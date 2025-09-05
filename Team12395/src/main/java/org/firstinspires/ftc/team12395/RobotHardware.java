@@ -45,7 +45,7 @@ public class RobotHardware {
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
 
     // Servos
-    private Servo baseLeft, baseRight, elbowMid, pincher;
+    public Servo baseLeft, baseRight, elbowMid, pincher;
 
 
     // IMU is used for field-centric heading

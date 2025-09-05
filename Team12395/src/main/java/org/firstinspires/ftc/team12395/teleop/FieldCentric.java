@@ -43,9 +43,9 @@ public class FieldCentric extends LinearOpMode {
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double baseBarrier = -1; // TODO placeholder, should be where elbow starts hitting the ground.
-    public static double barrierSlope = 1; // TODO placeholder, should be the slope where elbow starts hitting ground and base being straigh out.
-    public static double basePos, elbowPos, pinchPos  = 0; // TODO placeholder, set correct starting pos and put in INIT
+    public static double baseBarrier = 0.13; // TODO placeholder, should be where elbow starts hitting the ground.
+    public static double barrierSlope = 0.5/(0.285-0.13); // TODO placeholder, should be the slope where elbow starts hitting ground and base being straight out.
+    public static double basePos, elbowPos, pinchPos, basePos2  = 0; // TODO placeholder, set correct starting pos and put in INIT
 
     @Override
     public void runOpMode() {
@@ -54,6 +54,8 @@ public class FieldCentric extends LinearOpMode {
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
 
+        elbowPos = 0.5;
+        pinchPos = 0.32;
 
 
         robot.init();
@@ -63,28 +65,30 @@ public class FieldCentric extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            axial   = -gamepad1.left_stick_y/2;
+            lateral =  gamepad1.left_stick_x/2;
+            yaw     =  gamepad1.right_stick_x/2;
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            // + goes up
-            basePos  += 0.25*(gamepad1.right_trigger - gamepad1.left_trigger);
-            elbowPos += (gamepad1.right_bumper ? 0.07 : 0) - (gamepad1.left_bumper ? 0.07 : 0);
+            // + goes down
+            basePos  += 0.015*(gamepad1.left_trigger - gamepad1.right_trigger);
+
+            elbowPos += (gamepad1.right_bumper ? 0.02 : 0) - (gamepad1.left_bumper ? 0.02 : 0);
             if (gamepad1.bWasPressed()){
                 if (pinchPos != 0){
                     pinchPos = 0;
                 }
                 else {
-                    pinchPos = 1;
+                    pinchPos = 0.32;
                 }
             }
 
-            basePos = Range.clip(basePos, 0, 1);
+            basePos = Range.clip(basePos, 0, 0.285);
             elbowPos = Range.clip(elbowPos, 0 ,1);
-            if (basePos <= baseBarrier){
-                elbowPos = basePos*barrierSlope;
+
+            if (elbowPos <= (basePos*barrierSlope) -0.5 && basePos >= baseBarrier){
+                elbowPos = (basePos*barrierSlope )-0.5;
             }
 
             robot.setBaseServo(basePos);
