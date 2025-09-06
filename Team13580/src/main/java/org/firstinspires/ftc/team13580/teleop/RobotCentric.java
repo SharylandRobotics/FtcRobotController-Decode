@@ -59,9 +59,9 @@ public class RobotCentric extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Read sticks (FTC gamepads: pushing left_stick_y forward is negative → invert it)
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            axial   = -gamepad1.left_stick_y * 0.5;
+            lateral =  gamepad1.left_stick_x * 0.5;
+            yaw     =  gamepad1.right_stick_x * 0.5;
 
             // Optional: Deadband to filter tiny stick noise (uncomment to use)
             // double dead = 0.05; // TODO(STUDENTS): tune
