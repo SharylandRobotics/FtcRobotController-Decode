@@ -60,9 +60,9 @@ public class FieldCentric extends LinearOpMode {
 
             // READ sticks
             // NOTE: FTC gamepads support negative when pushing left_stick_y forward, so we invert it.
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            axial   = -gamepad1.left_stick_y * 0.5;
+            lateral =  gamepad1.left_stick_x * 0.5;
+            yaw     =  gamepad1.right_stick_x * 0.5;
 
             // Optional: Deadband to ignore tiny stick noise (uncomment to use)
             // double dead = 0.05: // TODO(STUDENTS): tune
