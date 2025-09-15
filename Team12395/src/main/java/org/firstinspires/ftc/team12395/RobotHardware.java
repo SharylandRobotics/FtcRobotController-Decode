@@ -204,4 +204,42 @@ public class RobotHardware {
     public void setPinchPos(double pos){
         pincher.setPosition(pos);
     }
+
+    private final double g = 9.81;
+
+    /**
+     * angle solver
+     * @param xT x which the curve will fall on (distance)
+     * @param v given velocity
+     * @return (0) the low arc, (1) the high arc)
+     */
+    public double[] findTurretAngles(double xT, double v){
+        double yT = 38.75;
+        double discriminant = Math.sqrt( Math.pow(v,4) - g*((g*xT*xT) + (2*yT*v*v)));
+
+        return new double[] {Math.atan((v * v - discriminant) / g * xT), Math.atan((v * v + discriminant) / g * xT)};
+    }
+
+    /**
+     * graph function
+     * @param x distance to check
+     * @param v given velocity
+     * @param z given angle
+     * @return distance from floor + offset the projectile will be at
+     */
+    public double trajectoryOf(double x, double v, double z){
+        return ( x*Math.tan(z) -( (g*x*x)/(2*v*v*Math.cos(z)*Math.cos(z) ) ) );
+    }
+
+    /**
+     * checks if a given velocity can reach a given coordinate
+     * @param x target x
+     * @param y target y
+     * @param v given velocity
+     * @return boolean response
+     */
+    public boolean shotPossible(double x, double y, double v){
+
+        return Math.sqrt( (x*2*g)/(Math.sin(2*(Math.atan(2*y/x)))) ) == v;
+    }
 }
