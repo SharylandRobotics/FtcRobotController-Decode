@@ -31,9 +31,7 @@ package org.firstinspires.ftc.team12395;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.*;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class RobotHardware {
@@ -43,10 +41,13 @@ public class RobotHardware {
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
+    public DcMotorEx turret, shooter;
+    private final int turretTpD = 1000;
 
     // Servos
-    public Servo baseLeft, baseRight, elbowMid, pincher;
+    public Servo counterFlip, baseRight, elbowMid, pincher;
 
+    private final double g = 9.81;
 
     // IMU is used for field-centric heading
     private IMU imu;
@@ -66,7 +67,11 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        baseLeft = myOpMode.hardwareMap.get(Servo.class, "base_left");
+        turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+        shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
+
+
+        counterFlip = myOpMode.hardwareMap.get(Servo.class, "base_left");
         baseRight = myOpMode.hardwareMap.get(Servo.class, "base_right");
         elbowMid = myOpMode.hardwareMap.get(Servo.class, "elbow_mid");
         pincher = myOpMode.hardwareMap.get(Servo.class, "pincher");
@@ -93,6 +98,9 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
+        turret.setDirection(DcMotorEx.Direction.FORWARD);
+        shooter.setDirection(DcMotorEx.Direction.REVERSE);
+
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -100,16 +108,26 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         // NOTE: BRAKE helps with precise stopping; FLOAT cna feel smoother when coasting.
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // SERVO POSITIONS
 
@@ -193,7 +211,7 @@ public class RobotHardware {
      * @param pos 0 - 1, based on baseLeft
      */
     public void setBaseServo(double pos){
-        baseLeft.setPosition(pos);
+        counterFlip.setPosition(pos);
         baseRight.setPosition(1 - pos);
     }
 
@@ -205,7 +223,9 @@ public class RobotHardware {
         pincher.setPosition(pos);
     }
 
-    private final double g = 9.81;
+    private int encoderToDegTurret(double deg){
+        return (int) (deg*turretTpD);
+    }
 
     /**
      * angle solver

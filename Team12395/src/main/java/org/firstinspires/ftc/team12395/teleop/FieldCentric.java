@@ -43,9 +43,7 @@ public class FieldCentric extends LinearOpMode {
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double baseBarrier = 0.13; // TODO placeholder, should be where elbow starts hitting the ground.
-    public static double barrierSlope = 0.5/(0.285-0.13); // TODO placeholder, should be the slope where elbow starts hitting ground and base being straight out.
-    public static double basePos, elbowPos, pinchPos, basePos2  = 0; // TODO placeholder, set correct starting pos and put in INIT
+    public static double velocity = 0;
 
     @Override
     public void runOpMode() {
@@ -54,8 +52,7 @@ public class FieldCentric extends LinearOpMode {
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
 
-        elbowPos = 0.5;
-        pinchPos = 0.32;
+
 
 
         robot.init();
@@ -71,29 +68,13 @@ public class FieldCentric extends LinearOpMode {
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            // + goes down
-            basePos  += 0.015*(gamepad1.left_trigger - gamepad1.right_trigger);
-
-            elbowPos += (gamepad1.right_bumper ? 0.02 : 0) - (gamepad1.left_bumper ? 0.02 : 0);
-            if (gamepad1.bWasPressed()){
-                if (pinchPos != 0){
-                    pinchPos = 0;
-                }
-                else {
-                    pinchPos = 0.32;
-                }
+            if (gamepad1.dpad_up){
+                velocity += 10;
+            } else if (gamepad1.dpad_down){
+                velocity -= 10;
             }
 
-            basePos = Range.clip(basePos, 0, 0.285);
-            elbowPos = Range.clip(elbowPos, 0 ,1);
-
-            if (elbowPos <= (basePos*barrierSlope) -0.5 && basePos >= baseBarrier){
-                elbowPos = (basePos*barrierSlope )-0.5;
-            }
-
-            robot.setBaseServo(basePos);
-            robot.setElbowPos(elbowPos);
-            robot.setPinchPos(pinchPos);
+            robot.shooter.setVelocity(velocity);
 
             // Telemetry for drivers + debugging
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
