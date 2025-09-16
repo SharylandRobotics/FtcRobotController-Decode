@@ -76,7 +76,6 @@ public class RobotCentric extends LinearOpMode {
             // WHY: Robot-centric uses the driver’s frame (no IMU rotation); great for quick testing.
             robot.driveRobotCentric(axial, lateral, yaw);
 
-
             // Telemetry for drivers + debugging
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
