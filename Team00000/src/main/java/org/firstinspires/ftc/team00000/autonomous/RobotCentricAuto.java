@@ -4,9 +4,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
-@Autonomous(name="Robot Centric", group="Autonomous")
+@Autonomous(name="Robot Centric Auto", group="Autonomous")
 
-public class RobotCentric extends LinearOpMode {
+public class RobotCentricAuto extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -25,15 +25,15 @@ public class RobotCentric extends LinearOpMode {
 
             robot.autoRobotCentric(AXIAL_SPEED, 24.0, 0.0);
             robot.turnToHeading(YAW_SPEED, -45.0);
-            robot.holdHeading(YAW_SPEED, -45.0, 0.5);
+            robot.holdHeading(-45.0, 0.5);
 
             robot.autoRobotCentric(AXIAL_SPEED, 17.0, -45.0);
             robot.turnToHeading(YAW_SPEED, 45.0);
-            robot.holdHeading(YAW_SPEED, 45, 0.5);
+            robot.holdHeading(45, 0.5);
 
             robot.autoRobotCentric(AXIAL_SPEED, 17.0, 45.0);
             robot.turnToHeading(YAW_SPEED, 0.0);
-            robot.holdHeading(YAW_SPEED, 0.0, 1.0);
+            robot.holdHeading( 0.0, 1.0);
 
             robot.autoRobotCentric(AXIAL_SPEED, -48.0, 0.0);
         }
