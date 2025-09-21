@@ -6,7 +6,7 @@ import org.firstinspires.ftc.team00000.RobotHardware;
 
 /**
  * Field-centric TeleOp
- * – Left stick: axial/lateral in field frame: Right sick: yaw.
+ * – Left stick: axial/lateral in field frame; Right stick: yaw.
  * – Includes lifestyle calls and cooperative yielding (idle).
  * – Adds heading telemetry for quick sanity checks/
  */
@@ -14,14 +14,19 @@ import org.firstinspires.ftc.team00000.RobotHardware;
 public class FieldCentric extends LinearOpMode {
 
     private final RobotHardware robot = new RobotHardware(this);
+    private boolean prevY = false;
+    private boolean prevStart = false;
 
     @Override
     public void runOpMode() {
         double axial = 0, lateral = 0, yaw = 0;
 
         robot.init();
+        telemetry.setMsTransmissionInterval(50); // faster telemetry updates
 
         telemetry.addLine("Field Centric: RT=slow mode, Start=zero heading");
+        int heartbeat = 0;
+        telemetry.addData("Heartbeat", heartbeat);
         telemetry.update();
 
         waitForStart();
@@ -37,15 +42,29 @@ public class FieldCentric extends LinearOpMode {
             double scale = gamepad1.right_trigger > 0.1 ? 0.35 : 1.0;
             axial *= scale; lateral *= scale; yaw *= scale;
 
-            // Re-zero heading if the hub was bumped
-            if (gamepad1.start) robot.start();
+            // Re-zero heading on START (edge triggered)
+            if (gamepad1.start && !prevStart) {
+                robot.start();
+            }
+            prevStart = gamepad1.start;
+
+            // Toggle vision heading blend with Y (edge triggered)
+            if (gamepad1.y && !prevY) {
+                RobotHardware.VISION_HEADING_BLEND_ENABLED = !RobotHardware.VISION_HEADING_BLEND_ENABLED;
+            }
+            prevY = gamepad1.y;
 
             robot.teleOpFieldCentric(axial, lateral, yaw);
             robot.periodic();
 
             telemetry.addData("Heading(deg)", "%.1f", robot.getHeading());
-            telemetry.addData("Inputs", "ax=%.2f lat=%.2f yaw=%.2f slow=%.2f",
-                    axial, lateral, yaw, scale);
+            heartbeat++;
+            telemetry.addData("Heartbeat", heartbeat);
+
+            if (gamepad1.a) {
+                robot.assistDriveToTagRange(2.50, 0.05, 0.25);
+            }
+
             telemetry.update();
 
             idle(); // cooperative yield (preferred to fixed sleep)

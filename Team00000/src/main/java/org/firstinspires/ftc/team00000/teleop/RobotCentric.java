@@ -39,9 +39,19 @@ public class RobotCentric extends LinearOpMode {
             robot.teleOpRobotCentric(axial, lateral, yaw);
             robot.periodic();
 
+            // Vision + shooter telemetry using RobotHardware helpers
+            robot.telemetryVision(telemetry);
+            double suggested = robot.getSuggestedShooterRpm();
+            if (suggested > 0) telemetry.addData("Shooter", "suggested=%.0f rpm", suggested);
+            else               telemetry.addLine("Shooter: no suggestion");
+
             telemetry.addData("Heading(deg)", "%.1f", robot.getHeading());
             telemetry.addData("Inputs", "ax=%.2f lat=%.2f yaw=%.2f slow=%.2f",
                     axial, lateral, yaw, scale);
+            // Optional: press A to auto-nudge to ~2.50 m from the tag while holding current heading
+            if (gamepad1.a) {
+                robot.assistDriveToTagRange(2.50, 0.05, 0.25);
+            }
             telemetry.update();
 
             idle();
