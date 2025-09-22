@@ -4,39 +4,45 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
-@TeleOp(name="Vision Test", group="Debug")
+// TeleOp mode for testing AprilTag vision telemetry
+@TeleOp(name="Vision Debug", group="zDebug")
 public class VisionTest extends LinearOpMode {
 
     private final RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
+        // Initialize hardware and vision
         robot.init();
         telemetry.setMsTransmissionInterval(50);
-        telemetry.addLine("Vision debug mode: AprilTag detection");
-        telemetry.update();
 
         waitForStart();
         robot.start();
 
-        int heartbeat = 0;
-
+        // Update vision and push telemetry each cycle
         while (opModeIsActive() && !isStopRequested()) {
             robot.periodic();
 
-            // Vision telemetry
-            robot.telemetryVision(telemetry); // helper prints minimal tag info
+            // Compute horizontal bearing from tag translation
+            boolean fix = robot.hasTagFix();
+            double tx = robot.getFieldPose().x;
+            double ty = robot.getFieldPose().y;
+            double tz = robot.getFieldPose().z;
+            double lateralHeading = (!Double.isNaN(tx) && !Double.isNaN(ty) && (tx != 0 || ty != 0))
+                    ? Math.toDegrees(Math.atan2(tx, ty))
+                    : Double.NaN;
+            double elevationAngle = (!Double.isNaN(tz) && !Double.isNaN(ty) && (tz != 0 || ty != 0))
+                    ? Math.toDegrees(Math.atan2(tz, ty))
+                    : Double.NaN;
 
-            telemetry.addData("HasTagFix", robot.hasTagFix());
-            telemetry.addData("Detections", (int) robot.getFieldPose().yM);
+            // Report vision state and pose values
+            telemetry.addData("HasTagFix", fix);
             telemetry.addData("TagID", robot.getFieldPose().tagId);
             telemetry.addData("Range (m)", "%.2f", robot.getRangeToGoalM());
-            telemetry.addData("Heading (blended)", "%.1f", robot.getHeading());
-            telemetry.addData("Heading (raw vision)", "%.1f", robot.getFieldPose().headingDeg);
-
-            heartbeat++;
-            telemetry.addData("Heartbeat", heartbeat);
-
+            telemetry.addData("Lateral Heading (deg)", "%.1f", lateralHeading);
+            telemetry.addData("Elevation Angle (deg)", "%.1f", elevationAngle);
+            telemetry.addData("Tx (m)", "%.2f", tx);
+            telemetry.addData("Tz (m)", "%.2f", tz);
             telemetry.update();
             idle();
         }

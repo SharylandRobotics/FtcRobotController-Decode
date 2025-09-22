@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -21,15 +22,10 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import java.util.List;
 
 /**
- * RobotHardware (mentor-level)
- * Design intent:
- * – Provide a thin, testable hardware layer with explicit lifecycle hooks.
- * – Drive math is centralized: field-centric using IMU heading from HeadingSubsystem.
- * – Vision can "blend" heading via a small offset without owning the drive.
- * Notes:
- * – All public statics are Dashboard-tunable (@Config).
- * – Slew limiting smooths driver inputs; heading controllers use same path for simplicity.
- * – RUN_TO_POSITION straight-line auto adds proportional yaw correction to stay on heading.
+ * RobotHardware
+ * Thin hardware layer with clear lifecycle hooks. Field-centric drive uses IMU.
+ * AprilTag vision fills a pose cache (x,y,z,yawDeg,range,tagId,hasFix).
+ * Tunables are exposed in FTC Dashboard (@Config).
  */
 @Config
 public class RobotHardware {
@@ -63,6 +59,8 @@ public class RobotHardware {
     public static boolean VISION_HEADING_BLEND_ENABLED = true;
     public static double VISION_HEADING_TRUST = 0.05; // 0.02-0.08 is typical
     public static boolean VISION_DEBUG_PASS_THROUGH = false;
+    public static boolean VISION_YAW_INVERT = true; // some SDK builds report camera yaw; invert to get robot yaw
+    public static double VISION_YAW_OFFSET_DEG = 0.0; // manual trim to align vision yaw to IMU
 
     // ───────────────── FTC runtime wiring ─────────────────
 
@@ -81,17 +79,24 @@ public class RobotHardware {
 
     /** Simple pose cache exposed to other subsystems */
     public static class FieldPose {
-        public double xM = 0, yM = 0, headingDeg = 0; // field frame; meters, degrees
+        // AprilTag convention (meters, degrees): x=+right, y=+forward, z=+up, yaw around +z
+        public double x = 0, y = 0, z = 0;   // meters
+        public double yawDeg = 0;            // degrees
         public boolean hasFix = false;
         public int tagId = -1;
         public double rangeM = Double.NaN;
     }
     private final FieldPose pose = new FieldPose();
 
-    /** Public accessors for other code (shooter/turret/autonomous) */
+    /** Public accessors for other code (shooter / turret / autonomous) */
     public FieldPose getFieldPose() { return pose; }
     public boolean hasTagFix() { return pose.hasFix; }
     public double getRangeToGoalM() { return pose.rangeM; } // used by ShooterLUT
+
+    /** Vision-only yaw (deg), or 0 if no fix. */
+    public double getVisionYawDeg() { return pose.hasFix ? pose.yawDeg : 0.0; }
+    /** Vision translation (m) in AprilTag convention; returns (0,0,0) if no fix. */
+    public double[] getVisionXYZ() { return new double[]{ pose.hasFix ? pose.x : 0.0, pose.hasFix ? pose.y : 0.0, pose.hasFix ? pose.z : 0.0 }; }
 
     /** Returns suggested shooter RPM based on current tag range, or 0 if no fix. */
     public double getSuggestedShooterRpm() {
@@ -105,13 +110,17 @@ public class RobotHardware {
         if (tel == null) return;
         if (!hasTagFix()) {
             tel.addLine("Tag: none");
-        } else {
-            tel.addData("Tag", "#%d  range=%.2f m  heading=%.1f°", pose.tagId, pose.rangeM, getHeading());
+            return;
         }
+        tel.addData("Tag", "#%d", pose.tagId);
+        tel.addData("Range (m)", "%.2f", pose.rangeM);
+        tel.addData("Yaw (deg)", "%.1f", pose.yawDeg);
     }
 
     /** Nudge robot until tag range ≈ targetM; returns when within tol or no fix. */
     public void assistDriveToTagRange(double targetM, double tolM, double maxPower) {
+        if (!hasTagFix() || maxPower <= 0) return;
+        maxPower = Math.abs(Range.clip(maxPower, 0, 1));
         if (!hasTagFix()) return;
         double targetHeading = getHeading();
         double err = getRangeToGoalM() - targetM;
@@ -158,7 +167,7 @@ public class RobotHardware {
         IMU.Parameters parameters = new IMU.Parameters(
                 new RevHubOrientationOnRobot(
                         RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.RIGHT
+                        RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
                 )
         );
         imu.initialize(parameters);
@@ -322,6 +331,7 @@ public class RobotHardware {
 
         void init() { }
 
+        // Prefer ftcPose (SDK units/axes); fall back to robotPose or bearing+range
         void update() {
             YawPitchRollAngles ypr = imu.getRobotYawPitchRollAngles();
             rawDeg = ypr.getYaw(AngleUnit.DEGREES);
@@ -360,6 +370,8 @@ public class RobotHardware {
         private double prevAx = 0, prevLat = 0, prevYaw = 0;
 
         void init() { }
+
+        // Translation camera→tag (m) — AprilTag convention: x=+right, y=+forward, z=+up
         void update() { }
 
         void stopAll() {
@@ -396,9 +408,10 @@ public class RobotHardware {
             double yaw     = slew(yawCmd,     prevYaw, SLEW_MAX_YAW);
             prevAx = axial; prevLat = lateral; prevYaw = yaw;
 
-            double h = Math.toRadians(-headingDeg);
-            double rotX = axial   * Math.cos(h) - lateral * Math.sin(h);
-            double rotY = axial   * Math.sin(h) + lateral * Math.cos(h);
+            final double h = Math.toRadians(-headingDeg);
+            final double c = Math.cos(h), s = Math.sin(h);
+            double rotX = axial * c - lateral * s;
+            double rotY = axial * s + lateral * c;
 
             // Reuse robot-centric path for final mixing/normalization.
             driveRobotCentric(rotY, rotX, yaw);
@@ -424,17 +437,11 @@ public class RobotHardware {
         private static final double CX = 689.03;
         private static final double CY = 372.06;
 
-        // Fixed transform from CAMERA → ROBOT center (meters, degrees)
-        // Measure these on your bot once the mount is final.
-        private static final double CAM_TX_M = 0.00; // +x right
-        private static final double CAM_TY_M = 0.20; // +y forward
-        private static final double CAM_TZ_M = 0.15; // +z up
-        private static final double CAM_YAW_DEG = 0.0; // camera yaw vs robot forward
-
         void init() {
             tags = new AprilTagProcessor.Builder()
                     .setLensIntrinsics(FX, FY, CX, CY)
                     .setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
+                    .setOutputUnits(DistanceUnit.METER, AngleUnit.DEGREES)
                     .build();
 
             // Enable camera streaming for FTC Dashboard (instead of DS preview)
@@ -444,13 +451,10 @@ public class RobotHardware {
                     .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                     .setCameraResolution(new android.util.Size(1280,800))
                     .build();
-            // Stream camera to FTC Dashboard (view on DS browser) at ~15 FPS
-            try {
-                com.acmerobotics.dashboard.FtcDashboard.getInstance().startCameraStream(portal, 15);
-            } catch (Throwable t) {
-                // Dashboard not present; ignore
-            }
+            // Stream to FTC Dashboard (192.168.43.1) — modest FPS to keep CPU/GPU headroom
+            try { com.acmerobotics.dashboard.FtcDashboard.getInstance().startCameraStream(portal, 12); } catch (Throwable ignored) { }
         }
+        // Vision yaw (deg): from ftcPose.yaw if present; else from -bearing
         void update() {
             if (portal == null || tags == null) return;
 
@@ -459,46 +463,60 @@ public class RobotHardware {
             pose.hasFix = false; // reset each frame
             pose.tagId = -1;
             pose.rangeM = Double.NaN;
-            // Save detection count for debug telemetry
-            pose.yM = dets != null ? dets.size() : 0;
 
             AprilTagDetection best = pickBest(dets);
-            if (best == null) {
+            if (best == null) return; // pose already reset above
+
+            // Prefer SDK-provided ftcPose (already in meters due to setOutputUnits). Fallback to robotPose.
+            double range;
+            double bearingRobotDeg;
+            if (best.ftcPose != null && !Double.isNaN(best.ftcPose.range) && best.ftcPose.range > 0) {
+                range = best.ftcPose.range;
+                bearingRobotDeg = best.ftcPose.bearing;
+            } else if (best.robotPose != null && best.robotPose.getPosition() != null) {
+                double tx = best.robotPose.getPosition().x; // +right (m)
+                double ty = best.robotPose.getPosition().y; // +forward (m)
+                range = Math.hypot(tx, ty);
+                bearingRobotDeg = Math.toDegrees(Math.atan2(tx, ty));
+            } else {
+                // No usable pose
                 pose.hasFix = false;
                 pose.tagId = -1;
                 pose.rangeM = Double.NaN;
-                // Save detection count for debug telemetry
-                // pose.yM already set above
                 return;
             }
 
-            // Derive flat-ground range/bearing from robotPose (works even if ftcPose is null)
-            double tx = best.robotPose.getPosition().x; // +right (m)
-            double ty = best.robotPose.getPosition().y; // +forward (m)
-            double range = Math.hypot(tx, ty);
-            double bearingRobotDeg = Math.toDegrees(Math.atan2(tx, ty)) + CAM_YAW_DEG;
-
-            // Gently nudge IMU heading toward a camera-derived proxy:
-            // if tag is to the right (+bearing), we nudge heading slightly left.
-            // Keep the trust tiny so drivers never feel a snap.
-            double approxVisionHeadingDeg = normDeg(getHeading() - bearingRobotDeg);
-
-            // Blend heading gently to avoid driver "snaps"
-            if (VISION_HEADING_BLEND_ENABLED) {
-                applyVisionYawCorrection(approxVisionHeadingDeg, VISION_HEADING_TRUST);
+            // Populate translation (camera -> tag) in meters using AprilTag convention
+            if (best.ftcPose != null && !Double.isNaN(best.ftcPose.x) && !Double.isNaN(best.ftcPose.y)) {
+                pose.x = best.ftcPose.x; // +right (m)
+                pose.y = best.ftcPose.y; // +forward (m)
+                pose.z = !Double.isNaN(best.ftcPose.z) ? best.ftcPose.z : 0.0; // +up (m)
+            } else if (best.robotPose != null && best.robotPose.getPosition() != null) {
+                pose.x = best.robotPose.getPosition().x;
+                pose.y = best.robotPose.getPosition().y;
+                try { pose.z = best.robotPose.getPosition().z; } catch (Throwable ignored) { pose.z = 0.0; }
+            } else {
+                // Reconstruct x/y from bearing + range if no pose vector is available
+                double rad = Math.toRadians(bearingRobotDeg);
+                pose.x = Math.sin(rad) * range; // +right
+                pose.y = Math.cos(rad) * range; // +forward
+                pose.z = 0.0;
             }
 
-            // Update public pose cache for shooter/turret; keep it simple in Phase 1
+            // Compute a direct vision yaw (no IMU blending): prefer orientation yaw, fallback to -bearing
+            double headingVisionDeg;
+            if (best.ftcPose != null && !Double.isNaN(best.ftcPose.yaw)) {
+                double camYaw = best.ftcPose.yaw; // degrees, per setOutputUnits
+                headingVisionDeg = (VISION_YAW_INVERT ? -camYaw : camYaw) + VISION_YAW_OFFSET_DEG;
+            } else {
+                headingVisionDeg = -bearingRobotDeg; // proxy from geometry
+            }
+
+            // Publish minimal, pure-vision pose for telemetry
             pose.tagId = best.id;
             pose.rangeM = range;
-            pose.headingDeg = approxVisionHeadingDeg; // expose raw vision-derived heading
+            pose.yawDeg = normDeg(headingVisionDeg);
             pose.hasFix = true;
-
-            // Save detection count for debug telemetry
-            // pose.yM already set above
-
-            // NOTE: For true field (x,y) you'll want a tag map → field pose composition.
-            // We'll add that in Phase 1b/Phase 3; the launcher only needs range for now.
         }
 
         void shutdown() {
@@ -515,6 +533,7 @@ public class RobotHardware {
         private static final double MIN_RANGE_M = 0.20; // too close = likely wrong
         private static final double MAX_RANGE_M = 7.0; // beyond reasonable FTC viewing
 
+        // Choose nearest valid tag (prefers robotPose; else ftcPose range). Filters outliers.
         private AprilTagDetection pickBest(List<AprilTagDetection> dets) {
             if (dets == null || dets.isEmpty()) return null;
 
@@ -527,15 +546,15 @@ public class RobotHardware {
 
             AprilTagDetection best = null;
             for (AprilTagDetection d : dets) {
-                if (d.metadata == null) continue; // need known tag
+                if (d.metadata == null) continue; // require known tag
                 // Prefer robotPose when available, otherwise fall back to ftcPose for range
                 double tx, ty;
                 boolean hasRobotPose = (d.robotPose != null);
                 if (hasRobotPose) {
                     tx = d.robotPose.getPosition().x;
                     ty = d.robotPose.getPosition().y;
-                } else if (d.ftcPose != null) {
-                    // Approximate X/Y from bearing/range if robotPose is missing
+                } else if (d.ftcPose != null && !Double.isNaN(d.ftcPose.range) && d.ftcPose.range > 0 && !Double.isNaN(d.ftcPose.bearing)) {
+                    // Reconstruct x/y from bearing+range
                     tx = Math.sin(Math.toRadians(d.ftcPose.bearing)) * d.ftcPose.range;
                     ty = Math.cos(Math.toRadians(d.ftcPose.bearing)) * d.ftcPose.range;
                 } else {
@@ -548,9 +567,9 @@ public class RobotHardware {
                 if (best == null) best = d;
                 else {
                     double br;
-                    if (best.robotPose != null) {
+                    if (best.robotPose != null && best.robotPose.getPosition() != null) {
                         br = Math.hypot(best.robotPose.getPosition().x, best.robotPose.getPosition().y);
-                    } else if (best.ftcPose != null) {
+                    } else if (best.ftcPose != null && !Double.isNaN(best.ftcPose.range) && best.ftcPose.range > 0) {
                         br = best.ftcPose.range;
                     } else {
                         br = Double.POSITIVE_INFINITY;
@@ -559,7 +578,7 @@ public class RobotHardware {
                 }
             }
 
-            // If all filtered out but we had detections, return first with metadata as a last resort
+            // If all filtered out, but we had detections, return first with metadata as a last resort
             if (best == null) {
                 for (AprilTagDetection d : dets) if (d.metadata != null) return d;
             }
