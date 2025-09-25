@@ -35,66 +35,50 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-@TeleOp(name="Field Centric", group="TeleOp")
+@TeleOp(name="Velocity Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class FieldCentric extends LinearOpMode {
+public class VelocityTest extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double velocity = 0;
-    public static double angle = 0.1;
-
+    public static double tVel = 0;
+    public static double cVel;
+    public static int repeated;
 
 
     @Override
     public void runOpMode() {
         // Driver inputs (range roughly [-1, 1])
-        double axial    = 0; // forward/back (+ forward)
-        double lateral  = 0; // strafe left/right (+ right)
-        double yaw      = 0; // rotation (+ CCW/left turn)
+        double pVel = 0;
 
-        double slew = 0;
 
         robot.init();
 
         waitForStart();
 
+        robot.setShooterVelocity(tVel);
+
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
+            cVel = robot.getShooterVelocity();
 
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
 
-            slew = 360*gamepad1.right_stick_y/20;
-
-            robot.driveFieldCentric(axial, lateral, yaw);
-
-            if (gamepad1.dpad_up){
-                velocity += 10;
-            } else if (gamepad1.dpad_down){
-                velocity -= 10;
+            if (Range.clip(pVel, cVel-1, cVel+1) == pVel){
+                repeated++;
+            } else if(!(repeated <= 0)){
+                repeated--;
             }
 
-            if (gamepad1.dpad_left){
-                angle += 0.045;
-            } else if (gamepad1.dpad_right){
-                angle -= 0.045;
-            }
-            angle = Range.clip(angle, 0.1, 1);
-
-            robot.setTurretPositionAbsolute(slew);
-
-            robot.setShooterVelocity(velocity);
-            robot.setHoodAngle(angle);
+            pVel=cVel;
 
 
             // Telemetry for drivers + debugging
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
-            telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
-            // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
+            if (repeated >= 5){
+                telemetry.addData("max RPS: ", pVel);
+            }
+            telemetry.addData("Inputs", "time=%.2f  cVel=%.2f   tVel=%.2f", getRuntime(), cVel, tVel);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

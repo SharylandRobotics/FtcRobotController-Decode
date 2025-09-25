@@ -32,6 +32,7 @@ package org.firstinspires.ftc.team12395;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
+import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class RobotHardware {
@@ -41,11 +42,14 @@ public class RobotHardware {
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
-    public DcMotorEx turret, shooter;
-    private final int turretTpD = 1000;
+    private DcMotorEx turret, shooter;
+    private final double turretTicksPerRevolution = ((((1+(46./17))) * (1+(46./11))) * 28);
+    private final double turretTicksPerDegree = turretTicksPerRevolution/360;
+    private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
+    private final int shooterMaxTPM = 2800;
 
     // Servos
-    public Servo counterFlip, baseRight, elbowMid, pincher;
+    private Servo counterFlip, hoodAngle, elbowMid, pincher;
 
     private final double g = 9.81;
 
@@ -72,7 +76,7 @@ public class RobotHardware {
 
 
         counterFlip = myOpMode.hardwareMap.get(Servo.class, "base_left");
-        baseRight = myOpMode.hardwareMap.get(Servo.class, "base_right");
+        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
         elbowMid = myOpMode.hardwareMap.get(Servo.class, "elbow_mid");
         pincher = myOpMode.hardwareMap.get(Servo.class, "pincher");
 
@@ -126,7 +130,10 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turret.setTargetPosition(0);
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // SERVO POSITIONS
@@ -206,25 +213,40 @@ public class RobotHardware {
 
     }
 
+    public void setTurretPositionAbsolute(double deg){
+        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
+
+        turret.setVelocity(turretMaxTPS);
+
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void setShooterVelocity(double tPs){
+        shooter.setVelocity(Range.clip(tPs, 0, shooterMaxTPM));
+    }
+
     /**
      *
-     * @param pos 0 - 1, based on baseLeft
+     * @return rpm in rps, not tps
+     * max rpm is 100. (6000 mRPM / 60 sec = 100 mRPS * 28 TPR = 2800 mTPS)
      */
-    public void setBaseServo(double pos){
-        counterFlip.setPosition(pos);
-        baseRight.setPosition(1 - pos);
+    public double getShooterVelocity(){
+        return shooter.getVelocity()/28;
     }
 
-    public void setElbowPos(double pos){
-        elbowMid.setPosition(pos);
+    public void setHoodAngle(double angle){
+        hoodAngle.setPosition(angle);
     }
 
-    public void setPinchPos(double pos){
-        pincher.setPosition(pos);
-    }
 
     private int encoderToDegTurret(double deg){
-        return (int) (deg*turretTpD);
+        return (int) (deg* turretTicksPerDegree);
+    }
+
+    public double[] getTurretAzimuth(){
+        double tDeg = turret.getCurrentPosition()/ turretTicksPerDegree;
+        double deg = (tDeg) % 360;
+        return new double[]{ (tDeg-deg)/360, tDeg % 360};
     }
 
     /**
