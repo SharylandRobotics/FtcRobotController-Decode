@@ -34,7 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
+import com.qualcomm.robotcore.hardware.Servo;
 /**
  * RobotHardware
  *
@@ -61,6 +61,13 @@ public class RobotHardware {
 
     // IMU is used for field-centric heading
     private IMU imu;
+    // servo set up
+    private Servo hood;
+
+    public static final double MID_SERVO       =  0.5 ;
+
+    //turret motor
+    private DcMotor turretMotor;
 
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
@@ -77,6 +84,16 @@ public class RobotHardware {
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
+        //servo
+        hood = myOpMode.hardwareMap.get(Servo.class, "hood_servo");
+        hood.setPosition(MID_SERVO);
+        //turret motor reverse?
+        turretMotor = myOpMode.hardwareMap.get(DcMotor.class, "turret_motor");
+        turretMotor.setDirection(DcMotor.Direction.REVERSE);
+        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+
 
         // --- IMU ORIENTATION ---
         // TODO(STUDENTS): Update if your Control/Expansion Hub is mounted differently.
@@ -193,4 +210,13 @@ public class RobotHardware {
         backRightDrive.setPower(backRightWheel);
 
     }
+    //servo
+    public void setHoodPositions(double position) {
+        hood.setPosition(position);
+    }
+    //turret
+    public void turretPower(double power){
+        turretMotor.setPower(power);
+    }
 }
+

@@ -104,6 +104,7 @@ public class ConceptExternalHardwareClass extends LinearOpMode {
             // Limit the total offset to half of the full travel range
             if (gamepad1.right_bumper)
                 handOffset += robot.HAND_SPEED;
+
             else if (gamepad1.left_bumper)
                 handOffset -= robot.HAND_SPEED;
             handOffset = Range.clip(handOffset, -0.5, 0.5);

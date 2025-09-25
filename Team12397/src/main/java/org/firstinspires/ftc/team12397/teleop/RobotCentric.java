@@ -31,6 +31,7 @@ package org.firstinspires.ftc.team12397.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12397.RobotHardware;
 
 @TeleOp(name="Robot Centric", group="TeleOp")
@@ -46,7 +47,6 @@ public class RobotCentric extends LinearOpMode {
         double axial    = 0; // forward/back (+ forward)
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
-
         // --- INIT PHASE ---
         // WHY: Centralized initialization (motor directions, encoders, IMU) lives in RobotHardware.init()
         // TODO(STUDENTS): Confirm motor names, directions, and zero-power modes in RobotHardware.init()
@@ -62,6 +62,22 @@ public class RobotCentric extends LinearOpMode {
             axial   = -gamepad1.left_stick_y;
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
+
+            //servo Hood stuff starts here
+            if (gamepad1.right_bumper)
+                robot.setHoodPositions(1.0);
+
+            if (gamepad1.left_bumper)
+                robot.setHoodPositions(0.0);
+
+
+            // Pace this loop so hands move at a reasonable speed.
+            sleep(50);
+
+            // turret motor
+            if (gamepad1.right_trigger != 0){
+                robot.turretPower(.2);
+            }
 
             // Optional: Deadband to filter tiny stick noise (uncomment to use)
             // double dead = 0.05; // TODO(STUDENTS): tune
@@ -82,6 +98,13 @@ public class RobotCentric extends LinearOpMode {
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             // Optional: expose heading during tuning
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
+            //servo stuff
+            telemetry.addData("Drive", "Left Stick");
+            telemetry.addData("Turn", "Right Stick");
+            telemetry.addData("Hood Servo Up/Down", "Y & A Buttons");
+            telemetry.addData("Hood Servo Open/Closed", "Left and Right Bumpers");
+            telemetry.addData("-", "-------");
+            telemetry.addData("Turret motor shooter", "Right Trigger");
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
@@ -89,5 +112,4 @@ public class RobotCentric extends LinearOpMode {
         }
     }
 }
-
 
