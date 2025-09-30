@@ -46,6 +46,7 @@ public class FieldCentric extends LinearOpMode {
     public static double velocity = 0;
     public static double angle = 0.1;
 
+    public static double slewTarget = 0;
 
 
     @Override
@@ -55,7 +56,7 @@ public class FieldCentric extends LinearOpMode {
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
 
-        double slew = 0;
+        double slewRate = 0;
 
         robot.init();
 
@@ -68,24 +69,21 @@ public class FieldCentric extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
-            slew = 360*gamepad1.right_stick_y/20;
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            if (gamepad1.dpad_up){
-                velocity += 10;
-            } else if (gamepad1.dpad_down){
-                velocity -= 10;
-            }
+            slewRate = Math.abs(gamepad1.right_stick_y);
+            slewTarget = (-gamepad1.right_stick_y < 0 ? -90 : (-gamepad1.right_stick_y > 0 ? 90 : robot.getCurrentTurretDegreePos() ));
 
-            if (gamepad1.dpad_left){
-                angle += 0.045;
-            } else if (gamepad1.dpad_right){
-                angle -= 0.045;
-            }
+            robot.setTurretPositionAbsolute(slewTarget, slewRate);
+
+            velocity = (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
+
+            angle = (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
             angle = Range.clip(angle, 0.1, 1);
 
-            robot.setTurretPositionAbsolute(slew);
+
+
 
             robot.setShooterVelocity(velocity);
             robot.setHoodAngle(angle);

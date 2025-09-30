@@ -42,14 +42,16 @@ public class RobotHardware {
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
-    private DcMotorEx turret, shooter;
-    private final double turretTicksPerRevolution = ((((1+(46./17))) * (1+(46./11))) * 28);
+    public DcMotorEx turret, shooter;
+
+    private final double spoolToTurretRatio = 4; // 4 rotations to 1
+    private final double turretTicksPerRevolution = spoolToTurretRatio*((((1+(46./17))) * (1+(46./11))) * 28);
     private final double turretTicksPerDegree = turretTicksPerRevolution/360;
     private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
     private final int shooterMaxTPM = 2800;
 
     // Servos
-    private Servo counterFlip, hoodAngle, elbowMid, pincher;
+    private Servo counterFlip, hoodAngle, gate, pincher;
 
     private final double g = 9.81;
 
@@ -77,7 +79,7 @@ public class RobotHardware {
 
         counterFlip = myOpMode.hardwareMap.get(Servo.class, "base_left");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
-        elbowMid = myOpMode.hardwareMap.get(Servo.class, "elbow_mid");
+        gate = myOpMode.hardwareMap.get(Servo.class, "gate");
         pincher = myOpMode.hardwareMap.get(Servo.class, "pincher");
 
         // --- IMU ORIENTATION ---
@@ -221,6 +223,14 @@ public class RobotHardware {
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
+    public void setTurretPositionAbsolute(double deg, double tps){
+        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
+
+        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
+
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
     public void setShooterVelocity(double tPs){
         shooter.setVelocity(Range.clip(tPs, 0, shooterMaxTPM));
     }
@@ -247,6 +257,10 @@ public class RobotHardware {
         double tDeg = turret.getCurrentPosition()/ turretTicksPerDegree;
         double deg = (tDeg) % 360;
         return new double[]{ (tDeg-deg)/360, tDeg % 360};
+    }
+
+    public double getCurrentTurretDegreePos(){
+        return turret.getCurrentPosition()/ turretTicksPerDegree;
     }
 
     /**
