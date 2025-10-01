@@ -47,6 +47,10 @@ public class FieldCentric extends LinearOpMode {
     public static double angle = 0.1;
 
     public static double slewTarget = 0;
+    public static double maxTurn = 90;
+
+    public static double indexerTarget = 0;
+
 
 
     @Override
@@ -73,21 +77,21 @@ public class FieldCentric extends LinearOpMode {
             robot.driveFieldCentric(axial, lateral, yaw);
 
             slewRate = Math.abs(gamepad1.right_stick_y);
-            slewTarget = (-gamepad1.right_stick_y < 0 ? -90 : (-gamepad1.right_stick_y > 0 ? 90 : robot.getCurrentTurretDegreePos() ));
+            slewTarget = (-gamepad1.right_stick_y < 0 ? -maxTurn : (-gamepad1.right_stick_y > 0 ? maxTurn : robot.getCurrentTurretDegreePos() ));
 
             robot.setTurretPositionAbsolute(slewTarget, slewRate);
 
-            velocity = (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
+            velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
 
-            angle = (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
+            angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
             angle = Range.clip(angle, 0.1, 1);
-
-
-
 
             robot.setShooterVelocity(velocity);
             robot.setHoodAngle(angle);
 
+            indexerTarget = (gamepad2.right_stick_x < 0 ? -360.5 : (gamepad2.right_stick_x > 0 ? 360.5 : robot.getSpindexerAzimuth()[1] ));
+
+            robot.setSpindexerAbsoluteCircleAngle(indexerTarget);
 
             // Telemetry for drivers + debugging
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");

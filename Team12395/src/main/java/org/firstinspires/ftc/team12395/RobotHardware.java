@@ -42,13 +42,18 @@ public class RobotHardware {
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
-    public DcMotorEx turret, shooter;
+    public DcMotorEx turret, shooter, spindexer;
 
     private final double spoolToTurretRatio = 4; // 4 rotations to 1
     private final double turretTicksPerRevolution = spoolToTurretRatio*((((1+(46./17))) * (1+(46./11))) * 28);
     private final double turretTicksPerDegree = turretTicksPerRevolution/360;
     private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
     private final int shooterMaxTPM = 2800;
+
+    private final double spoolToSpindexerRatio = 1;
+    private final double spindexerTicksPerRevolution = spoolToSpindexerRatio*((((1+(46./17))) * (1+(46./11))) * 28);
+    private final double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
+    private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
     // Servos
     private Servo counterFlip, hoodAngle, gate, pincher;
@@ -75,6 +80,7 @@ public class RobotHardware {
 
         turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
+        //spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
 
 
         counterFlip = myOpMode.hardwareMap.get(Servo.class, "base_left");
@@ -106,6 +112,7 @@ public class RobotHardware {
 
         turret.setDirection(DcMotorEx.Direction.FORWARD);
         shooter.setDirection(DcMotorEx.Direction.REVERSE);
+        spindexer.setDirection(DcMotorEx.Direction.FORWARD);
 
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.
@@ -116,6 +123,7 @@ public class RobotHardware {
 
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // NOTE: BRAKE helps with precise stopping; FLOAT cna feel smoother when coasting.
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -125,6 +133,7 @@ public class RobotHardware {
 
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -135,6 +144,10 @@ public class RobotHardware {
         turret.setTargetPosition(0);
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        spindexer.setTargetPosition(0);
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -297,5 +310,32 @@ public class RobotHardware {
     public boolean shotPossible(double x, double y, double v){
 
         return Math.sqrt( (x*2*g)/(Math.sin(2*(Math.atan(2*y/x)))) ) == v;
+    }
+
+    public double getCurrentSpindexerDegreesPos(){
+        return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
+    }
+
+    public double[] getSpindexerAzimuth(){
+        double tDeg = spindexer.getCurrentPosition()/ spindexerTicksPerDegree;
+        double deg = (tDeg) % 360;
+        return new double[]{ (tDeg-deg)/360, tDeg % 360};
+    }
+
+    public void setSpindexerRelativeAngle(double angle){
+        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
+    }
+
+    public void setSpindexerAbsoluteCircleAngle(double angle){
+        spindexer.setTargetPosition( (int) (  (getSpindexerAzimuth()[0]*spindexerTicksPerRevolution)
+                                            + (angle*spindexerTicksPerDegree) ) );
+    }
+
+    public void setSpindexerAbsoluteAngle(double revolutions, double angle){
+        spindexer.setTargetPosition( (int) ( (revolutions*spindexerTicksPerRevolution) + (angle*spindexerTicksPerDegree) ) );
+    }
+
+    public void setSpindexerAbsoluteAngle(double angle){
+        spindexer.setTargetPosition( (int) (angle*spindexerTicksPerDegree) );
     }
 }
