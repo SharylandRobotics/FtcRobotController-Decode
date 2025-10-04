@@ -46,6 +46,7 @@ public class RobotHardware {
     private DcMotor backLeftDrive   = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive  = null;
+    private DcMotor frontIntakeMotor = null;
 
     private IMU imu = null;
 
@@ -85,6 +86,7 @@ public class RobotHardware {
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
+        frontIntakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "front_intake_motor");
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
@@ -140,6 +142,7 @@ public class RobotHardware {
 
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
+    public void setArmPower(double power) {frontIntakeMotor.setPower(power);}
 
     public void teleOpFieldCentric(double axial, double lateral, double yaw) {
 

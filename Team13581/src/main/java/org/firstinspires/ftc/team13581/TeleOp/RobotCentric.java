@@ -63,6 +63,13 @@ public class RobotCentric extends LinearOpMode {
 
             telemetry.update();
 
+            if (gamepad1.a) {
+                robot.setArmPower(0.5);
+            }
+            if (gamepad1.b) {
+                robot.setArmPower(0);
+            }
+
             sleep(50);
         }
     }
