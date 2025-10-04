@@ -128,7 +128,7 @@ public class RobotCentric extends LinearOpMode {
                 intakeMotorOn = !intakeMotorOn;
             }
             if(intakeMotorOn){
-                robot.intakePower(1);
+                robot.intakePower(-1);
             }
             else{
                 robot.intakePower(0);
