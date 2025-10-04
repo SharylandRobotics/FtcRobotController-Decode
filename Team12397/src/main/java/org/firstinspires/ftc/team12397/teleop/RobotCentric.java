@@ -31,7 +31,6 @@ package org.firstinspires.ftc.team12397.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12397.RobotHardware;
 
 @TeleOp(name="Robot Centric", group="TeleOp")
@@ -63,6 +62,7 @@ public class RobotCentric extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
+
             //servo Hood stuff starts here
             // old code
             /*if (gamepad1.right_bumper)
@@ -72,9 +72,10 @@ public class RobotCentric extends LinearOpMode {
                 robot.setHoodPositions(0.0);
 
              */
+            //servo hood
             boolean servoOn = false;
             boolean lastServoState = false;
-            boolean currentServoState = (gamepad1.rightBumperWasPressed());
+            boolean currentServoState = (gamepad1.bWasPressed());
             if(currentServoState && !lastServoState){
                 servoOn = !servoOn;
             }
@@ -89,10 +90,26 @@ public class RobotCentric extends LinearOpMode {
             // Pace this loop so hands move at a reasonable speed.
             sleep(50);
 
+            boolean intakeservoOn = false;
+            boolean intakelastServoState = false;
+            boolean intakecurrentServoState = (gamepad1.y);
+            if(intakecurrentServoState && !intakelastServoState){
+                intakeservoOn = !intakeservoOn;
+            }
+            if(intakeservoOn){
+                robot.setIntakeServo(.5);
+            }
+            else{
+                robot.setIntakeServo(0.0);
+            }
+            intakelastServoState = intakecurrentServoState;
+
+            // Pace this loop so hands move at a reasonable speed.
+            sleep(50);
             // turret motor
             boolean turretOn = false;
             boolean lastTriggerState = false;
-            boolean currentTriggerState = (gamepad1.leftBumperWasPressed());
+            boolean currentTriggerState = (gamepad1.rightBumperWasPressed());
             if(currentTriggerState && !lastTriggerState){
                 turretOn = !turretOn;
             }
@@ -103,6 +120,20 @@ public class RobotCentric extends LinearOpMode {
                 robot.turretPower(0);
             }
             lastTriggerState = currentTriggerState;
+            //intake motor
+            boolean intakeMotorOn = false;
+            boolean intakeMotorlastTriggerState = false;
+            boolean intakeMotorcurrentTriggerState = (gamepad1.right_trigger > .5);
+            if(intakeMotorcurrentTriggerState && !intakeMotorlastTriggerState){
+                intakeMotorOn = !intakeMotorOn;
+            }
+            if(intakeMotorOn){
+                robot.intakePower(1);
+            }
+            else{
+                robot.intakePower(0);
+            }
+            intakeMotorlastTriggerState = intakeMotorcurrentTriggerState;
            /* if (gamepad1.right_trigger > 0){
                 robot.turretPower(1);
             }
@@ -132,10 +163,15 @@ public class RobotCentric extends LinearOpMode {
             //servo stuff
             telemetry.addData("Drive", "Left Stick");
             telemetry.addData("Turn", "Right Stick");
-            telemetry.addData("Hood Servo Up/Down", "Right Bumpter toggle");
+            telemetry.addData("Hood Servo Up/Down", "Button B toggle");
+            telemetry.addData("intake Servo Up/Down", "Button Y toggle");
+
 
             telemetry.addData("-", "-------");
-            telemetry.addData("Turret motor shooter", "Right Trigger toggle");
+            telemetry.addData("Turret motor shooter", "Right Bumper toggle");
+            telemetry.addData("intake motor", "Right Trigger Hold");
+
+
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
