@@ -27,15 +27,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team13580.teleop;
+package org.firstinspires.ftc.team13590.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.team13580.RobotHardware;
+import org.firstinspires.ftc.team13590.RobotHardware;
 
-@TeleOp(name="Robot Centric", group="TeleOp")
+@TeleOp(name="Field Centric", group="TeleOp")
 
-public class RobotCentric extends LinearOpMode {
+public class FieldCentric extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -56,7 +56,7 @@ public class RobotCentric extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
-            robot.teleOpRobotCentric(axial, lateral, yaw);
+            robot.teleOpFieldCentric(axial, lateral, yaw);
 
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);

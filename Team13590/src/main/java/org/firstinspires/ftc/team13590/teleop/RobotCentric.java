@@ -27,11 +27,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team13580.teleop;
+package org.firstinspires.ftc.team13590.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.team13580.RobotHardware;
+import org.firstinspires.ftc.team13590.RobotHardware;
 
 @TeleOp(name="Robot Centric", group="TeleOp")
 

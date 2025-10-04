@@ -33,8 +33,6 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
@@ -49,32 +47,6 @@ public class RobotHardware {
 
     private IMU imu = null;
 
-    private double  headingError     = 0;
-    private double  targetHeading    = 0;
-    private double  axialSpeed       = 0;
-    private double  lateralSpeed     = 0;
-    private double  yawSpeed         = 0;
-    private double  frontLeftSpeed   = 0;
-    private double  backLeftSpeed    = 0;
-    private double  frontRightSpeed  = 0;
-    private double  backRightSpeed   = 0;
-    private int     frontLeftTarget  = 0;
-    private int     backLeftTarget   = 0;
-    private int     frontRightTarget = 0;
-    private int     backRightTarget  = 0;
-
-    static final double COUNTS_PER_MOTOR_REV  = 537.7;
-    static final double DRIVE_GEAR_REDUCTION  = 1.0;
-    static final double WHEEL_DIAMETER_INCHES = 3.77953;
-    static final double COUNTS_PER_INCH       = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-                                                (WHEEL_DIAMETER_INCHES * Math.PI);
-
-    static final double HEADING_THRESHOLD = 1.0;
-
-    static final double P_AXIAL_GAIN   = 0.02;
-    static final double P_LATERAL_GAIN = 0.02;
-    static final double P_YAW_GAIN     = 0.03;
-
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
     }
@@ -88,7 +60,7 @@ public class RobotHardware {
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT));
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
@@ -171,87 +143,6 @@ public class RobotHardware {
         backLeftDrive.setPower(backLeftWheel);
         backRightDrive.setPower(backRightWheel);
 
-    }
-
-    public void autoRobotCentric(double maxAxialSpeed, double distance, double heading) {
-
-        if (myOpMode.opModeIsActive()) {
-
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
-            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
-
-            frontLeftDrive.setTargetPosition(frontLeftTarget);
-            backLeftDrive.setTargetPosition(backLeftTarget);
-            frontRightDrive.setTargetPosition(frontRightTarget);
-            backRightDrive.setTargetPosition(backRightTarget);
-
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            maxAxialSpeed = Math.abs(maxAxialSpeed);
-            teleOpRobotCentric(axialSpeed, 0, 0);
-
-            while (myOpMode.opModeIsActive() &&
-                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
-                            frontRightDrive.isBusy() && backRightDrive.isBusy())) {
-                yawSpeed = getSteeringCorrection(heading, P_AXIAL_GAIN);
-
-                if (distance < 0)
-                    yawSpeed *= -1.0;
-
-                teleOpRobotCentric(axialSpeed, lateralSpeed, yawSpeed);
-            }
-
-            teleOpRobotCentric(0, 0, 0);
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-    }
-
-    public void turnToHeading(double maxYawSpeed, double heading) {
-
-        getSteeringCorrection(heading, P_YAW_GAIN);
-
-        while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
-
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
-
-            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-            teleOpRobotCentric(0,0, yawSpeed);
-        }
-    }
-
-    public void holdHeading(double maxYawSpeed, double heading, double holdTime) {
-
-        ElapsedTime holdTimer = new ElapsedTime();
-        holdTimer.reset();
-
-        while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
-             yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
-
-             yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-             teleOpRobotCentric(0,0, yawSpeed);
-        }
-    }
-
-    public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
-        targetHeading = desiredHeading;
-
-        headingError = targetHeading - getHeading();
-
-        while (headingError > 180) headingError -= 360;
-        while (headingError <= 180) headingError += 360;
-
-        return Range.clip(headingError * proportionalGain, -1, 1);
     }
 
     public double getHeading() {
