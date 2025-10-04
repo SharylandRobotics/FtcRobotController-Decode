@@ -64,21 +64,52 @@ public class RobotCentric extends LinearOpMode {
             yaw     =  gamepad1.right_stick_x;
 
             //servo Hood stuff starts here
-            if (gamepad1.right_bumper)
-                robot.setHoodPositions(1.0);
+            // old code
+            /*if (gamepad1.right_bumper)
+                robot.setHoodPositions(.5);
 
             if (gamepad1.left_bumper)
                 robot.setHoodPositions(0.0);
 
+             */
+            boolean servoOn = false;
+            boolean lastServoState = false;
+            boolean currentServoState = (gamepad1.rightBumperWasPressed());
+            if(currentServoState && !lastServoState){
+                servoOn = !servoOn;
+            }
+            if(servoOn){
+                robot.setHoodPositions(.5);
+            }
+            else{
+                robot.setHoodPositions(0.0);
+            }
+            lastServoState = currentServoState;
 
             // Pace this loop so hands move at a reasonable speed.
             sleep(50);
 
             // turret motor
-            if (gamepad1.right_trigger != 0){
-                robot.turretPower(.2);
+            boolean turretOn = false;
+            boolean lastTriggerState = false;
+            boolean currentTriggerState = (gamepad1.leftBumperWasPressed());
+            if(currentTriggerState && !lastTriggerState){
+                turretOn = !turretOn;
             }
-
+            if(turretOn){
+                robot.turretPower(1);
+            }
+            else{
+                robot.turretPower(0);
+            }
+            lastTriggerState = currentTriggerState;
+           /* if (gamepad1.right_trigger > 0){
+                robot.turretPower(1);
+            }
+              if(gamepad1.left_trigger > 0){
+                robot.turretPower(0);
+            }
+             */
             // Optional: Deadband to filter tiny stick noise (uncomment to use)
             // double dead = 0.05; // TODO(STUDENTS): tune
             // axial   = (Math.abs(axial)   < dead) ? 0 : axial;
@@ -101,10 +132,10 @@ public class RobotCentric extends LinearOpMode {
             //servo stuff
             telemetry.addData("Drive", "Left Stick");
             telemetry.addData("Turn", "Right Stick");
-            telemetry.addData("Hood Servo Up/Down", "Y & A Buttons");
-            telemetry.addData("Hood Servo Open/Closed", "Left and Right Bumpers");
+            telemetry.addData("Hood Servo Up/Down", "Right Bumpter toggle");
+
             telemetry.addData("-", "-------");
-            telemetry.addData("Turret motor shooter", "Right Trigger");
+            telemetry.addData("Turret motor shooter", "Right Trigger toggle");
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
