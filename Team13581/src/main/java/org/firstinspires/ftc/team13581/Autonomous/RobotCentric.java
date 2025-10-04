@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team13581.RobotHardware;
 
-@Autonomous(name="Robot Centric", group="Autonomous")
+@Autonomous(name="Robot Centric Auto", group="Autonomous")
 
 public class RobotCentric extends LinearOpMode {
 
