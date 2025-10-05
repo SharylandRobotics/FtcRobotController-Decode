@@ -37,32 +37,40 @@ import org.firstinspires.ftc.team00000.RobotHardware;
 
 public class FieldCentric extends LinearOpMode {
 
+    // Create hardware instance and pass current OpMode reference
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
 
-        double axial    = 0;
-        double lateral  = 0;
-        double yaw      = 0;
+        // Variables for joystick input: forward/back (axial), strafe (lateral), rotation (yaw)
+        double axial;
+        double lateral;
+        double yaw;
 
+        // Initialize all motors, IMU, and hardware configuration
         robot.init();
 
+        // Wait for the start signal before entering main control loop
         waitForStart();
 
+        // Main control loop: continuously while TeleOp is active
         while (opModeIsActive()) {
 
+            // Read real-time joystick values from gamepad
             axial   = -gamepad1.left_stick_y;
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
+            // Apply joystick inputs directly to field-centric drive control using IMU-based orientation
             robot.teleOpFieldCentric(axial, lateral, yaw);
 
+            // Display control instructions and current input values to Driver Station
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
-
             telemetry.update();
 
+            // Small delay to prevent telemetry flooding
             sleep(50);
         }
     }

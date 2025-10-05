@@ -38,19 +38,23 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 public class RobotHardware {
 
-    private LinearOpMode myOpMode = null;
+    // Reference to the active LinearOpMode for hardware access and telemetry
+    private final LinearOpMode myOpMode;
 
+    // Drive motors for a mecanum drivetrain
     private DcMotor frontLeftDrive  = null;
     private DcMotor backLeftDrive   = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive  = null;
 
+    // Inertial Measurement Unit (IMU) for heading and orientation
     private IMU imu = null;
 
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
     }
 
+    // Constructor stores a reference to the op mode using this hardware
     public void init() {
 
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
@@ -58,6 +62,7 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
+        // Define IMU orientation relative to the Control Hub
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
@@ -65,8 +70,10 @@ public class RobotHardware {
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
 
+        // Reset heading to zero at initialization
         imu.resetYaw();
 
+        // Reverse left motors so all wheels drive forward consistently
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -77,23 +84,27 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        // Apply braking when motors receive zero power for stability
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        // Use encoders for closed-loop motor velocity control
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         while(myOpMode.opModeInInit()) {
+            // Display IMU heading and init status on Driver Station until start
             myOpMode.telemetry.addData("Status", "Hardware Initialized");
             myOpMode.telemetry.addData("Heading", "%4.0f", getHeading());
             myOpMode.telemetry.update();
         }
     }
 
+    // Basic robot-centric drive: movement relative to robot orientation
     public void teleOpRobotCentric(double axial, double lateral, double yaw) {
 
         double frontLeftPower  = axial + lateral + yaw;
@@ -113,6 +124,7 @@ public class RobotHardware {
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
 
+    // Field-centric drive: adjusts control on current IMU heading
     public void teleOpFieldCentric(double axial, double lateral, double yaw) {
 
         double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
@@ -137,6 +149,7 @@ public class RobotHardware {
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
 
+    // Apply calculated power values to each motor
     public void setDrivePower(double frontLeftWheel, double frontRightWheel, double backLeftWheel, double backRightWheel) {
         frontLeftDrive.setPower(frontLeftWheel);
         frontRightDrive.setPower(frontRightWheel);
@@ -145,6 +158,7 @@ public class RobotHardware {
 
     }
 
+    // Return current IMU yaw (rotation around vertical axial in degrees
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
