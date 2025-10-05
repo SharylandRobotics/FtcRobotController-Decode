@@ -33,7 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
-@TeleOp(name="Field Centric", group="TeleOp")
+@TeleOp(name = "Field Centric", group = "opMode")
 
 public class FieldCentric extends LinearOpMode {
 
@@ -51,22 +51,33 @@ public class FieldCentric extends LinearOpMode {
         // Initialize all motors, IMU, and hardware configuration
         robot.init();
 
-        // Wait for the start signal before entering main control loop
+        while(opModeInInit()) {
+            // Display IMU heading and init status on Driver Station until start
+            telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            telemetry.update();
+        }
+
         waitForStart();
+        if (isStopRequested()) return;
 
         // Main control loop: continuously while TeleOp is active
         while (opModeIsActive()) {
 
+            boolean slow = gamepad1.left_bumper;
+            double scale = slow ? 0.4 : 1.0;
+
             // Read real-time joystick values from gamepad
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            axial = -gamepad1.left_stick_y * scale;
+            lateral = gamepad1.left_stick_x * scale;
+            yaw = gamepad1.right_stick_x * scale;
 
             // Apply joystick inputs directly to field-centric drive control using IMU-based orientation
-            robot.teleOpFieldCentric(axial, lateral, yaw);
+            robot.driveFieldCentric(axial, lateral, yaw);
 
             // Display control instructions and current input values to Driver Station
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
+            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             telemetry.update();
 
