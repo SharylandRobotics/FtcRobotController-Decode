@@ -109,7 +109,7 @@ public class RobotCentric extends LinearOpMode {
             // turret motor
             boolean turretOn = false;
             boolean lastTriggerState = false;
-            boolean currentTriggerState = (gamepad1.rightBumperWasPressed());
+            boolean currentTriggerState = (gamepad1.right_trigger > .5);
             if(currentTriggerState && !lastTriggerState){
                 turretOn = !turretOn;
             }
@@ -123,12 +123,12 @@ public class RobotCentric extends LinearOpMode {
             //intake motor
             boolean intakeMotorOn = false;
             boolean intakeMotorlastTriggerState = false;
-            boolean intakeMotorcurrentTriggerState = (gamepad1.right_trigger > .5);
+            boolean intakeMotorcurrentTriggerState = (gamepad1.rightBumperWasPressed());
             if(intakeMotorcurrentTriggerState && !intakeMotorlastTriggerState){
                 intakeMotorOn = !intakeMotorOn;
             }
             if(intakeMotorOn){
-                robot.intakePower(1);
+                robot.intakePower(-1);
             }
             else{
                 robot.intakePower(0);
