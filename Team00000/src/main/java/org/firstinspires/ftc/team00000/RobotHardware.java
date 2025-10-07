@@ -35,8 +35,16 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.concurrent.TimeUnit;
 
 // Hardware wrapper for mecanum drive + IMU with TeleOp and simple auto helpers
 public class RobotHardware {
@@ -52,6 +60,10 @@ public class RobotHardware {
 
     // Inertial Measurement Unit (IMU) for heading and orientation
     private IMU imu = null;
+
+    private VisionPortal visionPortal;
+    public AprilTagProcessor aprilTag;
+    public AprilTagDetection desiredTag;
 
     private double headingError;
 
@@ -77,14 +89,16 @@ public class RobotHardware {
             (WHEEL_DIAMETER_INCHES * Math.PI);
 
     // Default speeds and proportional gains; HEADING_THRESHOLD in degrees
-    public static final double AXIAL_SPEED = 0.4;
-    public static final double LATERAL_SPEED = 0.4;
-    public static final double YAW_SPEED = 0.2;
+    public static final double AXIAL_SPEED = 0.5;
+    public static final double LATERAL_SPEED = 0.5;
+    public static final double YAW_SPEED = 0.3;
     static final double HEADING_THRESHOLD = 1.0;
 
-    static final double P_AXIAL_GAIN = 0.03;
-    static final double P_LATERAL_GAIN = 0.03;
-    static final double P_YAW_GAIN = 0.02;
+    public final double DESIRED_DISTANCE = 12.0;
+
+    public static final double AXIAL_GAIN = 0.02;
+    public static final double LATERAL_GAIN = 0.015;
+    public static final double YAW_GAIN = 0.01;
 
     // OpMode handle for hardwareMap and telemetry
     public RobotHardware(LinearOpMode opmode) {
@@ -133,6 +147,8 @@ public class RobotHardware {
 
         // Reset heading to zero at initialization
         imu.resetYaw();
+
+        setManualExposure(6, 250);
     }
 
     // Drive a distance (inches) while holding a heading (deg) using RUN_TO_POSITION
@@ -168,7 +184,7 @@ public class RobotHardware {
                     frontRightDrive.isBusy() && backRightDrive.isBusy())) {
 
                 // Proportional yaw correction to stay on heading while driving
-                yawSpeed = getSteeringCorrection(heading, P_AXIAL_GAIN);
+                yawSpeed = getSteeringCorrection(heading, AXIAL_GAIN);
 
                 // Invert correction when backing up
                 if (distance < 0)
@@ -204,12 +220,12 @@ public class RobotHardware {
     // Turn in place to target heading using proportional control
     public void turnToHeading(double maxYawSpeed, double heading) {
 
-        getSteeringCorrection(heading, P_YAW_GAIN);
+        getSteeringCorrection(heading, YAW_GAIN);
 
         while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
 
             // Limit turn power to requested maximum
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
+            yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
 
             yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
 
@@ -237,7 +253,7 @@ public class RobotHardware {
 
         while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
 
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
+            yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
 
             yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
 
@@ -325,6 +341,36 @@ public class RobotHardware {
         frontRightDrive.setPower(frontRightWheel);
         backLeftDrive.setPower(backLeftWheel);
         backRightDrive.setPower(backRightWheel);
+    }
+    public void initAprilTag() {
+
+        aprilTag = new AprilTagProcessor.Builder()
+                .setLensIntrinsics(921.31, 917.70, 689.03, 372.06)
+                .build();
+
+        aprilTag.setDecimation(2);
+
+        visionPortal = new VisionPortal.Builder()
+                .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .addProcessor(aprilTag)
+                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+                .setCameraResolution(new android.util.Size(1280,800))
+                .build();
+    }
+
+    private void setManualExposure(int exposureMS, int gain) {
+
+        if (visionPortal == null) return;
+
+        if (!myOpMode.isStopRequested()) {
+            ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
+            if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
+                exposureControl.setMode(ExposureControl.Mode.Manual);
+            }
+            exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
+            GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
+            gainControl.setGain(gain);
+        }
     }
 
     // Return current IMU yaw (rotation around vertical axis) in degrees

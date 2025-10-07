@@ -31,7 +31,11 @@ package org.firstinspires.ftc.team00000.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team00000.RobotHardware;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+
+import java.util.List;
 
 @TeleOp(name = "Field Centric", group = "opMode")
 
@@ -44,17 +48,21 @@ public class FieldCentric extends LinearOpMode {
     public void runOpMode() {
 
         // Variables for joystick input: forward/back (axial), strafe (lateral), rotation (yaw)
+        boolean targetFound;
         double axial;
         double lateral;
         double yaw;
 
         // Initialize all motors, IMU, and hardware configuration
         robot.init();
+        robot.initAprilTag();
 
         while(opModeInInit()) {
             // Display IMU heading and init status on Driver Station until start
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            telemetry.addData("Camera preview on/off", "3 dots, Camera Stream");
+            telemetry.addData(">", "Touch START to start OpMode");
             telemetry.update();
         }
 
@@ -64,13 +72,39 @@ public class FieldCentric extends LinearOpMode {
         // Main control loop: continuously while TeleOp is active
         while (opModeIsActive()) {
 
+            targetFound = false;
+            robot.desiredTag = null;
+
+            List<AprilTagDetection> currentDetections = robot.aprilTag.getDetections();
+            for (AprilTagDetection detection : currentDetections) {
+                if (detection.metadata != null) {
+                    if((detection.id == 20 || detection.id == 24)) {
+                        targetFound = true;
+                        robot.desiredTag = detection;
+                        break;
+                    }
+                }
+            }
+
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
 
-            // Read real-time joystick values from gamepad
-            axial = -gamepad1.left_stick_y * scale;
-            lateral = gamepad1.left_stick_x * scale;
-            yaw = gamepad1.right_stick_x * scale;
+            if (gamepad1.right_bumper && targetFound) {
+
+                double rangeError = (robot.desiredTag.ftcPose.range - robot.DESIRED_DISTANCE);
+                double headingError = robot.desiredTag.ftcPose.bearing;
+                double yawError = robot.desiredTag.ftcPose.yaw;
+
+                axial = Range.clip(rangeError * RobotHardware.AXIAL_GAIN, -RobotHardware.AXIAL_SPEED, RobotHardware.AXIAL_SPEED);
+                lateral = Range.clip(yawError * RobotHardware.LATERAL_GAIN, -RobotHardware.LATERAL_SPEED, RobotHardware.LATERAL_SPEED);
+                yaw = Range.clip(-headingError * RobotHardware.YAW_GAIN, -RobotHardware.YAW_SPEED, RobotHardware. YAW_SPEED);
+            } else {
+
+                // Read real-time joystick values from gamepad
+                axial = -gamepad1.left_stick_y * scale;
+                lateral = gamepad1.left_stick_x * scale;
+                yaw = gamepad1.right_stick_x * scale;
+            }
 
             // Apply joystick inputs directly to field-centric drive control using IMU-based orientation
             robot.driveFieldCentric(axial, lateral, yaw);
@@ -78,7 +112,12 @@ public class FieldCentric extends LinearOpMode {
             // Display control instructions and current input values to Driver Station
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            if (gamepad1.right_bumper && targetFound) {
+                telemetry.addData("Auto", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            } else {
+                telemetry.addData("Manual", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            }
+            telemetry.addData("\n>", "HOLD Right-Bumper to Drive to Target\n");
             telemetry.update();
 
             // Small delay to prevent telemetry flooding
