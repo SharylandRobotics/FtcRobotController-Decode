@@ -46,7 +46,6 @@ public class RobotCentric extends LinearOpMode {
         double axial    = 0; // forward/back (+ forward)
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
-
         // --- INIT PHASE ---
         // WHY: Centralized initialization (motor directions, encoders, IMU) lives in RobotHardware.init()
         // TODO(STUDENTS): Confirm motor names, directions, and zero-power modes in RobotHardware.init()
@@ -63,6 +62,85 @@ public class RobotCentric extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
+
+            //servo Hood stuff starts here
+            // old code
+            /*if (gamepad1.right_bumper)
+                robot.setHoodPositions(.5);
+
+            if (gamepad1.left_bumper)
+                robot.setHoodPositions(0.0);
+
+             */
+            //servo hood
+            boolean servoOn = false;
+            boolean lastServoState = false;
+            boolean currentServoState = (gamepad1.bWasPressed());
+            if(currentServoState && !lastServoState){
+                servoOn = !servoOn;
+            }
+            if(servoOn){
+                robot.setHoodPositions(.5);
+            }
+            else{
+                robot.setHoodPositions(0.0);
+            }
+            lastServoState = currentServoState;
+
+            // Pace this loop so hands move at a reasonable speed.
+            sleep(50);
+
+            boolean intakeservoOn = false;
+            boolean intakelastServoState = false;
+            boolean intakecurrentServoState = (gamepad1.y);
+            if(intakecurrentServoState && !intakelastServoState){
+                intakeservoOn = !intakeservoOn;
+            }
+            if(intakeservoOn){
+                robot.setIntakeServo(.5);
+            }
+            else{
+                robot.setIntakeServo(0.0);
+            }
+            intakelastServoState = intakecurrentServoState;
+
+            // Pace this loop so hands move at a reasonable speed.
+            sleep(50);
+            // turret motor
+            boolean turretOn = false;
+            boolean lastTriggerState = false;
+            boolean currentTriggerState = (gamepad1.right_trigger > .5);
+            if(currentTriggerState && !lastTriggerState){
+                turretOn = !turretOn;
+            }
+            if(turretOn){
+                robot.turretPower(1);
+            }
+            else{
+                robot.turretPower(0);
+            }
+            lastTriggerState = currentTriggerState;
+            //intake motor
+            boolean intakeMotorOn = false;
+            boolean intakeMotorlastTriggerState = false;
+            boolean intakeMotorcurrentTriggerState = (gamepad1.rightBumperWasPressed());
+            if(intakeMotorcurrentTriggerState && !intakeMotorlastTriggerState){
+                intakeMotorOn = !intakeMotorOn;
+            }
+            if(intakeMotorOn){
+                robot.intakePower(-1);
+            }
+            else{
+                robot.intakePower(0);
+            }
+            intakeMotorlastTriggerState = intakeMotorcurrentTriggerState;
+           /* if (gamepad1.right_trigger > 0){
+                robot.turretPower(1);
+            }
+              if(gamepad1.left_trigger > 0){
+                robot.turretPower(0);
+            }
+             */
             // Optional: Deadband to filter tiny stick noise (uncomment to use)
             // double dead = 0.05; // TODO(STUDENTS): tune
             // axial   = (Math.abs(axial)   < dead) ? 0 : axial;
@@ -82,6 +160,18 @@ public class RobotCentric extends LinearOpMode {
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             // Optional: expose heading during tuning
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
+            //servo stuff
+            telemetry.addData("Drive", "Left Stick");
+            telemetry.addData("Turn", "Right Stick");
+            telemetry.addData("Hood Servo Up/Down", "Button B toggle");
+            telemetry.addData("intake Servo Up/Down", "Button Y toggle");
+
+
+            telemetry.addData("-", "-------");
+            telemetry.addData("Turret motor shooter", "Right Bumper toggle");
+            telemetry.addData("intake motor", "Right Trigger Hold");
+
+
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
@@ -89,5 +179,4 @@ public class RobotCentric extends LinearOpMode {
         }
     }
 }
-
 
