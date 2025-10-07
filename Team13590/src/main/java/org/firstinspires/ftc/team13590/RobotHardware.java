@@ -45,7 +45,7 @@ public class RobotHardware {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive  = null;
 
-    // private DcMotorEx flywheel;
+    private DcMotorEx flywheel;
     private DcMotorEx intakeMotor;
 
     private IMU imu = null;
@@ -83,7 +83,7 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        // flywheel = myOpMode.hardwareMap.get(DcMotorEx.class, "flywheel");
+        //flywheel = myOpMode.hardwareMap.get(DcMotorEx.class, "flywheel");
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
@@ -99,21 +99,21 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        // flywheel.setDirection(DcMotorSimple.Direction.FORWARD);
+        //flywheel.setDirection(DcMotorSimple.Direction.FORWARD);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        // flywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //flywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -121,10 +121,12 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // flywheel.setTargetPosition(0);
-        // flywheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        // flywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        // flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        /*flywheel.setTargetPosition(0);
+        flywheel.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        flywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+         */
 
 
         while(myOpMode.opModeInInit()) {
@@ -271,7 +273,10 @@ public class RobotHardware {
         return orientation.getYaw(AngleUnit.DEGREES);
     }
 
-    // public void setFlywheelVelocity(int vel ){
-        // flywheel.setVelocity(vel);
-    // }
+    /*
+    public void setFlywheelVelocity(int vel ){
+        flywheel.setVelocity(vel);
+    }
+
+     */
 }
