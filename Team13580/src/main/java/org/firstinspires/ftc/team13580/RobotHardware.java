@@ -32,23 +32,21 @@ package org.firstinspires.ftc.team13580;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 public class RobotHardware {
 
-    private LinearOpMode myOpMode = null;
+    private final LinearOpMode myOpMode;
 
     private DcMotor frontLeftDrive  = null;
     private DcMotor backLeftDrive   = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive  = null;
 
-    private DcMotor intake = null;
-
-    private DcMotor output = null;
+    private DcMotor intakeDrive = null;
+    private DcMotor outputDrive = null;
 
     private IMU imu = null;
 
@@ -63,6 +61,9 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
+        intakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "intake_drive");
+        outputDrive = myOpMode.hardwareMap.get(DcMotor.class, "output_drive");
+
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));
@@ -76,8 +77,9 @@ public class RobotHardware {
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        intake.setDirection(DcMotorSimple.Direction.FORWARD);
-        output.setDirection(DcMotor.Direction.FORWARD);
+
+        intakeDrive.setDirection(DcMotor.Direction.FORWARD);
+        outputDrive.setDirection(DcMotor.Direction.FORWARD);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -89,8 +91,8 @@ public class RobotHardware {
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        output.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        intakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        outputDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -156,8 +158,8 @@ public class RobotHardware {
     }
 
     public void setIntakePower(double power) {
-        intake.setPower(power);
-        output.setPower(power);
+        intakeDrive.setPower(power);
+        outputDrive.setPower(power);
     }
 
     public double getHeading() {
