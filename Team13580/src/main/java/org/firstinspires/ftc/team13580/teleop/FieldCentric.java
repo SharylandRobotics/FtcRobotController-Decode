@@ -42,10 +42,10 @@ public class FieldCentric extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        double axial    = 0;
-        double lateral  = 0;
-        double yaw      = 0;
-        double intake   = 0;
+        double axial;
+        double lateral;
+        double yaw;
+        double intake;
 
         robot.init();
 
@@ -71,4 +71,3 @@ public class FieldCentric extends LinearOpMode {
         }
     }
 }
-
