@@ -29,19 +29,29 @@
 
 package org.firstinspires.ftc.team12395;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 public class RobotHardware {
 
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
 
+    public Limelight3A limelight;
+
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
+    private final double wheelDiameterInches = 3.77953;
+    private final double wheelsTicksPerRev = ((((1+(46./17))) * (1+(46./11))) * 28);
+    private final double wheelsTicksPerInch = wheelsTicksPerRev/wheelDiameterInches;
+
+
+
     public DcMotorEx turret, shooter, spindexer;
 
     private final double spoolToTurretRatio = 4; // 4 rotations to 1
@@ -56,9 +66,13 @@ public class RobotHardware {
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
     // Servos
-    private Servo counterFlip, hoodAngle, gate, pincher;
+    private Servo counterFlip, hoodAngle, gate;
 
     private final double g = 9.81;
+    private final double xOffset = 5.5; //cm
+    private final double yOffset = 16.5*2.54; //cm
+    private final double verticalTargetDistance = 70-yOffset;
+
 
     // IMU is used for field-centric heading
     private IMU imu;
@@ -73,6 +87,8 @@ public class RobotHardware {
      */
     public void init() {
         // --- HARDWARE MAP NAMES ---
+        //limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
+
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
@@ -80,21 +96,20 @@ public class RobotHardware {
 
         turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
-        //spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
+        spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
 
 
-        counterFlip = myOpMode.hardwareMap.get(Servo.class, "base_left");
+        counterFlip = myOpMode.hardwareMap.get(Servo.class, "counter_flip");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
         gate = myOpMode.hardwareMap.get(Servo.class, "gate");
-        pincher = myOpMode.hardwareMap.get(Servo.class, "pincher");
 
         // --- IMU ORIENTATION ---
         // TODO(STUDENTS): Update if your Control/Expansion Hub is mounted differently.
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,        // e.g., logo pointing up
-                RevHubOrientationOnRobot.UsbFacingDirection.LEFT));  // e.g., USB ports towards right
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards right
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
@@ -132,7 +147,7 @@ public class RobotHardware {
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
@@ -152,6 +167,8 @@ public class RobotHardware {
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // SERVO POSITIONS
+
+        hoodAngle.setPosition(1);
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         myOpMode.telemetry.update();
@@ -226,6 +243,43 @@ public class RobotHardware {
         backLeftDrive.setPower(backLeftWheel);
         backRightDrive.setPower(backRightWheel);
 
+    }
+
+    public void driveToEncoderRobotCentric(double distance, double directionAngle, double power){
+        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+        directionAngle = Math.toRadians(directionAngle);
+
+        double lateralTicks = directionAngle/Math.abs(directionAngle)*
+                distance*Math.cos((Math.abs(directionAngle)));
+
+        double axialTicks = directionAngle/Math.abs(directionAngle)*
+                distance*Math.sin((Math.abs(directionAngle)));
+
+
+        // Input rotation for field frame
+        double lateralRotation =  (Math.cos(directionAngle) -  Math.sin(directionAngle));
+        double axialRotation =  (Math.sin(directionAngle) +  Math.cos(directionAngle));
+
+        // WHY: Standard mecanum mixing (A + L + Y. etc.). Values may exceed |1|; we normalize below.
+        double frontLeftPower  = axialRotation + lateralRotation ;
+        double frontRightPower = axialRotation - lateralRotation ;
+        double backLeftPower   = axialRotation - lateralRotation ;
+        double backRightPower  = axialRotation + lateralRotation ;
+
+        // Normalize so that the highest magnitude is 1.0, preserving ratios
+        double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
+                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
+
+        max *= Range.clip(power,0,1);
+        if (max > 1.0) {
+            frontLeftPower  /= max;
+            frontRightPower /= max;
+            backLeftPower   /= max;
+            backRightPower  /= max;
+        }
+
+        setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
 
     public void setTurretPositionAbsolute(double deg){
@@ -337,5 +391,22 @@ public class RobotHardware {
 
     public void setSpindexerAbsoluteAngle(double angle){
         spindexer.setTargetPosition( (int) (angle*spindexerTicksPerDegree) );
+    }
+
+    public void setCounterRotatePos(double pos){
+        counterFlip.setPosition(Range.clip(pos, 0, 1));
+    }
+
+    private double[] getValuesToTarget(){
+        double tx = limelight.getLatestResult().getTx();
+        double ty = limelight.getLatestResult().getTy();
+        Position pose = limelight.getLatestResult().getBotpose_MT2().getPosition();
+
+        double yDistance = verticalTargetDistance /Math.tan(ty);
+        double xDistance = Math.tan(tx)*yDistance;
+
+        double groundDistance = yDistance/Math.cos(tx);
+
+        return new double[]{ xDistance, yDistance, groundDistance};
     }
 }

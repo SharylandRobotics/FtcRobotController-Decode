@@ -51,6 +51,14 @@ public class FieldCentric extends LinearOpMode {
 
     public static double indexerTarget = 0;
 
+    public static double counterFlipper = 0;
+
+    public static double preSetVelocity = 1100;
+    public static double preSetAngleFar = 0.2;
+    public static double preSetAngleClose = 0.5;
+
+
+
 
 
     @Override
@@ -76,12 +84,17 @@ public class FieldCentric extends LinearOpMode {
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            slewRate = Math.abs(gamepad1.right_stick_y);
-            slewTarget = (-gamepad1.right_stick_y < 0 ? -maxTurn : (-gamepad1.right_stick_y > 0 ? maxTurn : robot.getCurrentTurretDegreePos() ));
+            slewRate = Math.abs(gamepad1.right_trigger - gamepad1.left_trigger)*0.125;
+            slewTarget = (gamepad1.left_trigger > 0 ? -maxTurn : (gamepad1.right_trigger > 0 ? maxTurn : robot.getCurrentTurretDegreePos() ));
 
             robot.setTurretPositionAbsolute(slewTarget, slewRate);
 
             velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
+            if (gamepad1.xWasPressed()){
+                velocity = preSetVelocity;
+            } else if (gamepad1.bWasPressed()){
+                velocity = 0;
+            }
 
             angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
             angle = Range.clip(angle, 0.1, 1);
@@ -91,11 +104,17 @@ public class FieldCentric extends LinearOpMode {
 
             indexerTarget = (gamepad2.right_stick_x < 0 ? -360.5 : (gamepad2.right_stick_x > 0 ? 360.5 : robot.getSpindexerAzimuth()[1] ));
 
+            if (gamepad2.bWasPressed()){
+                counterFlipper = counterFlipper >= 1 ? 0 : 1;
+            }
+            robot.setCounterRotatePos(counterFlipper);
+
             robot.setSpindexerAbsoluteCircleAngle(indexerTarget);
 
             // Telemetry for drivers + debugging
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
+            telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
             telemetry.update();
 
