@@ -22,10 +22,17 @@
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * CAUSED ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+// Student notes:
+// • Robot-centric TeleOp: left stick = drive/strafe (robot frame), right stick = turn
+// • Uses RobotHardware for motors and IMU
+// • Hold left bumper for slow mode
+// • Forward and turn directions are relative to the robot (not the field)
+// • TODO (student): Adjust slow-mode speed (scale) and add joystick deadbands if needed
 
 package org.firstinspires.ftc.team00000.teleop;
 
@@ -37,53 +44,54 @@ import org.firstinspires.ftc.team00000.RobotHardware;
 
 public class RobotCentric extends LinearOpMode {
 
-    // Create hardware instance and pass current OpMode reference
+    // Hardware reference for drive and sensors
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
-
-        // Variables for joystick input: forward/back (axial), strafe (lateral), rotation (yaw)
+        // Driver inputs: axial (forward/back), lateral (strafe), yaw (turn)
         double axial;
         double lateral;
         double yaw;
 
-        // Initialize all motors, IMU, and hardware configuration
+        // Set up motors, encoders, and IMU before starting TeleOp
         robot.init();
 
         while(opModeInInit()) {
-            // Display IMU heading and init status on Driver Station until start
+            // Show IMU heading and confirm initialization before pressing START
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
             telemetry.update();
         }
 
+        // Waits for the driver to press START
         waitForStart();
         if (isStopRequested()) return;
 
         // Main control loop: continuously while TeleOp is active
         while (opModeIsActive()) {
-
+            // Hold left bumper for slow mode (precision control)
             boolean slow = gamepad1.left_bumper;
+            // TODO (student): Change 0.4 to your preferred slow-mode speed
             double scale = slow ? 0.4 : 1.0;
 
-            // Read real-time joystick values from gamepad
+            // TODO (student): Add joystick deadbands (e.g., if |value| < 0.05 → 0) to filter small stick noise
             axial = -gamepad1.left_stick_y * scale;
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            // Apply joystick inputs directly to robot-centric drive control
+            // TODO (student): Reverse any axis here if movement feels opposite to the stick
             robot.driveRobotCentric(axial, lateral, yaw);
 
-            // Display control instructions and current input values to Driver Station
+            // TODO (student): Add encoder or heading data here for debugging (e.g., motor positions, IMU yaw)
+            // Display controls and live joystick data on Driver Station
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             telemetry.update();
 
-            // Small delay to prevent telemetry flooding
+            // Small pause to keep telemetry updates smooth
             sleep(50);
         }
     }
 }
-
