@@ -52,7 +52,7 @@ public class Gyro extends LinearOpMode {
         // Initialize all motors and IMU before start
         robot.init();
 
-        while(opModeInInit()) {
+        while (opModeInInit()) {
             // Display heading and status continuously during init loop
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
@@ -74,29 +74,18 @@ public class Gyro extends LinearOpMode {
             Boolean phase2 = false;
             Boolean phase3 = false;
 
-            while(phase1){
+           /* while(phase1){
 
             }
             while(aprilTagFound){
 
             }
-           /* public void moveTo(){
-                while(phase1){
-
-                }
-                while(phase2){
-
-                }
-                while(phase3){
-
-                }
             */
-            }
-
-
 
 
         }
     }
+}
+
 
 
