@@ -33,27 +33,31 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
+// Student Notes: Field‑centric TeleOp. Left stick = drive/strafe, Right stick = turn, LB = slow mode.
+// TODO(students): Adjust slow‑mode scale if you want finer aiming.
 @TeleOp(name = "Field Centric", group = "opMode")
 
 public class FieldCentric extends LinearOpMode {
 
-    // Create hardware instance and pass current OpMode reference
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
 
-        // Variables for joystick input: forward/back (axial), strafe (lateral), rotation (yaw)
         double axial;
         double lateral;
         double yaw;
 
-        // Initialize all motors, IMU, and hardware configuration
+        // Student Note: Initialize hardware (motors, IMU, vision).
         robot.init();
 
         while(opModeInInit()) {
-            // Display IMU heading and init status on Driver Station until start
+            // Student Note: Pre‑start check — rotate robot by hand; heading should change.
+            // "Vision: Ready (AprilTag)" means camera + processor initialized.
             telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Vision", "Ready (AprilTag)");
+            telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
+                    robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
             telemetry.update();
         }
@@ -61,27 +65,39 @@ public class FieldCentric extends LinearOpMode {
         waitForStart();
         if (isStopRequested()) return;
 
-        // Main control loop: continuously while TeleOp is active
         while (opModeIsActive()) {
 
+            // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
 
-            // Read real-time joystick values from gamepad
             axial = -gamepad1.left_stick_y * scale;
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            // Apply joystick inputs directly to field-centric drive control using IMU-based orientation
+            // Student Note: Field‑centric drive call (mixing happens in RobotHardware).
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            // Display control instructions and current input values to Driver Station
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            telemetry.addData("Heading", "%4.0f°", robot.getHeading());
+            telemetry.addData("Inputs", "ax=%.2f   lat=%.2f   yaw=%.2f", axial, lateral, yaw);
+
+            String motif = robot.hasObeliskMotif () ? String.format("%s (ID %s)", robot.getObeliskMotif(),
+                    robot.getObeliskTagId()) : "–";
+            telemetry.addData("Obelisk Motif", motif);
+
+            // Student Note: Vision summary — if Goal Tag is "–", aim at a goal tag 1–3 m away and avoid glare.
+            // Bearing ~0° when centered; range decreases as you move closer.
+            Integer goalId = robot.getGoalTagId();
+            double range = robot.getGoalRangeIn();
+            double bearing = robot.getGoalBearingDeg();
+            double elevation = robot.getGoalElevationDeg();
+            telemetry.addData("Goal Tag", (goalId != null) ? goalId : "–");
+            telemetry.addData("Goal Pose", "range=%.1f in  bearing=%.1f°  elev=%.1f°", range, bearing, elevation);
+
             telemetry.update();
 
-            // Small delay to prevent telemetry flooding
             sleep(50);
         }
     }
