@@ -100,6 +100,18 @@ public class RobotHardware {
     private double goalBearingDeg = Double.NaN;
     private double goalElevationDeg = Double.NaN;
 
+    // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
+    private double tagYawDeg = Double.NaN;
+
+    private static final double DESIRED_DISTANCE = 24.0; // camera-to-tag inches
+    private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
+    private static final double LATERAL_GAIN = 0.015; // tagYawError -> lateral (strafe) speed
+    private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
+    public static final double MAX_AUTO_AXIAL = 0.50;
+    public static final double MAX_AUTO_LATERAL = 0.50;
+    public static final double MAX_AUTO_YAW = 0.30;
+    static final double HEADING_THRESHOLD = 1.0;
+
     // Student Note: Calibrated intrinsics for 1280×800. Must match camera resolution.
     // TODO(students): Recalibrate or update values if resolution or lens changes.
     private static final double LENS_FX = 921.31;
@@ -119,15 +131,6 @@ public class RobotHardware {
     static final double WHEEL_DIAMETER_INCHES = 4.094;
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * Math.PI);
-
-    public static final double AXIAL_SPEED = 0.4;
-    public static final double LATERAL_SPEED = 0.4;
-    public static final double YAW_SPEED = 0.2;
-    static final double HEADING_THRESHOLD = 1.0;
-
-    static final double P_AXIAL_GAIN = 0.03;
-    static final double P_LATERAL_GAIN = 0.03;
-    static final double P_YAW_GAIN = 0.02;
 
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
@@ -203,7 +206,7 @@ public class RobotHardware {
                     (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
                     frontRightDrive.isBusy() && backRightDrive.isBusy())) {
 
-                yawSpeed = getSteeringCorrection(heading, P_AXIAL_GAIN);
+                yawSpeed = getSteeringCorrection(heading, AXIAL_GAIN);
 
                 if (distance < 0)
                     yawSpeed *= -1.0;
@@ -237,13 +240,13 @@ public class RobotHardware {
 
     public void turnToHeading(double maxYawSpeed, double heading) {
 
-        getSteeringCorrection(heading, P_YAW_GAIN);
+        getSteeringCorrection(heading, YAW_GAIN);
 
         // Student Note: Turn‑in‑place until heading error is small.
         // TODO(students): Tune P_YAW_GAIN for snappier or smoother turns.
         while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
 
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
+            yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
 
             yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
 
@@ -271,7 +274,7 @@ public class RobotHardware {
         // Student Note: Briefly hold heading to let the robot settle after a move.
         while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
 
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
+            yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
 
             yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
 
@@ -405,6 +408,7 @@ public class RobotHardware {
             goalRangeIn = Double.NaN;
             goalBearingDeg = Double.NaN;
             goalElevationDeg = Double.NaN;
+            tagYawDeg = Double.NaN;
             return;
         }
 
@@ -443,16 +447,19 @@ public class RobotHardware {
                 goalRangeIn = chosen.ftcPose.range;
                 goalBearingDeg = chosen.ftcPose.bearing;
                 goalElevationDeg = chosen.ftcPose.elevation;
+                tagYawDeg = chosen.ftcPose.yaw;
             } else {
                 goalRangeIn = Double.NaN;
                 goalBearingDeg = Double.NaN;
                 goalElevationDeg = Double.NaN;
+                tagYawDeg = Double.NaN;
             }
         } else {
             goalTagId = null;
             goalRangeIn = Double.NaN;
             goalBearingDeg = Double.NaN;
             goalElevationDeg = Double.NaN;
+            tagYawDeg = Double.NaN;
         }
     }
 
@@ -470,8 +477,26 @@ public class RobotHardware {
 
     public double getGoalElevationDeg() { return  goalElevationDeg; }
 
+    public double getTagYawDeg() { return tagYawDeg; }
+
     public void resetObeliskMotif() {
         obeliskMotif = null;
         obeliskTagId = null;
+    }
+
+    public boolean autoDriveToGoalStep() {
+        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
+            return false;
+        }
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+        double headingError =  goalBearingDeg;
+        double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
+
+        double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
+        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
+
+        driveRobotCentric(axial, lateral, yaw);
+        return true;
     }
 }

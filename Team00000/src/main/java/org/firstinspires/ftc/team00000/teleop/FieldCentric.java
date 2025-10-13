@@ -56,6 +56,7 @@ public class FieldCentric extends LinearOpMode {
             // "Vision: Ready (AprilTag)" means camera + processor initialized.
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Vision", "Ready (AprilTag)");
+            telemetry.addData("Mode", "INIT");
             telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
                     robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
@@ -67,6 +68,9 @@ public class FieldCentric extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+            // Keep vision fresh before using pose values each loop
+            robot.updateAprilTagDetections();
+
             // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
@@ -75,27 +79,45 @@ public class FieldCentric extends LinearOpMode {
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            // Student Note: Field‑centric drive call (mixing happens in RobotHardware).
-            robot.driveFieldCentric(axial, lateral, yaw);
-
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
-            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Heading", "%4.0f°", robot.getHeading());
-            telemetry.addData("Inputs", "ax=%.2f   lat=%.2f   yaw=%.2f", axial, lateral, yaw);
-
-            String motif = robot.hasObeliskMotif () ? String.format("%s (ID %s)", robot.getObeliskMotif(),
-                    robot.getObeliskTagId()) : "–";
-            telemetry.addData("Obelisk Motif", motif);
-
-            // Student Note: Vision summary — if Goal Tag is "–", aim at a goal tag 1–3 m away and avoid glare.
-            // Bearing ~0° when centered; range decreases as you move closer.
+            // --- Vision helpers for concise telemetry ---
             Integer goalId = robot.getGoalTagId();
             double range = robot.getGoalRangeIn();
             double bearing = robot.getGoalBearingDeg();
             double elevation = robot.getGoalElevationDeg();
-            telemetry.addData("Goal Tag", (goalId != null) ? goalId : "–");
-            telemetry.addData("Goal Pose", "range=%.1f in  bearing=%.1f°  elev=%.1f°", range, bearing, elevation);
 
+            // Approx horizontal distance and aim-above-horizontal (camera pitched up 15°)
+            double horiz = (Double.isNaN(range) || Double.isNaN(bearing))
+                    ? Double.NaN
+                    : range * Math.cos(Math.toRadians(bearing));
+            double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (15.0 + elevation));
+
+            // Driver Assist: hold RB to auto-drive toward the visible goal tag (range->drive, yaw->strafe, bearing->turn).
+            boolean autoAssist = gamepad1.right_bumper;
+            boolean didAuto = false;
+            if (autoAssist) {
+                robot.updateAprilTagDetections();
+                didAuto = robot.autoDriveToGoalStep();
+            }
+
+            // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
+            if (!didAuto) {
+                robot.driveFieldCentric(axial, lateral, yaw);
+            }
+
+            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+            telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
+            telemetry.addData("Heading", "%4.0f°", robot.getHeading());
+            telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+
+            String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
+            telemetry.addData("Obelisk", motif);
+
+            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
+            telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
+            telemetry.addData("Aim",  "horiz=%.1f in  aboveHoriz=%s",
+                    horiz,
+                    Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal));
+            telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
             sleep(50);
