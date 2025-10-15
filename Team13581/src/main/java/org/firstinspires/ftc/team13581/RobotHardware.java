@@ -47,6 +47,7 @@ public class RobotHardware {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive  = null;
     private DcMotor frontIntakeMotor = null;
+    private DcMotor outtakeMotor = null;
 
     private IMU imu = null;
 
@@ -87,6 +88,7 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
         frontIntakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "front_intake_motor");
+        outtakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "outtake_motor");
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
@@ -97,10 +99,12 @@ public class RobotHardware {
 
         imu.resetYaw();
 
-        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
-        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontIntakeMotor.setDirection(DcMotor.Direction.REVERSE);
+        outtakeMotor.setDirection(DcMotor.Direction.FORWARD);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -111,6 +115,8 @@ public class RobotHardware {
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontIntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        outtakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -142,7 +148,9 @@ public class RobotHardware {
 
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
-    public void setArmPower(double power) {frontIntakeMotor.setPower(power);}
+    public void setFrontPower(double fpower) {frontIntakeMotor.setPower(fpower);}
+    public void setBackPower(double bpower) {outtakeMotor.setPower(bpower);}
+
 
     public void teleOpFieldCentric(double axial, double lateral, double yaw) {
 
