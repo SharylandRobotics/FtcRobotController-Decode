@@ -48,7 +48,7 @@ public class RobotHardware {
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
     private final double wheelDiameterInches = 3.77953;
     private final double wheelsTicksPerRev = ((((1+(46./17))) * (1+(46./11))) * 28);
-    private final double wheelsTicksPerInch = wheelsTicksPerRev/wheelDiameterInches;
+    private final double wheelsTicksPerInch = wheelsTicksPerRev/(wheelDiameterInches*Math.PI);
 
 
 
@@ -66,7 +66,7 @@ public class RobotHardware {
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
     // Servos
-    private Servo counterFlip, hoodAngle, gate;
+    private Servo xArm, hoodAngle, gate;
 
     private final double g = 9.81;
     private final double xOffset = 5.5; //cm
@@ -99,7 +99,7 @@ public class RobotHardware {
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
 
 
-        counterFlip = myOpMode.hardwareMap.get(Servo.class, "counter_flip");
+        xArm = myOpMode.hardwareMap.get(Servo.class, "counter_flip");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
         gate = myOpMode.hardwareMap.get(Servo.class, "gate");
 
@@ -245,6 +245,13 @@ public class RobotHardware {
 
     }
 
+    public void resetDriveEncoder(){
+        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
     public void driveToEncoderRobotCentric(double distance, double directionAngle, double power){
         double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
@@ -279,7 +286,82 @@ public class RobotHardware {
             backRightPower  /= max;
         }
 
+
+
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
+    }
+
+    public void driveEncoder(double speed, double leftFrontInches, double leftBackInches, double rightFrontInches, double rightBackInches){
+        // drives only while myOpMode is active
+        if(myOpMode.opModeIsActive()){
+
+
+            //determine new target position
+            int leftFrontTarget = frontLeftDrive.getCurrentPosition() + (int)(leftFrontInches * wheelsTicksPerInch);
+            int leftBackTarget = backLeftDrive.getCurrentPosition() + (int)(leftBackInches * wheelsTicksPerInch);
+            int rightFrontTarget = frontRightDrive.getCurrentPosition() + (int)(rightFrontInches * wheelsTicksPerInch);
+            int rightBackTarget = backRightDrive.getCurrentPosition() + (int)(rightBackInches * wheelsTicksPerInch);
+
+            frontLeftDrive.setTargetPosition(leftFrontTarget - 1);
+            backLeftDrive.setTargetPosition(leftBackTarget - 1 );
+            frontRightDrive.setTargetPosition(rightFrontTarget - 1);
+            backRightDrive.setTargetPosition(rightBackTarget - 1 );
+
+            //turn on RUN_TO_POSITION
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            setDrivePower(Math.abs(speed), Math.abs(speed), Math.abs(speed), Math.abs(speed));
+
+            while ((myOpMode.opModeIsActive() &&
+                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
+                            frontRightDrive.isBusy() && backRightDrive.isBusy()))){
+
+                //display it for driver
+
+                myOpMode.telemetry.addData("Running to ", " %7d :%7d :%7d :%7d",
+                        leftFrontTarget, leftBackTarget, rightFrontTarget, rightBackTarget);
+                myOpMode.telemetry.addData("Currently at ", "%7d ;%7d :%7d :%7d",
+                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
+                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
+                myOpMode.telemetry.update();
+            }
+
+            setDrivePower(0, 0, 0, 0 );
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            myOpMode.sleep(200); //optional pause after each move
+        }
+    }
+
+    /**
+     *
+     * @param speed 0-1
+     * @param degrees + cw/ - ccw
+     */
+    public void turnEncoderTrue(double speed, double degrees){
+
+        double angle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + Math.toRadians(degrees);
+
+        int turnWay = (angle > 0 ? 1 : -1);
+
+
+        setDrivePower(turnWay* Math.abs(speed),-turnWay* Math.abs(speed),
+                turnWay* Math.abs(speed),-turnWay* Math.abs(speed));
+
+        while ( !((Math.round(angle)< Math.toRadians(degrees*1.05)) && (Math.round(angle)> Math.toRadians(degrees*0.95))) ){
+            if ( !((Math.round(angle)< Math.toRadians(degrees*1.25)) && (Math.round(angle)> Math.toRadians(degrees*0.75))) ){
+                setDrivePower(turnWay* Math.abs(speed*0.7),-turnWay* Math.abs(speed*0.7),
+                        turnWay* Math.abs(speed*0.7),-turnWay* Math.abs(speed*0.7));
+            }
+
+        }
     }
 
     public void setTurretPositionAbsolute(double deg){
@@ -393,8 +475,8 @@ public class RobotHardware {
         spindexer.setTargetPosition( (int) (angle*spindexerTicksPerDegree) );
     }
 
-    public void setCounterRotatePos(double pos){
-        counterFlip.setPosition(Range.clip(pos, 0, 1));
+    public void setArmPos(double pos){
+        xArm.setPosition(Range.clip(pos, 0, 1));
     }
 
     private double[] getValuesToTarget(){

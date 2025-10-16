@@ -51,11 +51,11 @@ public class FieldCentric extends LinearOpMode {
 
     public static double indexerTarget = 0;
 
-    public static double counterFlipper = 0;
-
     public static double preSetVelocity = 1100;
     public static double preSetAngleFar = 0.2;
     public static double preSetAngleClose = 0.5;
+
+    public static double armPos = 1;
 
 
 
@@ -105,11 +105,17 @@ public class FieldCentric extends LinearOpMode {
             indexerTarget = (gamepad2.right_stick_x < 0 ? -360.5 : (gamepad2.right_stick_x > 0 ? 360.5 : robot.getSpindexerAzimuth()[1] ));
 
             if (gamepad2.bWasPressed()){
-                counterFlipper = counterFlipper >= 1 ? 0 : 1;
+                if (armPos == 0.75){
+                    armPos = 1;
+                } else if (armPos == 1){
+                    armPos = 0.75;
+                }
             }
-            robot.setCounterRotatePos(counterFlipper);
+
+            robot.setArmPos(armPos);
 
             robot.setSpindexerAbsoluteCircleAngle(indexerTarget);
+
 
             // Telemetry for drivers + debugging
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
