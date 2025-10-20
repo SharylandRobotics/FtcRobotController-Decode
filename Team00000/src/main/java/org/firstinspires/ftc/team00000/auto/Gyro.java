@@ -64,19 +64,19 @@ public class Gyro extends LinearOpMode {
         if (opModeIsActive()) {
 
             // Drive 24" forward, then turn and hold headings as defined
-            robot.driveStraight(AXIAL_SPEED, 24.0, 0.0);
-            robot.turnToHeading(YAW_SPEED, -45.0);
-            robot.holdHeading(YAW_SPEED, -45.0, 0.5);
+            robot.driveStraight(MAX_AUTO_AXIAL, 24.0, 0.0);
+            robot.turnToHeading(MAX_AUTO_YAW, -45.0);
+            robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
 
-            robot.driveStraight(AXIAL_SPEED, 17.0, -45.0);
-            robot.turnToHeading(YAW_SPEED, 45.0);
-            robot.holdHeading(YAW_SPEED, 45.0, 0.5);
+            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, -45.0);
+            robot.turnToHeading(MAX_AUTO_YAW, 45.0);
+            robot.holdHeading(MAX_AUTO_YAW, 45.0, 0.5);
 
-            robot.driveStraight(AXIAL_SPEED, 17.0, 45.0);
-            robot.turnToHeading(YAW_SPEED, 0.0);
-            robot.holdHeading(YAW_SPEED, 0.0, 1.0);
+            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, 45.0);
+            robot.turnToHeading(MAX_AUTO_YAW, 0.0);
+            robot.holdHeading(MAX_AUTO_YAW, 0.0, 1.0);
 
-            robot.driveStraight(AXIAL_SPEED, -48.0, 0.0);
+            robot.driveStraight(MAX_AUTO_AXIAL, -48.0, 0.0);
 
             // Indicate completion and pause for display
             telemetry.addData("Path", "Complete");

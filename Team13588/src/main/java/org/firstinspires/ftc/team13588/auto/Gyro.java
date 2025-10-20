@@ -27,47 +27,61 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team13580.teleop;
+package org.firstinspires.ftc.team13588.auto;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.team13580.RobotHardware;
+import org.firstinspires.ftc.team13588.RobotHardware;
 
-@TeleOp(name="Field Centric", group="TeleOp")
+import static org.firstinspires.ftc.team13588.RobotHardware.*;
 
-public class FieldCentric extends LinearOpMode {
+@Autonomous(name = "Gyro", group = "opMode")
 
+// Autonomous routine using gyro-based driving with RobotHardware helpers
+public class Gyro extends LinearOpMode {
+
+    // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
 
-        double axial;
-        double lateral;
-        double yaw;
-        double intake;
-
+        // Initialize all motors and IMU before start
         robot.init();
 
-        waitForStart();
-
-        while (opModeIsActive()) {
-
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
-
-            intake  = gamepad1.right_trigger;
-
-            robot.teleOpFieldCentric(axial, lateral, yaw);
-            robot.setIntakePower(intake);
-
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
-            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
-
+        while(opModeInInit()) {
+            // Display heading and status continuously during init loop
+            telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Heading", "%4.0f", robot.getHeading());
             telemetry.update();
+        }
 
-            sleep(50);
+        // Wait for PLAY; exit early if stop is pressed
+        waitForStart();
+        if (isStopRequested()) return;
+
+        // Execute full autonomous path sequence once started
+        if (opModeIsActive()) {
+
+            // Drive 24" forward, then turn and hold headings as defined
+            robot.driveStraight(MAX_AUTO_AXIAL, 24.0, 0.0);
+            robot.turnToHeading(MAX_AUTO_YAW, -45.0);
+            robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
+
+            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, -45.0);
+            robot.turnToHeading(MAX_AUTO_YAW, 45.0);
+            robot.holdHeading(MAX_AUTO_YAW, 45.0, 0.5);
+
+            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, 45.0);
+            robot.turnToHeading(MAX_AUTO_YAW, 0.0);
+            robot.holdHeading(MAX_AUTO_YAW, 0.0, 1.0);
+
+            robot.driveStraight(MAX_AUTO_AXIAL, -48.0, 0.0);
+
+            // Indicate completion and pause for display
+            telemetry.addData("Path", "Complete");
+            telemetry.update();
+            sleep(1000);  // Pause to display last telemetry message.
         }
     }
 }

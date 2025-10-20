@@ -27,11 +27,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team00000.teleop;
+package org.firstinspires.ftc.team13588.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.team00000.RobotHardware;
+import org.firstinspires.ftc.team13588.RobotHardware;
 
 // Student Notes: Field‑centric TeleOp. Left stick = drive/strafe, Right stick = turn, LB = slow mode.
 // TODO(students): Adjust slow‑mode scale if you want finer aiming.
@@ -124,4 +124,3 @@ public class FieldCentric extends LinearOpMode {
         }
     }
 }
-
