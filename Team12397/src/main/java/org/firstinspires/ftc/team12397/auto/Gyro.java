@@ -43,6 +43,7 @@ import static org.firstinspires.ftc.team12397.RobotHardware.*;
 // Autonomous routine using gyro-based driving with RobotHardware helpers
 public class Gyro extends LinearOpMode {
 
+
     // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
 
@@ -67,20 +68,24 @@ public class Gyro extends LinearOpMode {
         if (opModeIsActive()) {
 
             Boolean aprilTagFound = false;
-            double x;
-            double y;
-            double z;
+
             Boolean phase1 = true;
             Boolean phase2 = false;
             Boolean phase3 = false;
 
-           /* while(phase1){
+              while(phase1){
 
+                  robot.driveStraight(AXIAL_SPEED, 60, 0);
+                  robot.turnToHeading(AXIAL_SPEED, -90);
+                  robot.driveStraight(AXIAL_SPEED, 24, 90);
+
+                  //robot.searchForTag(24);
+                  //robot.moveToTag();
+                  phase1 = false;
             }
             while(aprilTagFound){
 
             }
-            */
 
 
         }

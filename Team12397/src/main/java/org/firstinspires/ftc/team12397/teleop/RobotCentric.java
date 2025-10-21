@@ -88,28 +88,27 @@ public class RobotCentric extends LinearOpMode {
             lastServoState = currentServoState;
 
             // Pace this loop so hands move at a reasonable speed.
-            sleep(50);
 
-            boolean intakeservoOn = false;
-            boolean intakelastServoState = false;
-            boolean intakecurrentServoState = (gamepad1.y);
-            if(intakecurrentServoState && !intakelastServoState){
-                intakeservoOn = !intakeservoOn;
-            }
-            if(intakeservoOn){
-                robot.setIntakeServo(.5);
-            }
-            else{
-                robot.setIntakeServo(0.0);
-            }
-            intakelastServoState = intakecurrentServoState;
+//            boolean intakeservoOn = false;
+//            boolean intakelastServoState = false;
+//            boolean intakecurrentServoState = (gamepad1.y);
+//            if(intakecurrentServoState && !intakelastServoState){
+//                intakeservoOn = !intakeservoOn;
+//            }
+//            if(intakeservoOn){
+//                robot.setIntakeServo(.5);
+//            }
+//            else{
+//                robot.setIntakeServo(0.0);
+//            }
+//            intakelastServoState = intakecurrentServoState;
 
             // Pace this loop so hands move at a reasonable speed.
-            sleep(50);
+
             // turret motor
             boolean turretOn = false;
             boolean lastTriggerState = false;
-            boolean currentTriggerState = (gamepad1.right_trigger > .5);
+            boolean currentTriggerState = (gamepad1.rightBumperWasReleased());
             if(currentTriggerState && !lastTriggerState){
                 turretOn = !turretOn;
             }
@@ -123,16 +122,16 @@ public class RobotCentric extends LinearOpMode {
             //intake motor
             boolean intakeMotorOn = false;
             boolean intakeMotorlastTriggerState = false;
-            boolean intakeMotorcurrentTriggerState = (gamepad1.rightBumperWasPressed());
+            boolean intakeMotorcurrentTriggerState = (gamepad1.left_trigger > .5);
             if(intakeMotorcurrentTriggerState && !intakeMotorlastTriggerState){
                 intakeMotorOn = !intakeMotorOn;
             }
-            if(intakeMotorOn){
-                robot.intakePower(-1);
-            }
-            else{
-                robot.intakePower(0);
-            }
+//            if(intakeMotorOn){
+//                robot.intakePower(-1);
+//            }
+//            else{
+//                robot.intakePower(0);
+//            }
             intakeMotorlastTriggerState = intakeMotorcurrentTriggerState;
            /* if (gamepad1.right_trigger > 0){
                 robot.turretPower(1);
