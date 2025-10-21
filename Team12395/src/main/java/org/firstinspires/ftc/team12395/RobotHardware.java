@@ -68,6 +68,8 @@ public class RobotHardware {
     // Servos
     private Servo xArm, hoodAngle, gate;
 
+    // physics
+
     private final double g = 9.81;
     private final double xOffset = 5.5; //cm
     private final double yOffset = 16.5*2.54; //cm
@@ -148,7 +150,7 @@ public class RobotHardware {
 
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -164,13 +166,19 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        spindexer.setPositionPIDFCoefficients(20);
+        spindexer.setPower(0.25);
+
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter.setVelocityPIDFCoefficients(100, 3, 3, 0);
 
         // SERVO POSITIONS
 
         hoodAngle.setPosition(1);
+        xArm.setPosition(1);
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
+        myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
     }
 
@@ -460,14 +468,16 @@ public class RobotHardware {
 
     public void setSpindexerRelativeAngle(double angle){
         spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
+
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
-    public void setSpindexerAbsoluteCircleAngle(double angle){
+    public void setSpindexerRelativeRevolutionAbsoluteAngle(double angle){
         spindexer.setTargetPosition( (int) (  (getSpindexerAzimuth()[0]*spindexerTicksPerRevolution)
                                             + (angle*spindexerTicksPerDegree) ) );
     }
 
-    public void setSpindexerAbsoluteAngle(double revolutions, double angle){
+    public void setSpindexerAbsoluteRevolutionAbsoluteAngle(double revolutions, double angle){
         spindexer.setTargetPosition( (int) ( (revolutions*spindexerTicksPerRevolution) + (angle*spindexerTicksPerDegree) ) );
     }
 

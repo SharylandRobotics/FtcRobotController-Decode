@@ -35,77 +35,63 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-@TeleOp(name="Velocity Test", group="TeleOp")
+@TeleOp(name="Spindexer Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class VelocityTest extends LinearOpMode {
+public class SpindexerTEst extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double targetVel = 700;
-    public static double targetVel2 = 400;
-    public static double currentVel;
-    public static double cycles = 20;
+    public static int targetPos = 360;
+    public static double currentPos;
     public static double P;
-    public static double I;
-    public static double D;
-    public static double F;
-
-    public static double TelemVel;
+    //public static double I;
+    //public static double D;
+    //public static double F;
 
 
     @Override
     public void runOpMode() {
-
-        double clock = 0;
-        boolean slow = true;
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
-        P = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
-        I = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
-        D = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
-        F = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
+        P = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).p;
+        //I = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
+        //D = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
+        //F = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
 
         waitForStart();
 
-        robot.setShooterVelocity(targetVel);
+        robot.spindexer.setTargetPosition(targetPos);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            if (clock > cycles){
-                slow = !slow;
-                clock = 0;
+
+            if (!robot.spindexer.isBusy()) {
+                robot.spindexer.setTargetPosition(targetPos);
+                robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                if (targetPos == 360){
+                    targetPos = 0;
+                } else if (targetPos == 0){
+                    targetPos = 360;
+                }
             }
+            currentPos = robot.spindexer.getCurrentPosition();
 
-            if (slow) {
-                robot.setShooterVelocity(targetVel);
-                currentVel = robot.shooter.getVelocity();
-                TelemVel = targetVel;
-            } else {
-                robot.setShooterVelocity(targetVel2);
-                currentVel = robot.shooter.getVelocity();
-                TelemVel = targetVel2;
-            }
+            robot.spindexer.setPositionPIDFCoefficients(P);
 
-            robot.shooter.setVelocityPIDFCoefficients(P, I, D, F);
-
-            telemetry.addData("target Velocity: ", TelemVel);
-            telemetry.addData("current Velocity: ", currentVel);
-            telemetry.addData("PIDF: ", robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+            telemetry.addData("target Position: ", targetPos);
+            telemetry.addData("current Position: ", currentPos);
+            telemetry.addData("PIDF: ", robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
-            if (clock <= cycles) {
-                clock++;
-            }
         }
     }
 }

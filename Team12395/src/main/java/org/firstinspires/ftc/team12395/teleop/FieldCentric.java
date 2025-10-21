@@ -37,7 +37,6 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 @TeleOp(name="Field Centric", group="TeleOp")
 @Config
-// TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class FieldCentric extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
@@ -47,13 +46,14 @@ public class FieldCentric extends LinearOpMode {
     public static double angle = 0.1;
 
     public static double slewTarget = 0;
-    public static double maxTurn = 90;
+    public static double maxTurnR = 90;
+    public static double maxTurnL = 180;
 
     public static double indexerTarget = 0;
 
     public static double preSetVelocity = 1100;
-    public static double preSetAngleFar = 0.2;
-    public static double preSetAngleClose = 0.5;
+    public static double preSetAngleFar = 0.69;
+    public static double preSetAngleClose = 0.2;
 
     public static double armPos = 1;
 
@@ -70,6 +70,9 @@ public class FieldCentric extends LinearOpMode {
 
         double slewRate = 0;
 
+        boolean checkSpinBusy = false;
+        double armClock = 30;
+
         robot.init();
 
         waitForStart();
@@ -82,10 +85,12 @@ public class FieldCentric extends LinearOpMode {
             yaw     =  gamepad1.right_stick_x;
 
 
+
+
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            slewRate = Math.abs(gamepad1.right_trigger - gamepad1.left_trigger)*0.125;
-            slewTarget = (gamepad1.left_trigger > 0 ? -maxTurn : (gamepad1.right_trigger > 0 ? maxTurn : robot.getCurrentTurretDegreePos() ));
+            slewRate = Math.abs(gamepad1.right_trigger - gamepad1.left_trigger)*0.085;
+            slewTarget = (gamepad1.left_trigger > 0 ? -maxTurnL : (gamepad1.right_trigger > 0 ? maxTurnR : robot.getCurrentTurretDegreePos() ));
 
             robot.setTurretPositionAbsolute(slewTarget, slewRate);
 
@@ -97,28 +102,35 @@ public class FieldCentric extends LinearOpMode {
             }
 
             angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
-            angle = Range.clip(angle, 0.1, 1);
+            angle = Range.clip(angle, 0.19, 1);
 
             robot.setShooterVelocity(velocity);
             robot.setHoodAngle(angle);
 
-            indexerTarget = (gamepad2.right_stick_x < 0 ? -360.5 : (gamepad2.right_stick_x > 0 ? 360.5 : robot.getSpindexerAzimuth()[1] ));
-
-            if (gamepad2.bWasPressed()){
-                if (armPos == 0.75){
-                    armPos = 1;
-                } else if (armPos == 1){
-                    armPos = 0.75;
+            if (!robot.spindexer.isBusy() && armClock > 30) {
+                if (gamepad2.leftBumperWasPressed()) {
+                    robot.setSpindexerRelativeAngle(120);
+                } else if (gamepad2.rightBumperWasPressed()) {
+                    robot.setSpindexerRelativeAngle(-120);
                 }
+            }
+
+            if (gamepad2.b){
+                armPos =  0.7;
+                armClock = 0;
+            }
+            if (gamepad2.bWasReleased()){
+                armPos = 1;
+                armClock = 0;
             }
 
             robot.setArmPos(armPos);
 
-            robot.setSpindexerAbsoluteCircleAngle(indexerTarget);
-
 
             // Telemetry for drivers + debugging
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
+            telemetry.addData("Controls G2", "Left & Right Bumpers : Spindexer | B : Arm");
+            telemetry.addData("Controls G1", "Left & Right Triggers : Turret " +
+                    "\n | Left & Right Dpad : Hood Angle | Up & Down Dpad : Velocity");
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
@@ -126,6 +138,9 @@ public class FieldCentric extends LinearOpMode {
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
+            if (armClock <= 30){
+                armClock++;
+            }
         }
     }
 }
