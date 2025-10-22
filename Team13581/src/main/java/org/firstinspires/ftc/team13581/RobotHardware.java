@@ -33,6 +33,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -48,6 +49,8 @@ public class RobotHardware {
     private DcMotor backRightDrive  = null;
     private DcMotor frontIntakeMotor = null;
     private DcMotor outtakeMotor = null;
+    private DcMotor hAim = null;
+    //private Servo vAim = null;
 
     private IMU imu = null;
 
@@ -89,6 +92,8 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
         frontIntakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "front_intake_motor");
         outtakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "outtake_motor");
+        hAim = myOpMode.hardwareMap.get(DcMotor.class, "h_aim");
+
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
@@ -105,6 +110,8 @@ public class RobotHardware {
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
         frontIntakeMotor.setDirection(DcMotor.Direction.REVERSE);
         outtakeMotor.setDirection(DcMotor.Direction.FORWARD);
+        hAim.setDirection(DcMotor.Direction.FORWARD);
+
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -117,6 +124,8 @@ public class RobotHardware {
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontIntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         outtakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        hAim.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -150,6 +159,7 @@ public class RobotHardware {
     }
     public void setFrontPower(double fpower) {frontIntakeMotor.setPower(fpower);}
     public void setBackPower(double bpower) {outtakeMotor.setPower(bpower);}
+    public void setAimPower(double hpower) {hAim.setPower(hpower);}
 
 
     public void teleOpFieldCentric(double axial, double lateral, double yaw) {
