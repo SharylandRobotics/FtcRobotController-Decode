@@ -69,6 +69,27 @@ public class FieldCentric extends LinearOpMode {
         if (isStopRequested()) return;
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
+            //shooting mechanism
+            double x12 = gamepad1.right_trigger;
+            if(x12 > .5){
+                robot.shootMotors(5);
+
+            }
+            //turret / hood servo
+            boolean servoOn = false;
+            boolean lastServoState = false;
+            boolean currentServoState = (gamepad1.bWasPressed());
+            if(currentServoState && !lastServoState){
+                servoOn = !servoOn;
+            }
+            if(servoOn){
+                robot.setHoodPositions(.5);
+            }
+            else{
+                robot.setHoodPositions(0.0);
+            }
+            lastServoState = currentServoState;
+
 
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
@@ -111,15 +132,30 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
 
-//            String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
-//            telemetry.addData("Obelisk", motif);
-//
-//            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
-//            telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
-//            telemetry.addData("Aim",  "horiz=%.1f in  aboveHoriz=%s",
-//                    horiz,
-//                    Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal));
-//            telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
+            String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
+            telemetry.addData("Obelisk", motif);
+
+            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
+            telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
+            telemetry.addData("Aim",  "horiz=%.1f in  aboveHoriz=%s",
+                    horiz,
+                    Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal));
+            telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
+            // non tag code
+            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
+            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            // Optional: expose heading during tuning
+            // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
+            //servo stuff
+            telemetry.addData("Drive", "Left Stick");
+            telemetry.addData("Turn", "Right Stick");
+            telemetry.addData("Hood Servo Up/Down", "Button B toggle");
+            //telemetry.addData("intake Servo Up/Down", "Button Y toggle");
+
+
+            telemetry.addData("-", "-------");
+            telemetry.addData("Turret motor shooter", "Right Trigger toggle");
+
             telemetry.update();
 
             sleep(50);

@@ -96,7 +96,7 @@ public class RobotHardware {
     // intake servo
     //private Servo intakeServo;
     // intake motor
-    //private DcMotor intakeMotor;
+    private DcMotor intakeMotor;
     //turret motor
     private DcMotor turretMotor;
     // camera
@@ -166,12 +166,12 @@ public class RobotHardware {
         //intakeServo = myOpMode.hardwareMap.get(Servo.class, "intake_servo");
         //intakeServo.setPosition(MID_SERVO);
         //intake motor
-        /*intakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "intake_motor");
+        intakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "intake_motor");
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-         */
+
         //turret motor reverse?
         turretMotor = myOpMode.hardwareMap.get(DcMotor.class, "turret_motor");
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -651,6 +651,17 @@ public class RobotHardware {
 
         driveRobotCentric(axial, lateral, yaw);
         return true;
+    }
+    public void shootMotors(double durationSeconds) {
+        // Turn both turret and intake on full speed
+        turretMotor.setPower(1);
+        intakeMotor.setPower(-1);
+
+        myOpMode.sleep((long)(durationSeconds * 1000)); // Wait for specified time
+
+        // Turn motors off
+        turretMotor.setPower(0);
+        intakeMotor.setPower(0);
     }
 
     //old code
