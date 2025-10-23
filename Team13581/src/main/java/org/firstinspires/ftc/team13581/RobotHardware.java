@@ -50,7 +50,7 @@ public class RobotHardware {
     private DcMotor frontIntakeMotor = null;
     private DcMotor outtakeMotor = null;
     private DcMotor hAim = null;
-    //private Servo vAim = null;
+    private Servo vAim = null;
 
     private IMU imu = null;
 
@@ -67,6 +67,9 @@ public class RobotHardware {
     private int     backLeftTarget   = 0;
     private int     frontRightTarget = 0;
     private int     backRightTarget  = 0;
+
+    public static final double V_OPEN       =  0.5 ;
+    public static final double TV_SPEED      =  0.02 ;
 
     static final double COUNTS_PER_MOTOR_REV  = 537.7;
     static final double DRIVE_GEAR_REDUCTION  = 1.0;
@@ -132,6 +135,8 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        vAim = myOpMode.hardwareMap.get(Servo.class, "v_aim");
+
         while(myOpMode.opModeInInit()) {
             myOpMode.telemetry.addData("Status", "Hardware Initialized");
             myOpMode.telemetry.addData("Heading", "%4.0f", getHeading());
@@ -160,6 +165,9 @@ public class RobotHardware {
     public void setFrontPower(double fpower) {frontIntakeMotor.setPower(fpower);}
     public void setBackPower(double bpower) {outtakeMotor.setPower(bpower);}
     public void setAimPower(double hpower) {hAim.setPower(hpower);}
+
+    public void setAimPos(double pos) {vAim.setPosition(pos);}
+    public double getAimPos() { return vAim.getPosition();}
 
 
     public void teleOpFieldCentric(double axial, double lateral, double yaw) {

@@ -87,6 +87,20 @@ public class RobotCentric extends LinearOpMode {
             if (gamepad2.dpad_right) {
                 robot.setAimPower(0.2);
             }
+
+            if (gamepad2.dpad_up) {
+                double tempPos = robot.getAimPos();
+                if (tempPos > 0.5) {
+                    robot.setAimPos(tempPos - 0.05);
+                }
+            }
+
+            if (gamepad2.dpad_down) {
+                double tempPos = robot.getAimPos();
+                if (tempPos < 0.8) {
+                    robot.setAimPos(tempPos + 0.05);
+                }
+            }
         }
     }
 }
