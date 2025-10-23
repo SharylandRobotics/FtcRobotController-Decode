@@ -162,9 +162,9 @@ public class RobotHardware {
 
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
-    public void setFrontPower(double fpower) {frontIntakeMotor.setPower(fpower);}
-    public void setBackPower(double bpower) {outtakeMotor.setPower(bpower);}
-    public void setAimPower(double hpower) {hAim.setPower(hpower);}
+    public void setFrontPower(double fp) {frontIntakeMotor.setPower(fp);}
+    public void setBackPower(double bp) {outtakeMotor.setPower(bp);}
+    public void setAimPower(double hp) {hAim.setPower(hp);}
 
     public void setAimPos(double pos) {vAim.setPosition(pos);}
     public double getAimPos() { return vAim.getPosition();}
