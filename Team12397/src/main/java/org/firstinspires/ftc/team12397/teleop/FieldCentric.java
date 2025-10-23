@@ -46,7 +46,8 @@ public class FieldCentric extends LinearOpMode {
         double axial    = 0; // forward/back (+ forward)
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
-
+        boolean servoOn = false;
+        boolean lastServoState = false;
         // --- INIT PHASE ---
         // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
         // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
@@ -76,8 +77,7 @@ public class FieldCentric extends LinearOpMode {
 
             }
             //turret / hood servo
-            boolean servoOn = false;
-            boolean lastServoState = false;
+
             boolean currentServoState = (gamepad1.bWasPressed());
             if(currentServoState && !lastServoState){
                 servoOn = !servoOn;

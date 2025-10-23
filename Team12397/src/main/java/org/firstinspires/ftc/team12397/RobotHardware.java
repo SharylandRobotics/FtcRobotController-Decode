@@ -538,7 +538,7 @@ public class RobotHardware {
         aprilTag = tagBuilder.build();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
-                .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam"))
                 .setCameraResolution(new Size(1280, 800))
                 .enableLiveView(true)
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
