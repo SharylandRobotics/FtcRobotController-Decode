@@ -68,8 +68,7 @@ public class RobotHardware {
     private int     frontRightTarget = 0;
     private int     backRightTarget  = 0;
 
-    public static final double V_OPEN       =  0.5 ;
-    public static final double TV_SPEED      =  0.02 ;
+    public static final double V_Center = 0.5 ;
 
     static final double COUNTS_PER_MOTOR_REV  = 537.7;
     static final double DRIVE_GEAR_REDUCTION  = 1.0;
