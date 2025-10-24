@@ -52,8 +52,13 @@ public class RobotCentric extends LinearOpMode {
         robot.init();
 
         while(opModeInInit()) {
-            // Display IMU heading and init status on Driver Station until start
+            // Student Note: Pre‑start check — rotate robot by hand; heading should change.
+            // "Vision: Ready (AprilTag)" means camera + processor initialized.
             telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Vision", "Ready (AprilTag)");
+            telemetry.addData("Mode", "INIT");
+            telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
+                    robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
             telemetry.update();
         }
@@ -72,13 +77,46 @@ public class RobotCentric extends LinearOpMode {
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            // Apply joystick inputs directly to robot-centric drive control
-            robot.driveRobotCentric(axial, lateral, yaw);
+            // --- Vision helpers for concise telemetry ---
+            Integer goalId = robot.getGoalTagId();
+            double range = robot.getGoalRangeIn();
+            double bearing = robot.getGoalBearingDeg();
+            double elevation = robot.getGoalElevationDeg();
 
-            // Display control instructions and current input values to Driver Station
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
+            // Approx horizontal distance and aim-above-horizontal (camera pitched up 15°)
+            double horiz = (Double.isNaN(range) || Double.isNaN(bearing))
+                    ? Double.NaN
+                    : range * Math.cos(Math.toRadians(bearing));
+            double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (15.0 + elevation));
+
+            // Driver Assist: hold RB to auto-drive toward the visible goal tag (range->drive, yaw->strafe, bearing->turn).
+            boolean autoAssist = gamepad1.right_bumper;
+            boolean didAuto = false;
+            if (autoAssist) {
+                robot.updateAprilTagDetections();
+                didAuto = robot.autoDriveToGoalStep();
+            }
+
+            // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
+            if (!didAuto) {
+                // Apply joystick inputs directly to robot-centric drive control
+                robot.driveRobotCentric(axial, lateral, yaw);
+            }
+
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
+            telemetry.addData("Heading", "%4.0f°", robot.getHeading());
+            telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+
+            String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
+            telemetry.addData("Obelisk", motif);
+
+            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
+            telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
+            telemetry.addData("Aim",  "horiz=%.1f in  aboveHoriz=%s",
+                    horiz,
+                    Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal));
+            telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
             // Small delay to prevent telemetry flooding
