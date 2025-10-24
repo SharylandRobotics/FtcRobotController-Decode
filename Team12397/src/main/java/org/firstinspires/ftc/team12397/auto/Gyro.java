@@ -78,8 +78,10 @@ public class Gyro extends LinearOpMode {
                   robot.driveStraight(AXIAL_SPEED, 60, 0);
                   robot.turnToHeading(AXIAL_SPEED, -90);
                   robot.driveStraight(AXIAL_SPEED, 24, 90);
-                  //to due: calculate offset for auto drive & config shoot motors
+                  //to due: calculate offset for auto  & config shoot motors & servo
                  // robot.autoDriveToGoalStep();
+                  //robot.startIntakeMotor();
+                  //robot.shootMotors();
                   phase1 = false;
             }
             while(aprilTagFound){

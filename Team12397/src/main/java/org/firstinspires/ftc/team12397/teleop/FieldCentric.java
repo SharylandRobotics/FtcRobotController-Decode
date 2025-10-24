@@ -76,6 +76,11 @@ public class FieldCentric extends LinearOpMode {
                 robot.shootMotors(5);
 
             }
+            //intake mechanism
+            double x13 = gamepad1.left_trigger;
+            if(x13>.5){
+                robot.startIntakeMotor(5);
+            }
             //turret / hood servo
 
             boolean currentServoState = (gamepad1.bWasPressed());
@@ -149,12 +154,19 @@ public class FieldCentric extends LinearOpMode {
             //servo stuff
             telemetry.addData("Drive", "Left Stick");
             telemetry.addData("Turn", "Right Stick");
-            telemetry.addData("Hood Servo Up/Down", "Button B toggle");
             //telemetry.addData("intake Servo Up/Down", "Button Y toggle");
 
 
             telemetry.addData("-", "-------");
+            telemetry.addData("Hood Servo Up/Down", "Button B toggle");
             telemetry.addData("Turret motor shooter", "Right Trigger toggle");
+            telemetry.addData("intake shooter", "Left Trigger toggle");
+            telemetry.addData("Drive to tag", "Hold Right Bumper");
+            telemetry.addData(" Slow drive to tag", "Hold Left Bumper");
+
+
+
+
 
             telemetry.update();
 

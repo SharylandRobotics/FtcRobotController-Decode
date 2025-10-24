@@ -255,7 +255,7 @@ public class RobotHardware {
             backRightPower  /= max;
         }
         // change max speed in hardware  for field and drive centric
-        final double MAX_SPEED = 0.5; // 50% of full speed
+        final double MAX_SPEED = 1; // 50% of full speed
         frontLeftPower  *= MAX_SPEED;
         frontRightPower *= MAX_SPEED;
         backLeftPower   *= MAX_SPEED;
@@ -538,8 +538,8 @@ public class RobotHardware {
         aprilTag = tagBuilder.build();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
-                .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam"))
-                .setCameraResolution(new Size(1280, 800))
+                .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCameraResolution(new Size(1280, 720))
                 .enableLiveView(true)
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .addProcessor(aprilTag)
@@ -661,6 +661,18 @@ public class RobotHardware {
 
         // Turn motors off
         turretMotor.setPower(0);
+        intakeMotor.setPower(0);
+    }
+
+    public void startIntakeMotor(double durationSeconds) {
+        // Turn both turret and intake on full speed
+
+        intakeMotor.setPower(-1);
+
+        myOpMode.sleep((long)(durationSeconds * 1000)); // Wait for specified time
+
+        // Turn motors off
+
         intakeMotor.setPower(0);
     }
 
