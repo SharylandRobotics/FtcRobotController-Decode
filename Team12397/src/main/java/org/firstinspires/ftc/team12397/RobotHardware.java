@@ -294,7 +294,7 @@ public class RobotHardware {
             backRightPower  /= max;
         }
         // change max speed in hardware  for field and drive centric
-        final double MAX_SPEED = 0.5; // 50% of full speed
+        final double MAX_SPEED = 1; // 50% of full speed
         frontLeftPower  *= MAX_SPEED;
         frontRightPower *= MAX_SPEED;
         backLeftPower   *= MAX_SPEED;
