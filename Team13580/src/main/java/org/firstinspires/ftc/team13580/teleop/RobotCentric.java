@@ -33,36 +33,55 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name="Robot Centric", group="TeleOp")
+@TeleOp(name = "Robot Centric", group = "opMode")
 
 public class RobotCentric extends LinearOpMode {
 
+    // Create hardware instance and pass current OpMode reference
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
 
-        double axial    = 0;
-        double lateral  = 0;
-        double yaw      = 0;
+        // Variables for joystick input: forward/back (axial), strafe (lateral), rotation (yaw)
+        double axial;
+        double lateral;
+        double yaw;
 
+        // Initialize all motors, IMU, and hardware configuration
         robot.init();
 
-        waitForStart();
+        while(opModeInInit()) {
+            // Display IMU heading and init status on Driver Station until start
+            telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            telemetry.update();
+        }
 
+        waitForStart();
+        if (isStopRequested()) return;
+
+        // Main control loop: continuously while TeleOp is active
         while (opModeIsActive()) {
 
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            boolean slow = gamepad1.left_bumper;
+            double scale = slow ? 0.4 : 1.0;
 
-            robot.teleOpRobotCentric(axial, lateral, yaw);
+            // Read real-time joystick values from gamepad
+            axial = -gamepad1.left_stick_y * scale;
+            lateral = gamepad1.left_stick_x * scale;
+            yaw = gamepad1.right_stick_x * scale;
 
+            // Apply joystick inputs directly to robot-centric drive control
+            robot.driveRobotCentric(axial, lateral, yaw);
+
+            // Display control instructions and current input values to Driver Station
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
+            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
-
             telemetry.update();
 
+            // Small delay to prevent telemetry flooding
             sleep(50);
         }
     }

@@ -27,13 +27,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team00000.auto;
+package org.firstinspires.ftc.team13580.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.team00000.RobotHardware;
+import org.firstinspires.ftc.team13580.RobotHardware;
 
-import static org.firstinspires.ftc.team00000.RobotHardware.*;
+import static org.firstinspires.ftc.team13580.RobotHardware.*;
 
 @Autonomous(name = "Gyro", group = "opMode")
 
@@ -62,6 +62,7 @@ public class Gyro extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
+
             // Drive 24" forward, then turn and hold headings as defined
             robot.driveStraight(MAX_AUTO_AXIAL, 24.0, 0.0);
             robot.turnToHeading(MAX_AUTO_YAW, -45.0);

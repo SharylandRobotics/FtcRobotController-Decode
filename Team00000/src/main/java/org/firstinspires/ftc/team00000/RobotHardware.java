@@ -34,6 +34,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -103,13 +104,13 @@ public class RobotHardware {
     // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
     private double tagYawDeg = Double.NaN;
 
-    private static final double DESIRED_DISTANCE = 24.0; // camera-to-tag inches
+    private static final double DESIRED_DISTANCE = 50.0; // camera-to-tag inches
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
     private static final double LATERAL_GAIN = 0.015; // tagYawError -> lateral (strafe) speed
     private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
-    public static final double MAX_AUTO_AXIAL = 0.50;
-    public static final double MAX_AUTO_LATERAL = 0.50;
-    public static final double MAX_AUTO_YAW = 0.30;
+    public static final double MAX_AUTO_AXIAL = 0.90;
+    public static final double MAX_AUTO_LATERAL = 0.90;
+    public static final double MAX_AUTO_YAW = 0.70;
     static final double HEADING_THRESHOLD = 1.0;
 
     // Student Note: Calibrated intrinsics for 1280×800. Must match camera resolution.
@@ -146,8 +147,8 @@ public class RobotHardware {
         // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
