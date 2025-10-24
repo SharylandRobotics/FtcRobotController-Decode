@@ -27,63 +27,61 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team13580.teleop;
+package org.firstinspires.ftc.team13580.auto;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name = "Robot Centric", group = "opMode")
+import static org.firstinspires.ftc.team13580.RobotHardware.*;
 
-public class RobotCentric extends LinearOpMode {
+@Autonomous(name = "Gyro", group = "opMode")
 
-    // Create hardware instance and pass current OpMode reference
+// Autonomous routine using gyro-based driving with RobotHardware helpers
+public class Gyro extends LinearOpMode {
+
+    // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
 
-        // Variables for joystick input: forward/back (axial), strafe (lateral), rotation (yaw)
-        double axial;
-        double lateral;
-        double yaw;
-
-        // Initialize all motors, IMU, and hardware configuration
+        // Initialize all motors and IMU before start
         robot.init();
 
         while(opModeInInit()) {
-            // Display IMU heading and init status on Driver Station until start
+            // Display heading and status continuously during init loop
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
             telemetry.update();
         }
 
+        // Wait for PLAY; exit early if stop is pressed
         waitForStart();
         if (isStopRequested()) return;
 
-        // Main control loop: continuously while TeleOp is active
-        while (opModeIsActive()) {
+        // Execute full autonomous path sequence once started
+        if (opModeIsActive()) {
 
-            boolean slow = gamepad1.left_bumper;
-            double scale = slow ? 0.4 : 1.0;
+            // Drive 24" forward, then turn and hold headings as defined
+            robot.driveStraight(MAX_AUTO_AXIAL, 24.0, 0.0);
+            robot.turnToHeading(MAX_AUTO_YAW, -45.0);
+            robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
 
-            // Read real-time joystick values from gamepad
-            axial = -gamepad1.left_stick_y * scale;
-            lateral = gamepad1.left_stick_x * scale;
-            yaw = gamepad1.right_stick_x * scale;
+            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, -45.0);
+            robot.turnToHeading(MAX_AUTO_YAW, 45.0);
+            robot.holdHeading(MAX_AUTO_YAW, 45.0, 0.5);
 
-            // Apply joystick inputs directly to robot-centric drive control
-            robot.driveRobotCentric(axial, lateral, yaw);
+            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, 45.0);
+            robot.turnToHeading(MAX_AUTO_YAW, 0.0);
+            robot.holdHeading(MAX_AUTO_YAW, 0.0, 1.0);
 
-            // Display control instructions and current input values to Driver Station
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
-            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            robot.driveStraight(MAX_AUTO_AXIAL, -48.0, 0.0);
+
+            // Indicate completion and pause for display
+            telemetry.addData("Path", "Complete");
             telemetry.update();
-
-            // Small delay to prevent telemetry flooding
-            sleep(50);
+            sleep(1000);  // Pause to display last telemetry message.
         }
     }
 }
-
