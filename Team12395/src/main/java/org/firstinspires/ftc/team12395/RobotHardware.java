@@ -29,13 +29,20 @@
 
 package org.firstinspires.ftc.team12395;
 
+import android.graphics.Color;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
+import java.util.List;
 
 public class RobotHardware {
 
@@ -43,6 +50,8 @@ public class RobotHardware {
     private LinearOpMode myOpMode = null;
 
     public Limelight3A limelight;
+
+    public ColorSensor colorSensor;
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
@@ -52,7 +61,10 @@ public class RobotHardware {
 
 
 
-    public DcMotorEx turret, shooter, spindexer;
+    public DcMotorEx turret, shooter, spindexer, intake;
+
+    public static int maxTurnR = 90;
+    public static int maxTurnL = 180; // negative
 
     private final double spoolToTurretRatio = 4; // 4 rotations to 1
     private final double turretTicksPerRevolution = spoolToTurretRatio*((((1+(46./17))) * (1+(46./11))) * 28);
@@ -66,7 +78,7 @@ public class RobotHardware {
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
     // Servos
-    private Servo xArm, hoodAngle, gate;
+    private Servo xArm, hoodAngle, hoodAngle2;
 
     // physics
 
@@ -79,6 +91,41 @@ public class RobotHardware {
     // IMU is used for field-centric heading
     private IMU imu;
 
+    // lemoine stuff
+
+    private double headingError;
+
+    private double targetHeading;
+
+    private double axialSpeed;
+    private double lateralSpeed;
+    private double yawSpeed;
+    private double frontLeftSpeed;
+    private double backLeftSpeed;
+    private double frontRightSpeed;
+    private double backRightSpeed;
+    private int frontLeftTarget;
+    private int backLeftTarget;
+    private int frontRightTarget;
+    private int backRightTarget;
+
+    // Drive geometry and encoder model (update if wheels/gearing change)
+    static final double COUNTS_PER_MOTOR_REV = 537.7;
+    static final double DRIVE_GEAR_REDUCTION = 1.0;
+    static final double WHEEL_DIAMETER_INCHES = 4.094;
+    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * Math.PI);
+
+    // Default speeds and proportional gains; HEADING_THRESHOLD in degrees
+    public static final double AXIAL_SPEED = 0.4;
+    public static final double LATERAL_SPEED = 0.4;
+    public static final double YAW_SPEED = 0.2;
+    static final double HEADING_THRESHOLD = 0.25;
+
+    static final double P_AXIAL_GAIN = 0.03;
+    static final double P_LATERAL_GAIN = 0.03;
+    static final double P_YAW_GAIN = 0.02;
+
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
     }
@@ -89,7 +136,8 @@ public class RobotHardware {
      */
     public void init() {
         // --- HARDWARE MAP NAMES ---
-        //limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
+        limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
+        limelight.setPollRateHz(100);
 
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
@@ -99,11 +147,14 @@ public class RobotHardware {
         turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
+        intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
+        colorSensor = myOpMode.hardwareMap.get(ColorSensor.class, "color_sensor");
+        colorSensor.enableLed(true);
 
-        xArm = myOpMode.hardwareMap.get(Servo.class, "counter_flip");
+        xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
-        gate = myOpMode.hardwareMap.get(Servo.class, "gate");
+        hoodAngle2 = myOpMode.hardwareMap.get(Servo.class, "hood_angle2");
 
         // --- IMU ORIENTATION ---
         // TODO(STUDENTS): Update if your Control/Expansion Hub is mounted differently.
@@ -130,6 +181,7 @@ public class RobotHardware {
         turret.setDirection(DcMotorEx.Direction.FORWARD);
         shooter.setDirection(DcMotorEx.Direction.REVERSE);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
+        intake.setDirection(DcMotorEx.Direction.FORWARD);
 
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.
@@ -141,6 +193,8 @@ public class RobotHardware {
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
 
         // NOTE: BRAKE helps with precise stopping; FLOAT cna feel smoother when coasting.
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -151,6 +205,7 @@ public class RobotHardware {
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -166,20 +221,25 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        spindexer.setPositionPIDFCoefficients(20);
-        spindexer.setPower(0.25);
+        spindexer.setVelocityPIDFCoefficients(8,4,1,3);
+        spindexer.setPower(0.3);
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter.setVelocityPIDFCoefficients(100, 3, 3, 0);
 
+        intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         // SERVO POSITIONS
 
         hoodAngle.setPosition(1);
+
         xArm.setPosition(1);
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
+
+        colorSensor.enableLed(false);
     }
 
     /**
@@ -372,7 +432,12 @@ public class RobotHardware {
         }
     }
 
+    public void setIntakeSpeed(int vel){
+        intake.setVelocity(vel);
+    }
+
     public void setTurretPositionAbsolute(double deg){
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
         turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
         turret.setVelocity(turretMaxTPS);
@@ -381,9 +446,30 @@ public class RobotHardware {
     }
 
     public void setTurretPositionAbsolute(double deg, double tps){
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
         turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
         turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
+
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void setTurretPositionRelative(double deg, double tps){
+        deg += getCurrentTurretDegreePos();
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
+        turret.setTargetPosition((int) deg);
+
+        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
+
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void setTurretPositionRelative(double deg){
+        deg += getCurrentTurretDegreePos();
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
+        turret.setTargetPosition((int) deg);
+
+        turret.setVelocity(turretMaxTPS);
 
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
@@ -403,6 +489,8 @@ public class RobotHardware {
 
     public void setHoodAngle(double angle){
         hoodAngle.setPosition(angle);
+        hoodAngle2.setPosition(1-angle);
+
     }
 
 
@@ -500,5 +588,170 @@ public class RobotHardware {
         double groundDistance = yDistance/Math.cos(tx);
 
         return new double[]{ xDistance, yDistance, groundDistance};
+    }
+
+    public void driveStraight(double maxAxialSpeed, double distance, double heading) {
+
+        if (myOpMode.opModeIsActive()) {
+
+            // Convert inches to encoder counts for straight motion
+            int moveCounts = (int)(distance * COUNTS_PER_INCH);
+            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
+            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
+            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
+            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
+
+            // Same target on all wheels → straight move
+            frontLeftDrive.setTargetPosition(frontLeftTarget);
+            backLeftDrive.setTargetPosition(backLeftTarget);
+            frontRightDrive.setTargetPosition(frontRightTarget);
+            backRightDrive.setTargetPosition(backRightTarget);
+
+            // Use built-in position control to reach targets
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // RUN_TO_POSITION requires positive power magnitude
+            axialSpeed = Math.abs(maxAxialSpeed);
+            driveRobotCentric(axialSpeed, 0, 0);
+
+            while (myOpMode.opModeIsActive() &&
+                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
+                            frontRightDrive.isBusy() && backRightDrive.isBusy())) {
+
+                // Proportional yaw correction to stay on heading while driving
+                yawSpeed = getSteeringCorrection(heading, P_AXIAL_GAIN);
+
+                // Invert correction when backing up
+                if (distance < 0)
+                    yawSpeed *= -1.0;
+
+                driveRobotCentric(axialSpeed, 0, yawSpeed);
+
+                myOpMode.telemetry.addData("Motion", "Drive Straight");
+                myOpMode.telemetry.addData("Target Pos FL:BL:FR:BR", "%7d:%7d:%7d:%7d",
+                        frontLeftTarget,  backLeftTarget, frontRightTarget, backRightTarget);
+                myOpMode.telemetry.addData("Actual Pos FL:BL:FR:BR","%7d:%7d:%7d:%7d",
+                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
+                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
+                myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
+                        targetHeading, getHeading());
+                myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
+                        headingError, yawSpeed);
+                myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
+                        frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
+                myOpMode.telemetry.update();
+            }
+
+            driveRobotCentric(0, 0, 0);
+
+            // Restore TeleOp run mode after completing the move
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
+
+    // Turn in place to target heading using proportional control
+    public void turnToHeading(double maxYawSpeed, double heading) {
+
+        getSteeringCorrection(heading, P_YAW_GAIN);
+
+        while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
+
+            // Limit turn power to requested maximum
+            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
+
+            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
+
+            driveRobotCentric(0, 0, yawSpeed);
+
+            myOpMode.telemetry.addData("Motion", "Turning");
+            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
+                    targetHeading, getHeading());
+            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
+                    headingError, yawSpeed);
+            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
+                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
+            myOpMode.telemetry.update();
+        }
+
+        // Stop turning and recenter outputs
+        driveRobotCentric(0, 0, 0);
+    }
+
+    // Maintain heading for a fixed time (sec) to let the robot settle
+    public void holdHeading(double maxYawSpeed, double heading, double holdTime) {
+
+        ElapsedTime holdTimer = new ElapsedTime();
+        holdTimer.reset();
+
+        while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
+
+            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
+
+            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
+
+            driveRobotCentric(0, 0, yawSpeed);
+
+            myOpMode.telemetry.addData("Motion", "Hold Heading");
+            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
+                    targetHeading, getHeading());
+            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
+                    headingError, yawSpeed);
+            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
+                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
+            myOpMode.telemetry.update();
+        }
+
+        driveRobotCentric(0, 0, 0);
+    }
+
+    // Return clipped turn command from normalized heading error (-180, 180]
+    public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
+        targetHeading = desiredHeading;
+
+        headingError = -targetHeading + getHeading();
+
+        while (headingError > 180) headingError -= 360;
+        while (headingError <= -180) headingError += 360;
+
+        return Range.clip(headingError * proportionalGain, -1.0, 1.0);
+    }
+
+    public double getHeading() {
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        return orientation.getYaw(AngleUnit.DEGREES);
+    }
+
+    public void homeToAprilTag(){
+        LLResult result = limelight.getLatestResult();
+        if (result != null & result.isValid()){
+
+            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
+
+
+
+            for (LLResultTypes.FiducialResult fiducial : fresult){
+                if (fiducial.getFiducialId() != 20 || fiducial.getFiducialId() != 24){
+                    fresult.remove(fiducial);
+                }
+            }
+
+
+            if (!fresult.isEmpty()) {
+                myOpMode.telemetry.addData("Tag ID: ", fresult.get(0));
+                myOpMode.telemetry.addData("Tags: ", fresult.size());
+
+                double tx = fresult.get(0).getTargetXDegrees();
+
+                setTurretPositionRelative(tx);
+                setTurretPositionRelative(tx);
+            }
+
+        }
     }
 }

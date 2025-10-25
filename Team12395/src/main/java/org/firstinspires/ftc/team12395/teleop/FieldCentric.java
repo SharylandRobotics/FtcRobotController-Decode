@@ -35,6 +35,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
+import static org.firstinspires.ftc.team12395.RobotHardware.*;
+
 @TeleOp(name="Field Centric", group="TeleOp")
 @Config
 public class FieldCentric extends LinearOpMode {
@@ -46,8 +48,6 @@ public class FieldCentric extends LinearOpMode {
     public static double angle = 0.1;
 
     public static double slewTarget = 0;
-    public static double maxTurnR = 90;
-    public static double maxTurnL = 180;
 
     public static double indexerTarget = 0;
 
@@ -56,6 +56,8 @@ public class FieldCentric extends LinearOpMode {
     public static double preSetAngleClose = 0.2;
 
     public static double armPos = 1;
+
+    public static int intakeVel = 0;
 
 
 
@@ -68,14 +70,21 @@ public class FieldCentric extends LinearOpMode {
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
 
+        double spinAngle = 120;
+
         double slewRate = 0;
 
         boolean checkSpinBusy = false;
-        double armClock = 30;
+        double armClock = 11;
 
         robot.init();
 
+        robot.limelight.start();
+        robot.limelight.pipelineSwitch(2);
+
         waitForStart();
+
+        robot.colorSensor.enableLed(true);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -92,26 +101,49 @@ public class FieldCentric extends LinearOpMode {
             slewRate = Math.abs(gamepad1.right_trigger - gamepad1.left_trigger)*0.085;
             slewTarget = (gamepad1.left_trigger > 0 ? -maxTurnL : (gamepad1.right_trigger > 0 ? maxTurnR : robot.getCurrentTurretDegreePos() ));
 
-            robot.setTurretPositionAbsolute(slewTarget, slewRate);
+
 
             velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
             if (gamepad1.xWasPressed()){
                 velocity = preSetVelocity;
+                angle = 0.69;
             } else if (gamepad1.bWasPressed()){
                 velocity = 0;
+            } else if (gamepad1.aWasPressed()){
+                velocity = 800;
+                angle = 0.4;
             }
 
             angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
-            angle = Range.clip(angle, 0.19, 1);
+            angle = Range.clip(angle, 0, 1); // 0.19
 
             robot.setShooterVelocity(velocity);
             robot.setHoodAngle(angle);
 
-            if (!robot.spindexer.isBusy() && armClock > 30) {
+            if (gamepad1.yWasPressed()){
+                if (intakeVel == -1000 || intakeVel == 1000){
+                    intakeVel = 0;
+                } else if (intakeVel == 0){
+                    intakeVel = -1000;
+                }
+                robot.setIntakeSpeed(intakeVel); // 2800 max?
+            } else if (gamepad1.dpad_down){
+                intakeVel = 1000;
+                robot.setIntakeSpeed(intakeVel);
+            }
+
+
+            if (gamepad2.a){
+                spinAngle = 60;
+            } else {
+                spinAngle = 120;
+            }
+
+            if (!robot.spindexer.isBusy() && armClock > 10) {
                 if (gamepad2.leftBumperWasPressed()) {
-                    robot.setSpindexerRelativeAngle(120);
+                    robot.setSpindexerRelativeAngle(spinAngle);
                 } else if (gamepad2.rightBumperWasPressed()) {
-                    robot.setSpindexerRelativeAngle(-120);
+                    robot.setSpindexerRelativeAngle(-spinAngle);
                 }
             }
 
@@ -124,6 +156,11 @@ public class FieldCentric extends LinearOpMode {
                 armClock = 0;
             }
 
+            if (gamepad2.x){
+                robot.homeToAprilTag();
+            } else {
+                robot.setTurretPositionAbsolute(slewTarget, slewRate);
+            }
             robot.setArmPos(armPos);
 
 
@@ -133,12 +170,13 @@ public class FieldCentric extends LinearOpMode {
                     "\n | Left & Right Dpad : Hood Angle | Up & Down Dpad : Velocity");
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
+            telemetry.addData("Colors (RGB): ",  "R=%d%n G=%d%n B=%d%n ", robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue());
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
-            if (armClock <= 30){
+            if (armClock <= 10){
                 armClock++;
             }
         }

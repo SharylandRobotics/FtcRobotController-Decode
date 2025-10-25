@@ -1,10 +1,11 @@
 package org.firstinspires.ftc.team12395.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.team12395.RobotHardware;
+
+import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @Autonomous(name =  "Auto By Encoder", group = "Robot")
 public class AutoByEncoder extends LinearOpMode {
@@ -18,17 +19,71 @@ public class AutoByEncoder extends LinearOpMode {
 
         waitForStart();
 
-        // drive forward
-        robot.driveEncoder(0.5, 39, 39, 39, 39);
-        sleep(300);
-        // strafe left
-        robot.driveEncoder(0.5, -25, 25, 25, -25);
-        sleep(300);
-        // turn right
-        robot.driveEncoder(0.5, 5, 5, -5, -5);
-        sleep(300);
+        robot.setShooterVelocity(800);
+        robot.setHoodAngle(0.375);
+        robot.setTurretPositionAbsolute(5, 0.8);
+        robot.setTurretPositionAbsolute(5, 0.8);
+        robot.driveStraight(AXIAL_SPEED, -48 , 0);
+        // shooter setup
 
-        robot.driveEncoder(1, -10, -10, -10, -10);
+        sleep(1500);
+
+        robot.setArmPos(0.7);
+        sleep(1000);
+        robot.setArmPos(1);
+        sleep(1000);
+        robot.setSpindexerRelativeAngle(120);
+
+        while(robot.spindexer.isBusy()){
+            telemetry.addData("waiting for spindexer...", "");
+            telemetry.update();
+        }
+        telemetry.clear();
+
+        sleep(1000);
+
+        robot.setArmPos(0.7);
+        sleep(1000);
+        robot.setArmPos(1);
+        sleep(1000);
+        robot.setSpindexerRelativeAngle(120);
+
+        while(robot.spindexer.isBusy()){
+            telemetry.addData("waiting for spindexer...", "");
+            telemetry.update();
+        }
+        telemetry.clear();
+
+        sleep(1000);
+
+        robot.setArmPos(0.7);
+        sleep(1000);
+        robot.setArmPos(1);
+        sleep(1000);
+
+        robot.setShooterVelocity(0);
+
+        robot.setSpindexerRelativeAngle(60);
+        robot.setTurretPositionAbsolute(40);
+        robot.turnToHeading(YAW_SPEED, 44 );
+
+        sleep(1000);
+
+        robot.driveEncoder(AXIAL_SPEED, -13, 13, 13 ,-13);
+
+        /*
+
+        sleep(1000);
+
+        robot.setIntakeSpeed(1000);
+
+        robot.turnToHeading(YAW_SPEED, -45);
+        robot.driveStraight(0.2, 10, -45);
+
+         */
+
+
+
     }
 
 }
