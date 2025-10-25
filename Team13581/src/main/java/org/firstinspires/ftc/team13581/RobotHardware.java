@@ -32,6 +32,7 @@ package org.firstinspires.ftc.team13581;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -111,7 +112,7 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
         frontIntakeMotor.setDirection(DcMotor.Direction.REVERSE);
-        outtakeMotor.setDirection(DcMotor.Direction.FORWARD);
+        outtakeMotor.setDirection(DcMotor.Direction.REVERSE);
         hAim.setDirection(DcMotor.Direction.FORWARD);
 
 
@@ -163,6 +164,7 @@ public class RobotHardware {
     }
     public void setFrontPower(double fp) {frontIntakeMotor.setPower(fp);}
     public void setBackPower(double bp) {outtakeMotor.setPower(bp);}
+    public double getBackPower() {return outtakeMotor.getPower();}
     public void setAimPower(double hp) {hAim.setPower(hp);}
 
     public void setAimPos(double pos) {vAim.setPosition(pos);}

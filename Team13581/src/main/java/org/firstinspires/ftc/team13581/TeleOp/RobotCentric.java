@@ -60,6 +60,8 @@ public class RobotCentric extends LinearOpMode {
 
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            telemetry.addData("Servo Angle: ", robot.getAimPos());
+            telemetry.addData("Power: ", robot.getBackPower());
 
             telemetry.update();
 
@@ -73,6 +75,12 @@ public class RobotCentric extends LinearOpMode {
                 robot.setFrontPower(-1);
             }
 
+            if (gamepad2.y) {
+                robot.setBackPower(robot.getBackPower() + 0.05);
+            }
+            if (gamepad2.x) {
+                robot.setBackPower(robot.getBackPower() - 0.05);
+            }
             if (gamepad2.a) {
                 robot.setBackPower(1);
             }
@@ -81,23 +89,23 @@ public class RobotCentric extends LinearOpMode {
             }
             sleep(50);
 
-            if (gamepad2.dpad_left) {
+            if (gamepad2.left_trigger > 0) {
                 robot.setAimPower(-0.2);
             }
-            if (gamepad2.dpad_right) {
+            if (gamepad2.right_trigger > 0) {
                 robot.setAimPower(0.2);
-            }
-
-            if (gamepad2.dpad_up) {
-                double tempPos = robot.getAimPos();
-                if (tempPos > 0.5) {
-                    robot.setAimPos(tempPos - 0.05);
-                }
             }
 
             if (gamepad2.dpad_down) {
                 double tempPos = robot.getAimPos();
-                if (tempPos < 0.8) {
+                if (tempPos > 0.2) {
+                    robot.setAimPos(tempPos - 0.05);
+                }
+            }
+
+            if (gamepad2.dpad_up) {
+                double tempPos = robot.getAimPos();
+                if (tempPos < (1-0.1)) {
                     robot.setAimPos(tempPos + 0.05);
                 }
             }
