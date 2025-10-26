@@ -137,7 +137,7 @@ public class RobotHardware {
     public void init() {
         // --- HARDWARE MAP NAMES ---
         limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
-        limelight.setPollRateHz(100);
+        limelight.pipelineSwitch(1);
 
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
@@ -467,11 +467,12 @@ public class RobotHardware {
     public void setTurretPositionRelative(double deg){
         deg += getCurrentTurretDegreePos();
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) deg);
 
-        turret.setVelocity(turretMaxTPS);
+        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        turret.setVelocity(turretMaxTPS);
     }
 
     public void setShooterVelocity(double tPs){
@@ -733,23 +734,26 @@ public class RobotHardware {
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
 
+            myOpMode.telemetry.addData("Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Tags: ", fresult.size());
 
 
             for (LLResultTypes.FiducialResult fiducial : fresult){
-                if (fiducial.getFiducialId() != 20 || fiducial.getFiducialId() != 24){
+                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23){
                     fresult.remove(fiducial);
                 }
             }
 
 
             if (!fresult.isEmpty()) {
-                myOpMode.telemetry.addData("Tag ID: ", fresult.get(0));
-                myOpMode.telemetry.addData("Tags: ", fresult.size());
+
 
                 double tx = fresult.get(0).getTargetXDegrees();
 
+
                 setTurretPositionRelative(tx);
-                setTurretPositionRelative(tx);
+                myOpMode.telemetry.addData("turning deg: ", tx);
+
             }
 
         }

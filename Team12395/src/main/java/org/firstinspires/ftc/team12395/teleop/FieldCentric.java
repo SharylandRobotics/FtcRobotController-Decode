@@ -80,7 +80,6 @@ public class FieldCentric extends LinearOpMode {
         robot.init();
 
         robot.limelight.start();
-        robot.limelight.pipelineSwitch(2);
 
         waitForStart();
 
@@ -148,7 +147,7 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (gamepad2.b){
-                armPos =  0.7;
+                armPos =  0.575;
                 armClock = 0;
             }
             if (gamepad2.bWasReleased()){
