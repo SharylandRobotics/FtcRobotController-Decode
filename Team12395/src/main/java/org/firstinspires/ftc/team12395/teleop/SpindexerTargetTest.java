@@ -37,61 +37,84 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-@TeleOp(name="Spindexer Test", group="TeleOp")
+import static org.firstinspires.ftc.team12395.RobotHardware.*;
+
+@TeleOp(name="Spindexer Target Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class SpindexerTEst extends LinearOpMode {
+public class SpindexerTargetTest extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static int targetPos = 360;
+    public static int velocity = 800;
+    public static double targetPos = 360;
+    public static double targetPos2 = 20;
     public static double currentPos;
+    public static double cycles = 20;
     public static double P;
-    //public static double I;
-    //public static double D;
-    //public static double F;
+    public static double I;
+    public static double D;
+    public static double F;
+    public static double TelemPos;
 
 
     @Override
     public void runOpMode() {
+
+        double clock = 0;
+        boolean slow = true;
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
-        P = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).p;
-        //I = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
-        //D = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
-        //F = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
+        P = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
+        I = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
+        D = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
+        F = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
 
         waitForStart();
 
-        robot.spindexer.setTargetPosition(targetPos);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            if (!robot.spindexer.isBusy()) {
-                robot.spindexer.setTargetPosition(targetPos);
-                robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                if (targetPos == 360){
-                    targetPos = 0;
-                } else if (targetPos == 0){
-                    targetPos = 360;
+            if (clock > cycles){
+                slow = !slow;
+                clock = 0;
+
+                if (slow) {
+                    robot.spindexer.setTargetPosition((int) (targetPos*spindexerTicksPerDegree));
+                    robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    robot.spindexer.setVelocity(velocity);
+
+                    TelemPos = targetPos;
+                } else {
+                    robot.spindexer.setTargetPosition((int) (targetPos2*spindexerTicksPerDegree));
+                    robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    robot.spindexer.setVelocity(velocity);
+
+                    TelemPos = targetPos2;
                 }
             }
-            currentPos = robot.spindexer.getCurrentPosition();
 
-            robot.spindexer.setPositionPIDFCoefficients(P);
+            currentPos = robot.spindexer.getCurrentPosition()/spindexerTicksPerDegree;
 
-            telemetry.addData("target Position: ", targetPos);
-            telemetry.addData("current Position: ", currentPos);
-            telemetry.addData("PIDF: ", robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
+
+
+            robot.spindexer.setVelocityPIDFCoefficients(P, I, D, F);
+
+            telemetry.addData("target Pos: ", TelemPos);
+            telemetry.addData("current Pos: ", currentPos);
+            telemetry.addData("PIDF: ", robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
+            if (clock <= cycles) {
+                clock++;
+            }
         }
     }
 }

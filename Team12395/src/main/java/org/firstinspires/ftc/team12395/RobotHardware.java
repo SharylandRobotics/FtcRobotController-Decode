@@ -63,8 +63,8 @@ public class RobotHardware {
 
     public DcMotorEx turret, shooter, spindexer, intake;
 
-    public static int maxTurnR = 90;
-    public static int maxTurnL = 180; // negative
+    public static int maxTurnR = 100 ;
+    public static int maxTurnL = 100; // negative
 
     private final double spoolToTurretRatio = 4; // 4 rotations to 1
     private final double turretTicksPerRevolution = spoolToTurretRatio*((((1+(46./17))) * (1+(46./11))) * 28);
@@ -72,9 +72,9 @@ public class RobotHardware {
     private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
     private final int shooterMaxTPM = 2800;
 
-    private final double spoolToSpindexerRatio = 1;
-    private final double spindexerTicksPerRevolution = spoolToSpindexerRatio*((((1+(46./17))) * (1+(46./11))) * 28);
-    private final double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
+    private final static double spoolToSpindexerRatio = 1;
+    private final static double spindexerTicksPerRevolution = spoolToSpindexerRatio*((((1+(46./17))) * (1+(46./11))) * 28);
+    public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
     // Servos
@@ -221,7 +221,7 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        spindexer.setVelocityPIDFCoefficients(8,4,1,3);
+        spindexer.setVelocityPIDFCoefficients(14,4,1,4);
         spindexer.setPower(0.3);
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -728,7 +728,7 @@ public class RobotHardware {
         return orientation.getYaw(AngleUnit.DEGREES);
     }
 
-    public void homeToAprilTag(){
+    public double homeToAprilTag(){
         LLResult result = limelight.getLatestResult();
         if (result != null & result.isValid()){
 
@@ -750,12 +750,12 @@ public class RobotHardware {
 
                 double tx = fresult.get(0).getTargetXDegrees();
 
-
-                setTurretPositionRelative(tx);
                 myOpMode.telemetry.addData("turning deg: ", tx);
+                return tx;
 
             }
 
         }
+        return Double.NaN;
     }
 }

@@ -74,7 +74,7 @@ public class FieldCentric extends LinearOpMode {
 
         double slewRate = 0;
 
-        boolean checkSpinBusy = false;
+        double prevHeading = 0;
         double armClock = 11;
 
         robot.init();
@@ -126,10 +126,16 @@ public class FieldCentric extends LinearOpMode {
                     intakeVel = -1000;
                 }
                 robot.setIntakeSpeed(intakeVel); // 2800 max?
-            } else if (gamepad1.dpad_down){
-                intakeVel = 1000;
+            } else if (gamepad1.dpadDownWasPressed()){
+                if (intakeVel != 1000){
+                    intakeVel = 1000;
+                } else  {
+                    intakeVel = 0;
+                }
+
                 robot.setIntakeSpeed(intakeVel);
             }
+
 
 
             if (gamepad2.a){
@@ -147,7 +153,7 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (gamepad2.b){
-                armPos =  0.575;
+                armPos =  0.7;
                 armClock = 0;
             }
             if (gamepad2.bWasReleased()){
@@ -156,10 +162,19 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (gamepad2.x){
-                robot.homeToAprilTag();
+                double errorDeg = robot.homeToAprilTag();
+                if (!Double.isNaN(errorDeg) ) {
+                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading));
+                } else {
+                    telemetry.addData("AprilTag Not Detected/Invalid ", "...");
+                    robot.setTurretPositionAbsolute(slewTarget, slewRate);
+                }
             } else {
                 robot.setTurretPositionAbsolute(slewTarget, slewRate);
             }
+
+            prevHeading = robot.getHeading();
+
             robot.setArmPos(armPos);
 
 
