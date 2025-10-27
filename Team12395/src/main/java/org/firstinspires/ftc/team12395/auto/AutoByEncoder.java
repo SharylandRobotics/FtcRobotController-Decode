@@ -17,16 +17,28 @@ public class AutoByEncoder extends LinearOpMode {
         robot.init();
         robot.resetDriveEncoder();
 
+        robot.limelight.start();
+
         waitForStart();
 
         robot.setShooterVelocity(800);
         robot.setHoodAngle(0.375);
-        robot.setTurretPositionAbsolute(5, 0.8);
-        robot.setTurretPositionAbsolute(5, 0.8);
-        robot.driveStraight(AXIAL_SPEED, -48 , 0);
+        //5 deg
+
+        robot.setTurretPositionRelative(35);
+        robot.driveEncoder( AXIAL_SPEED, -36, 36, 36, -36);
+
+        robot.setTurretPositionAbsolute(90);
+        robot.processObelisk();
+        //robot.pattern.
         // shooter setup
 
         sleep(1500);
+        telemetry.addData("Offset: ", robot.homeToAprilTag());
+        telemetry.update();
+        robot.setTurretPositionRelative(robot.homeToAprilTag());
+
+        sleep(1000);
 
         robot.setArmPos(0.7);
         sleep(1000);
@@ -64,23 +76,27 @@ public class AutoByEncoder extends LinearOpMode {
         robot.setShooterVelocity(0);
 
         robot.setSpindexerRelativeAngle(60);
-        robot.setTurretPositionAbsolute(40);
-        robot.turnToHeading(YAW_SPEED, 44 );
+
 
         sleep(1000);
 
-        robot.driveEncoder(AXIAL_SPEED, -13, 13, 13 ,-13);
+        robot.driveEncoder(AXIAL_SPEED, -20, 20, 20 ,-20);
 
-        /*
+
 
         sleep(1000);
 
-        robot.setIntakeSpeed(1000);
+        robot.setIntakeSpeed(-1000);
 
-        robot.turnToHeading(YAW_SPEED, -45);
-        robot.driveStraight(0.2, 10, -45);
+        robot.driveStraight(0.15, 10, 0);
 
-         */
+        sleep(750);
+
+        robot.setIntakeSpeed(0);
+
+
+
+
 
 
 

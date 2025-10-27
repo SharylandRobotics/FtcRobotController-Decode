@@ -42,6 +42,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RobotHardware {
@@ -50,8 +53,12 @@ public class RobotHardware {
     private LinearOpMode myOpMode = null;
 
     public Limelight3A limelight;
+    public LLResult result;
 
     public ColorSensor colorSensor;
+
+    private List<Integer> mag = Arrays.asList(Color.GREEN, Color.MAGENTA, Color.MAGENTA);
+    public List<Integer> pattern = Arrays.asList(Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT);
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
@@ -408,29 +415,6 @@ public class RobotHardware {
         }
     }
 
-    /**
-     *
-     * @param speed 0-1
-     * @param degrees + cw/ - ccw
-     */
-    public void turnEncoderTrue(double speed, double degrees){
-
-        double angle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + Math.toRadians(degrees);
-
-        int turnWay = (angle > 0 ? 1 : -1);
-
-
-        setDrivePower(turnWay* Math.abs(speed),-turnWay* Math.abs(speed),
-                turnWay* Math.abs(speed),-turnWay* Math.abs(speed));
-
-        while ( !((Math.round(angle)< Math.toRadians(degrees*1.05)) && (Math.round(angle)> Math.toRadians(degrees*0.95))) ){
-            if ( !((Math.round(angle)< Math.toRadians(degrees*1.25)) && (Math.round(angle)> Math.toRadians(degrees*0.75))) ){
-                setDrivePower(turnWay* Math.abs(speed*0.7),-turnWay* Math.abs(speed*0.7),
-                        turnWay* Math.abs(speed*0.7),-turnWay* Math.abs(speed*0.7));
-            }
-
-        }
-    }
 
     public void setIntakeSpeed(int vel){
         intake.setVelocity(vel);
@@ -440,18 +424,18 @@ public class RobotHardware {
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
         turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
-        turret.setVelocity(turretMaxTPS);
-
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        turret.setVelocity(turretMaxTPS);
     }
 
     public void setTurretPositionAbsolute(double deg, double tps){
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
         turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
-        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
-
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
     }
 
     public void setTurretPositionRelative(double deg, double tps){
@@ -459,9 +443,9 @@ public class RobotHardware {
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
         turret.setTargetPosition((int) deg);
 
-        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
-
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
     }
 
     public void setTurretPositionRelative(double deg){
@@ -549,30 +533,19 @@ public class RobotHardware {
         return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
     }
 
-    public double[] getSpindexerAzimuth(){
-        double tDeg = spindexer.getCurrentPosition()/ spindexerTicksPerDegree;
-        double deg = (tDeg) % 360;
-        return new double[]{ (tDeg-deg)/360, tDeg % 360};
-    }
-
     public void setSpindexerRelativeAngle(double angle){
         spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
-    public void setSpindexerRelativeRevolutionAbsoluteAngle(double angle){
-        spindexer.setTargetPosition( (int) (  (getSpindexerAzimuth()[0]*spindexerTicksPerRevolution)
-                                            + (angle*spindexerTicksPerDegree) ) );
+    public void turnSpindexerRight(double angle){
+
+        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (-angle*spindexerTicksPerDegree));
+
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
-    public void setSpindexerAbsoluteRevolutionAbsoluteAngle(double revolutions, double angle){
-        spindexer.setTargetPosition( (int) ( (revolutions*spindexerTicksPerRevolution) + (angle*spindexerTicksPerDegree) ) );
-    }
-
-    public void setSpindexerAbsoluteAngle(double angle){
-        spindexer.setTargetPosition( (int) (angle*spindexerTicksPerDegree) );
-    }
 
     public void setArmPos(double pos){
         xArm.setPosition(Range.clip(pos, 0, 1));
@@ -728,13 +701,17 @@ public class RobotHardware {
         return orientation.getYaw(AngleUnit.DEGREES);
     }
 
+    public boolean processLLresult(){
+        result = limelight.getLatestResult();
+        return result != null && result.isValid();
+    }
+
     public double homeToAprilTag(){
-        LLResult result = limelight.getLatestResult();
-        if (result != null & result.isValid()){
+        if (processLLresult()){
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
 
-            myOpMode.telemetry.addData("Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
             myOpMode.telemetry.addData("Tags: ", fresult.size());
 
 
@@ -743,7 +720,6 @@ public class RobotHardware {
                     fresult.remove(fiducial);
                 }
             }
-
 
             if (!fresult.isEmpty()) {
 
@@ -757,5 +733,51 @@ public class RobotHardware {
 
         }
         return Double.NaN;
+    }
+
+    public void processObelisk(){
+        if (processLLresult()){
+            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
+
+            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Tags: ", fresult.size());
+
+
+            for (LLResultTypes.FiducialResult fiducial : fresult){
+                if (fiducial.getFiducialId() == 20 || fiducial.getFiducialId() == 24){
+                    fresult.remove(fiducial);
+                }
+            }
+
+            if (!fresult.isEmpty()) {
+                int closestObelisk = fresult.get(0).getFiducialId();
+                if (closestObelisk == 21){
+                    pattern = Arrays.asList(Color.GREEN, Color.MAGENTA, Color.MAGENTA);
+                    myOpMode.telemetry.addData("Tag 21: ", "GPP");
+                } else if (closestObelisk == 22) {
+                    pattern = Arrays.asList(Color.MAGENTA, Color.GREEN, Color.MAGENTA);
+                    myOpMode.telemetry.addData("Tag 22: ", "PGP");
+                } else if (closestObelisk == 23){
+                    pattern = Arrays.asList(Color.MAGENTA, Color.MAGENTA, Color.GREEN);
+                    myOpMode.telemetry.addData("Tag 23: ", "PPG");
+                }
+            }
+        }
+    }
+
+    public int solvePattern(){
+        if (!mag.contains(Color.TRANSPARENT) && !pattern.contains(Color.TRANSPARENT)){
+            for (int i=0; i<3; i++){
+                if (mag.get(i) == pattern.get(i)){
+                    for (int j=0; j<3; j++){
+                        return 2;
+                    }
+                }
+            }
+        } else {
+            return 404;
+        }
+
+        return 404;
     }
 }

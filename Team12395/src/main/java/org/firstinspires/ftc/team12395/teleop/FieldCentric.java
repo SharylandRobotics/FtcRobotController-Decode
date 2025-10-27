@@ -76,6 +76,9 @@ public class FieldCentric extends LinearOpMode {
 
         double prevHeading = 0;
         double armClock = 11;
+        int lastTrackingClock = 10;
+
+        boolean xToggle = false;
 
         robot.init();
 
@@ -145,9 +148,9 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (!robot.spindexer.isBusy() && armClock > 10) {
-                if (gamepad2.leftBumperWasPressed()) {
+                if (gamepad2.leftBumperWasPressed()) { // ccw
                     robot.setSpindexerRelativeAngle(spinAngle);
-                } else if (gamepad2.rightBumperWasPressed()) {
+                } else if (gamepad2.rightBumperWasPressed()) { // cw
                     robot.setSpindexerRelativeAngle(-spinAngle);
                 }
             }
@@ -161,11 +164,18 @@ public class FieldCentric extends LinearOpMode {
                 armClock = 0;
             }
 
-            if (gamepad2.x){
+            if (gamepad2.xWasPressed()){
+                xToggle = !xToggle;
+            }
+
+            if (xToggle){
                 double errorDeg = robot.homeToAprilTag();
                 if (!Double.isNaN(errorDeg) ) {
                     robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading));
-                } else {
+                    lastTrackingClock = 0;
+                } else if (lastTrackingClock < 50) {
+                    robot.setTurretPositionRelative((robot.getHeading() - prevHeading));
+                }else {
                     telemetry.addData("AprilTag Not Detected/Invalid ", "...");
                     robot.setTurretPositionAbsolute(slewTarget, slewRate);
                 }
@@ -192,6 +202,10 @@ public class FieldCentric extends LinearOpMode {
             sleep(50); // ~20 Hz;
             if (armClock <= 10){
                 armClock++;
+            }
+
+            if (lastTrackingClock <= 100){
+                lastTrackingClock++;
             }
         }
     }
