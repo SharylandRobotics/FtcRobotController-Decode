@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -35,27 +35,28 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-@TeleOp(name="Velocity Test", group="TeleOp")
+import static org.firstinspires.ftc.team12395.RobotHardware.*;
+
+@TeleOp(name="Spindexer Target Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class VelocityTest extends LinearOpMode {
+public class SpindexerTargetTest extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double targetVel = 700;
-    public static double targetVel2 = 400;
-    public static double currentVel;
+    public static int velocity = 800;
+    public static double targetPos = 360;
+    public static double targetPos2 = 20;
+    public static double currentPos;
     public static double cycles = 20;
     public static double P;
     public static double I;
     public static double D;
     public static double F;
-
-    public static double TelemVel;
+    public static double TelemPos;
 
 
     @Override
@@ -68,37 +69,45 @@ public class VelocityTest extends LinearOpMode {
 
         robot.init();
 
-        P = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
-        I = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
-        D = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
-        F = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
+        P = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
+        I = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
+        D = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
+        F = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
 
         waitForStart();
 
-        robot.setShooterVelocity(targetVel);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
+
             if (clock > cycles){
                 slow = !slow;
                 clock = 0;
+
+                if (slow) {
+                    robot.spindexer.setTargetPosition((int) (targetPos*spindexerTicksPerDegree));
+                    robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    robot.spindexer.setVelocity(velocity);
+
+                    TelemPos = targetPos;
+                } else {
+                    robot.spindexer.setTargetPosition((int) (targetPos2*spindexerTicksPerDegree));
+                    robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    robot.spindexer.setVelocity(velocity);
+
+                    TelemPos = targetPos2;
+                }
             }
 
-            if (slow) {
-                robot.setShooterVelocity(targetVel);
-                currentVel = robot.shooter.getVelocity();
-                TelemVel = targetVel;
-            } else {
-                robot.setShooterVelocity(targetVel2);
-                currentVel = robot.shooter.getVelocity();
-                TelemVel = targetVel2;
-            }
+            currentPos = robot.spindexer.getCurrentPosition()/spindexerTicksPerDegree;
 
-            robot.shooter.setVelocityPIDFCoefficients(P, I, D, F);
 
-            telemetry.addData("target Velocity: ", TelemVel);
-            telemetry.addData("current Velocity: ", currentVel);
-            telemetry.addData("PIDF: ", robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+
+            robot.spindexer.setVelocityPIDFCoefficients(P, I, D, F);
+
+            telemetry.addData("target Pos: ", TelemPos);
+            telemetry.addData("current Pos: ", currentPos);
+            telemetry.addData("PIDF: ", robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

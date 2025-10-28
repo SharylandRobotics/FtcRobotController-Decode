@@ -42,9 +42,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class RobotHardware {
@@ -57,8 +54,9 @@ public class RobotHardware {
 
     public ColorSensor colorSensor;
 
-    private List<Integer> mag = Arrays.asList(Color.GREEN, Color.MAGENTA, Color.MAGENTA);
-    public List<Integer> pattern = Arrays.asList(Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT);
+    public static String mag = "GPP";
+    public static String pattern = "000";
+    public int chamber = 0;
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
@@ -752,32 +750,57 @@ public class RobotHardware {
             if (!fresult.isEmpty()) {
                 int closestObelisk = fresult.get(0).getFiducialId();
                 if (closestObelisk == 21){
-                    pattern = Arrays.asList(Color.GREEN, Color.MAGENTA, Color.MAGENTA);
+                    pattern = "GPP";
                     myOpMode.telemetry.addData("Tag 21: ", "GPP");
                 } else if (closestObelisk == 22) {
-                    pattern = Arrays.asList(Color.MAGENTA, Color.GREEN, Color.MAGENTA);
+                    pattern = "PGP";
                     myOpMode.telemetry.addData("Tag 22: ", "PGP");
                 } else if (closestObelisk == 23){
-                    pattern = Arrays.asList(Color.MAGENTA, Color.MAGENTA, Color.GREEN);
+                    pattern = "PPG";
                     myOpMode.telemetry.addData("Tag 23: ", "PPG");
                 }
             }
         }
     }
 
-    public int solvePattern(){
-        if (!mag.contains(Color.TRANSPARENT) && !pattern.contains(Color.TRANSPARENT)){
-            for (int i=0; i<3; i++){
-                if (mag.get(i) == pattern.get(i)){
-                    for (int j=0; j<3; j++){
-                        return 2;
-                    }
+    public int[] solvePattern(){
+        if (!mag.contains("0") && mag.contains("G") && !pattern.contains("0")){
+            // if I have a full mag with Green and know the pattern
+            int greenIndex = mag.indexOf("G");
+            if (pattern.equals("GPP")){
+                if (greenIndex == chamber){// if green is selected
+                    return new int[] {0, 2};// don't move, turn right twice
+                } else if (Character.toString( mag.charAt((chamber + 1) % mag.length()) ) != "G" ){
+                    // if the color to my right isn't green, turn left, then turn right twice
+                    return new int[] {-1, 2};
+                } else {
+                    // the color to my right is green, turn right, then turn right twice
+                    return new int[] {1, 2};
+                }
+
+            } else if (pattern.equals("PGP")){
+                if (greenIndex == chamber){ // if green is selected
+                    return new int[] {-1, 2}; //  turn left, then turn right twice
+                } else if (Character.toString( mag.charAt((chamber + 1) % mag.length()) ) != "G" ){
+                    // if the color to my right isn't green, turn right, then turn right twice
+                    return new int[] {1, 2};
+                } else {
+                    // the color to my right is green, don't move, turn right twice
+                    return new int[] {0, 2};
+                }
+
+            } else if (pattern.equals("PPG")){
+                if (greenIndex == chamber){ // if green is selected
+                    return new int[] {1, 2}; //  turn right, then turn right twice
+                } else if (Character.toString( mag.charAt((chamber + 1) % mag.length()) ) != "G" ){
+                    // if the color to my right isn't green, don't move, turn right twice
+                    return new int[] {0, 2};
+                } else {
+                    // the color to my right is green, turn left, then turn right twice
+                    return new int[] {-1, 2};
                 }
             }
-        } else {
-            return 404;
         }
-
-        return 404;
+        return null;
     }
 }

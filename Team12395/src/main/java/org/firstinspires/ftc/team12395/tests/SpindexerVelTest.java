@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -37,26 +37,23 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-import static org.firstinspires.ftc.team12395.RobotHardware.*;
-
-@TeleOp(name="Spindexer Target Test", group="TeleOp")
+@TeleOp(name="Spindexer Velocity Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class SpindexerTargetTest extends LinearOpMode {
+public class SpindexerVelTest extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static int velocity = 800;
-    public static double targetPos = 360;
-    public static double targetPos2 = 20;
-    public static double currentPos;
+    public static double targetVel = 250;
+    public static double targetVel2 = 500;
+    public static double currentVel;
     public static double cycles = 20;
     public static double P;
     public static double I;
     public static double D;
     public static double F;
-    public static double TelemPos;
+    public static double TelemVel;
 
 
     @Override
@@ -76,6 +73,7 @@ public class SpindexerTargetTest extends LinearOpMode {
 
         waitForStart();
 
+        robot.spindexer.setVelocity(targetVel);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -83,30 +81,22 @@ public class SpindexerTargetTest extends LinearOpMode {
             if (clock > cycles){
                 slow = !slow;
                 clock = 0;
-
-                if (slow) {
-                    robot.spindexer.setTargetPosition((int) (targetPos*spindexerTicksPerDegree));
-                    robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    robot.spindexer.setVelocity(velocity);
-
-                    TelemPos = targetPos;
-                } else {
-                    robot.spindexer.setTargetPosition((int) (targetPos2*spindexerTicksPerDegree));
-                    robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    robot.spindexer.setVelocity(velocity);
-
-                    TelemPos = targetPos2;
-                }
             }
 
-            currentPos = robot.spindexer.getCurrentPosition()/spindexerTicksPerDegree;
-
-
+            if (slow) {
+                robot.spindexer.setVelocity(targetVel);
+                currentVel = robot.spindexer.getVelocity();
+                TelemVel = targetVel;
+            } else {
+                robot.spindexer.setVelocity(targetVel2);
+                currentVel = robot.spindexer.getVelocity();
+                TelemVel = targetVel2;
+            }
 
             robot.spindexer.setVelocityPIDFCoefficients(P, I, D, F);
 
-            telemetry.addData("target Pos: ", TelemPos);
-            telemetry.addData("current Pos: ", currentPos);
+            telemetry.addData("target Velocity: ", TelemVel);
+            telemetry.addData("current Velocity: ", currentVel);
             telemetry.addData("PIDF: ", robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
             telemetry.update();
 

@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -35,76 +35,70 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-@TeleOp(name="Spindexer Velocity Test", group="TeleOp")
+import static org.firstinspires.ftc.team12395.RobotHardware.*;
+
+@TeleOp(name="Sort Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class SpindexerVelTest extends LinearOpMode {
+public class SpindexerSortTest extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double targetVel = 250;
-    public static double targetVel2 = 500;
-    public static double currentVel;
-    public static double cycles = 20;
-    public static double P;
-    public static double I;
-    public static double D;
-    public static double F;
-    public static double TelemVel;
+    public static double targetVel = 700;
 
+    public static boolean trigger = false;
+    public String action;
 
     @Override
     public void runOpMode() {
+        int[] solution;
+        boolean setup = false;
+        int pacer = 0;
 
-        double clock = 0;
-        boolean slow = true;
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
-        P = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
-        I = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
-        D = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
-        F = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
-
         waitForStart();
-
-        robot.spindexer.setVelocity(targetVel);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
+            solution = robot.solvePattern();
 
-            if (clock > cycles){
-                slow = !slow;
-                clock = 0;
+            if (solution != null && !setup){
+                robot.setSpindexerRelativeAngle(120 * solution[0]);
+                setup = true;
             }
 
-            if (slow) {
-                robot.spindexer.setVelocity(targetVel);
-                currentVel = robot.spindexer.getVelocity();
-                TelemVel = targetVel;
-            } else {
-                robot.spindexer.setVelocity(targetVel2);
-                currentVel = robot.spindexer.getVelocity();
-                TelemVel = targetVel2;
+            if (!robot.spindexer.isBusy()) {
+
+                if (setup && trigger && (pacer == 0 || pacer == 40)) {
+                    robot.setSpindexerRelativeAngle(120);
+                    if (pacer == 40) {
+                        pacer = 0;
+                        trigger = false;
+                    }
+                }
+
             }
 
-            robot.spindexer.setVelocityPIDFCoefficients(P, I, D, F);
-
-            telemetry.addData("target Velocity: ", TelemVel);
-            telemetry.addData("current Velocity: ", currentVel);
-            telemetry.addData("PIDF: ", robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
-            telemetry.update();
+            telemetry.addData("setup?: ", setup);
+            telemetry.addData("performing shooting action?: ", trigger);
+            telemetry.addData("pacer: ", pacer);
+            telemetry.addData("busy?: ", robot.spindexer.isBusy());
+            telemetry.addData("target Velocity: ", targetVel);
+            telemetry.addData("current Action: ", action);
+            telemetry.addData("current Pattern: ", pattern);
+           telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
-            if (clock <= cycles) {
-                clock++;
+            if (trigger && pacer <= 40){
+                pacer++;
             }
         }
     }
