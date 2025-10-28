@@ -29,9 +29,11 @@
 
 package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
+import android.graphics.Color;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
@@ -80,13 +82,15 @@ public class FieldCentric extends LinearOpMode {
 
         boolean xToggle = false;
 
+        NormalizedRGBA RGBcolor;
+        float[] hsvValues = new float[3];
+
         robot.init();
 
         robot.limelight.start();
 
         waitForStart();
 
-        robot.colorSensor.enableLed(true);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -96,7 +100,7 @@ public class FieldCentric extends LinearOpMode {
             yaw     =  gamepad1.right_stick_x;
 
 
-
+            RGBcolor = robot.colorSensor.getNormalizedColors();
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
@@ -149,9 +153,9 @@ public class FieldCentric extends LinearOpMode {
 
             if (!robot.spindexer.isBusy() && armClock > 10) {
                 if (gamepad2.leftBumperWasPressed()) { // ccw
-                    robot.setSpindexerRelativeAngle(spinAngle);
+                    robot.spindexerHandler((int) spinAngle);
                 } else if (gamepad2.rightBumperWasPressed()) { // cw
-                    robot.setSpindexerRelativeAngle(-spinAngle);
+                    robot.spindexerHandler((int) -spinAngle);
                 }
             }
 
@@ -170,14 +174,23 @@ public class FieldCentric extends LinearOpMode {
 
             if (xToggle){
                 double errorDeg = robot.homeToAprilTag();
+
                 if (!Double.isNaN(errorDeg) ) {
-                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading));
+
+                    double farFudge = 4;
+                    if (velocity == preSetVelocity){
+                        farFudge *= errorDeg/Math.abs(errorDeg);
+                    }
+
+                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading) + farFudge);
                     lastTrackingClock = 0;
-                } else if (lastTrackingClock < 50) {
+                } else if (lastTrackingClock < 2000) {
+
+
                     robot.setTurretPositionRelative((robot.getHeading() - prevHeading));
                 }else {
                     telemetry.addData("AprilTag Not Detected/Invalid ", "...");
-                    robot.setTurretPositionAbsolute(slewTarget, slewRate);
+                    robot.setTurretPositionRelative(slewTarget, slewRate);
                 }
             } else {
                 robot.setTurretPositionAbsolute(slewTarget, slewRate);
@@ -187,6 +200,7 @@ public class FieldCentric extends LinearOpMode {
 
             robot.setArmPos(armPos);
 
+            Color.colorToHSV(RGBcolor.toColor(), hsvValues);
 
             // Telemetry for drivers + debugging
             telemetry.addData("Controls G2", "Left & Right Bumpers : Spindexer | B : Arm");
@@ -194,7 +208,7 @@ public class FieldCentric extends LinearOpMode {
                     "\n | Left & Right Dpad : Hood Angle | Up & Down Dpad : Velocity");
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            telemetry.addData("Colors (RGB): ",  "R=%d%n G=%d%n B=%d%n ", robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue());
+            telemetry.addData("Colors (HSV): ",  "H=%d%n S=%d%n V=%d%n ", hsvValues[0], hsvValues[1], hsvValues[2]);
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
             telemetry.update();
 
@@ -204,7 +218,7 @@ public class FieldCentric extends LinearOpMode {
                 armClock++;
             }
 
-            if (lastTrackingClock <= 100){
+            if (lastTrackingClock <= 2000){
                 lastTrackingClock++;
             }
         }

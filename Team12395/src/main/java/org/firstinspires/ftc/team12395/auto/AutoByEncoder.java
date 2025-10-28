@@ -22,83 +22,157 @@ public class AutoByEncoder extends LinearOpMode {
         waitForStart();
 
         robot.setShooterVelocity(800);
-        robot.setHoodAngle(0.375);
+        robot.setHoodAngle(0.65);
         //5 deg
 
         robot.setTurretPositionRelative(35);
         robot.driveEncoder( AXIAL_SPEED, -36, 36, 36, -36);
 
-        robot.setTurretPositionAbsolute(90);
-        robot.processObelisk();
+        sleep(1200);
+
+        //robot.setTurretPositionAbsolute(90);
+        //robot.processObelisk();
         //robot.pattern.
         // shooter setup
 
-        sleep(1500);
         telemetry.addData("Offset: ", robot.homeToAprilTag());
         telemetry.update();
+        robot.setTurretPositionRelative(robot.homeToAprilTag());
+
+        sleep(500);
+
+        robot.setArmPos(0.7);
+        sleep(750);
+        robot.setArmPos(1);
+        sleep(750);
+        robot.spindexerHandler(120);
+
+        while(robot.spindexer.isBusy()){
+            telemetry.addData("waiting for spindexer...", "");
+            telemetry.update();
+        }
+        telemetry.clear();
+
+        sleep(750);
+
+        robot.setArmPos(0.7);
+        sleep(750);
+        robot.setArmPos(1);
+        sleep(750);
+        robot.spindexerHandler(120);
+
+        while(robot.spindexer.isBusy()){
+            telemetry.addData("waiting for spindexer...", "");
+            telemetry.update();
+        }
+        telemetry.clear();
+
+        sleep(750);
+
+        robot.setArmPos(0.7);
+        sleep(750);
+        robot.setArmPos(1);
+        sleep(750);
+
+        //robot.setShooterVelocity(0);
+
+        // finish shooting
+
+        // start pickingg up
+
+        robot.spindexerHandler(60);
+
+        robot.driveEncoder(AXIAL_SPEED, -20, 20, 20 ,-20);
+
+        robot.setIntakeSpeed(-1000);
+
+        robot.driveStraight(AXIAL_SPEED, 10, 0);
+
+        robot.driveStraight(0.2, 10, 0);
+        sleep(650);
+        robot.spindexerHandler(120);
+        sleep(600);
+        robot.driveStraight(0.2, 5, 0);
+        sleep(650);
+        robot.spindexerHandler(120);
+        sleep(600);
+        robot.driveStraight(0.2, 5, 0);
+        sleep(650);
+        robot.setIntakeSpeed(0);
+
+        robot.spindexerHandler(60);
+
+        // end pick up
+
+        // repeat shooting sequence
+
+        robot.setShooterVelocity(850);
+        robot.setHoodAngle(0.5);
+        robot.driveStraight(AXIAL_SPEED, -30, 0);
+
+
         robot.setTurretPositionRelative(robot.homeToAprilTag());
 
         sleep(1000);
 
         robot.setArmPos(0.7);
-        sleep(1000);
+        sleep(750);
         robot.setArmPos(1);
-        sleep(1000);
-        robot.setSpindexerRelativeAngle(120);
+        sleep(750);
+        robot.spindexerHandler(120);
 
         while(robot.spindexer.isBusy()){
             telemetry.addData("waiting for spindexer...", "");
             telemetry.update();
         }
         telemetry.clear();
-
-        sleep(1000);
-
-        robot.setArmPos(0.7);
-        sleep(1000);
-        robot.setArmPos(1);
-        sleep(1000);
-        robot.setSpindexerRelativeAngle(120);
-
-        while(robot.spindexer.isBusy()){
-            telemetry.addData("waiting for spindexer...", "");
-            telemetry.update();
-        }
-        telemetry.clear();
-
-        sleep(1000);
-
-        robot.setArmPos(0.7);
-        sleep(1000);
-        robot.setArmPos(1);
-        sleep(1000);
-
-        robot.setShooterVelocity(0);
-
-        robot.setSpindexerRelativeAngle(60);
-
-
-        sleep(1000);
-
-        robot.driveEncoder(AXIAL_SPEED, -20, 20, 20 ,-20);
-
-
-
-        sleep(1000);
-
-        robot.setIntakeSpeed(-1000);
-
-        robot.driveStraight(0.15, 10, 0);
 
         sleep(750);
 
+        robot.setArmPos(0.7);
+        sleep(750);
+        robot.setArmPos(1);
+        sleep(750);
+        robot.spindexerHandler(120);
+
+        while(robot.spindexer.isBusy()){
+            telemetry.addData("waiting for spindexer...", "");
+            telemetry.update();
+        }
+        telemetry.clear();
+
+        sleep(750);
+
+        robot.setArmPos(0.7);
+        sleep(750);
+        robot.setArmPos(1);
+        sleep(750);
+
+        robot.setShooterVelocity(0);
+
+        // end shooting sequence
+
+        // strafe to next balls
+
+        robot.spindexerHandler(60);
+
+        robot.driveEncoder(AXIAL_SPEED, 0, 48, 48, 0);
+
+        robot.driveEncoder(AXIAL_SPEED, -24, 24, 24, -24);
+
+        robot.setIntakeSpeed(-1000);
+
+        robot.driveStraight(0.2, 10, 0);
+        sleep(650);
+        robot.spindexerHandler(120);
+        sleep(600);
+        robot.driveStraight(0.2, 5, 0);
+        sleep(650);
+        robot.spindexerHandler(120);
+        sleep(600);
+        robot.driveStraight(0.2, 5, 0);
+        sleep(650);
         robot.setIntakeSpeed(0);
-
-
-
-
-
-
 
     }
 

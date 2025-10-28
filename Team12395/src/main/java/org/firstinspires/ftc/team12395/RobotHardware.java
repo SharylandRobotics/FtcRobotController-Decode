@@ -52,7 +52,7 @@ public class RobotHardware {
     public Limelight3A limelight;
     public LLResult result;
 
-    public ColorSensor colorSensor;
+    public NormalizedColorSensor colorSensor;
 
     public static String mag = "GPP";
     public static String pattern = "000";
@@ -81,6 +81,8 @@ public class RobotHardware {
     private final static double spindexerTicksPerRevolution = spoolToSpindexerRatio*((((1+(46./17))) * (1+(46./11))) * 28);
     public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
+
+    private int spindexerTarget = 0;
 
     // Servos
     private Servo xArm, hoodAngle, hoodAngle2;
@@ -122,7 +124,7 @@ public class RobotHardware {
             (WHEEL_DIAMETER_INCHES * Math.PI);
 
     // Default speeds and proportional gains; HEADING_THRESHOLD in degrees
-    public static final double AXIAL_SPEED = 0.4;
+    public static final double AXIAL_SPEED = 0.6;
     public static final double LATERAL_SPEED = 0.4;
     public static final double YAW_SPEED = 0.2;
     static final double HEADING_THRESHOLD = 0.25;
@@ -154,8 +156,7 @@ public class RobotHardware {
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
-        colorSensor = myOpMode.hardwareMap.get(ColorSensor.class, "color_sensor");
-        colorSensor.enableLed(true);
+        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
 
         xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
@@ -244,7 +245,6 @@ public class RobotHardware {
         myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
-        colorSensor.enableLed(false);
     }
 
     /**
@@ -531,6 +531,16 @@ public class RobotHardware {
         return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
     }
 
+    public void spindexerHandler(int targetAdd){
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd) * spindexerTicksPerDegree) );
+
+        spindexerTarget += targetAdd;
+
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        spindexer.setVelocity(800);
+    }
+
     public void setSpindexerRelativeAngle(double angle){
         spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
 
@@ -714,7 +724,7 @@ public class RobotHardware {
 
 
             for (LLResultTypes.FiducialResult fiducial : fresult){
-                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23){
+                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 24){
                     fresult.remove(fiducial);
                 }
             }
@@ -722,7 +732,7 @@ public class RobotHardware {
             if (!fresult.isEmpty()) {
 
 
-                double tx = fresult.get(0).getTargetXDegrees();
+                double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
 
                 myOpMode.telemetry.addData("turning deg: ", tx);
                 return tx;
@@ -800,6 +810,14 @@ public class RobotHardware {
                     return new int[] {-1, 2};
                 }
             }
+        }
+        return null;
+    }
+
+    public int[] solveAltPattern(String setPattern){
+        String reconstruct = String.valueOf(mag.charAt(chamber) + mag.charAt((chamber + 1) % 3) + mag.charAt((chamber + 2) % 3));
+        if  (reconstruct.equals(setPattern)) {
+            return new int[] {0, 2};
         }
         return null;
     }
