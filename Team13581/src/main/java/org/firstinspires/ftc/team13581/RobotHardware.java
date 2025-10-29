@@ -52,6 +52,7 @@ public class RobotHardware {
     private DcMotor outtakeMotor = null;
     private DcMotor hAim = null;
     private Servo vAim = null;
+    private Servo lever = null;
 
     private IMU imu = null;
 
@@ -136,6 +137,7 @@ public class RobotHardware {
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         vAim = myOpMode.hardwareMap.get(Servo.class, "v_aim");
+        lever = myOpMode.hardwareMap.get(Servo.class, "lever");
 
         while(myOpMode.opModeInInit()) {
             myOpMode.telemetry.addData("Status", "Hardware Initialized");
@@ -166,9 +168,9 @@ public class RobotHardware {
     public void setBackPower(double bp) {outtakeMotor.setPower(bp);}
     public double getBackPower() {return outtakeMotor.getPower();}
     public void setAimPower(double hp) {hAim.setPower(hp);}
-
     public void setAimPos(double pos) {vAim.setPosition(pos);}
     public double getAimPos() { return vAim.getPosition();}
+    public void setLeverPos(double l) {lever.setPosition(l);}
 
 
     public void teleOpFieldCentric(double axial, double lateral, double yaw) {
