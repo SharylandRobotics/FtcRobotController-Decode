@@ -90,10 +90,10 @@ public class RobotCentric extends LinearOpMode {
             sleep(50);
 
             if (gamepad2.left_trigger > 0) {
-                robot.setAimPower(-0.05);
+                robot.setAimPower(-0.1);
             }
             if (gamepad2.right_trigger > 0) {
-                robot.setAimPower(0.05);
+                robot.setAimPower(0.1);
             }
             if (gamepad2.right_bumper) {
                 robot.setAimPower(0);
