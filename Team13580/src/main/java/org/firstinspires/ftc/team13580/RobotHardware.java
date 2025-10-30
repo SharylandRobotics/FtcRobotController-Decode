@@ -34,6 +34,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -60,6 +61,13 @@ public class RobotHardware {
     private DcMotor backLeftDrive;
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
+    private DcMotor intakeDrive;
+    private DcMotor outtakeDrive;
+
+    private Servo kicker;
+    private Servo kickerLeft;
+
+
 
     // Student Note: IMU provides yaw (heading) for field‑centric drive and turns.
     // TODO(students): If heading seems rotated, check hub orientation in init().
@@ -76,6 +84,8 @@ public class RobotHardware {
     private double backLeftSpeed;
     private double frontRightSpeed;
     private double backRightSpeed;
+    private double intakeSpeed;
+    private double outtakeSpeed;
     private int frontLeftTarget;
     private int backLeftTarget;
     private int frontRightTarget;
@@ -141,11 +151,17 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        // Student Note: Control Hub mounting directions for correct IMU yaw.
+        intakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "intake_drive");
+        outtakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "outtake_drive");
+
+        kicker = myOpMode.hardwareMap.get(Servo.class, "kicker");
+        kickerLeft = myOpMode.hardwareMap.get(Servo.class, "kicker_left");
+
+                // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
@@ -154,6 +170,9 @@ public class RobotHardware {
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        intakeDrive.setDirection(DcMotor.Direction.REVERSE);
+        outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -164,6 +183,9 @@ public class RobotHardware {
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        intakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        outtakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -360,6 +382,16 @@ public class RobotHardware {
         backRightDrive.setPower(backRightWheel);
     }
 
+    public void setIntakePower(double intakeWheel) {
+        intakeSpeed = intakeWheel;
+        intakeDrive.setPower(intakeWheel);
+    }
+
+    public void setOuttakePower(double outtakeWheel) {
+        outtakeSpeed = outtakeWheel;
+        outtakeDrive.setPower(outtakeWheel);
+    }
+
     // Student Note: Convenience — current yaw (degrees) from the IMU.
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
@@ -395,7 +427,7 @@ public class RobotHardware {
     // Student Note: Never navigate on Obelisk tags—only latch which one we saw.
     // Goal targeting: keep current goal if visible; else take first non‑Obelisk.
     // Clears pose when no goal is visible to avoid stale data.
-    // TODO(students): Add a "target lock" button if drivers want sticky targeting.
+    // TODO(students): Add a "target lock" btton if drivers want sticky targeting.
     public void updateAprilTagDetections() {
         if (aprilTag == null) return;
 
@@ -496,4 +528,10 @@ public class RobotHardware {
         driveRobotCentric(axial, lateral, yaw);
         return true;
     }
+
+    public void setKickerPosition(double pos){
+        kicker.setPosition(pos);
+    }
+
+    public void setKickerLeftPosition(double pos) {kickerLeft.setPosition(pos);}
 }

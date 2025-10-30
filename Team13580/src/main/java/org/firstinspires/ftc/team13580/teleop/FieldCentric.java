@@ -43,10 +43,15 @@ public class FieldCentric extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        double kickerBackPos = 0.35;
+        double kickerForwardPos = 0;
 
         double axial;
         double lateral;
         double yaw;
+
+        double intake;
+        double outtake;
 
         // Student Note: Initialize hardware (motors, IMU, vision).
         robot.init();
@@ -103,6 +108,28 @@ public class FieldCentric extends LinearOpMode {
             if (!didAuto) {
                 robot.driveFieldCentric(axial, lateral, yaw);
             }
+
+            intake = gamepad1.right_trigger;
+            if (gamepad1.y){
+                outtake = 0.7;
+            } else {
+                outtake = gamepad1.left_trigger;
+            }
+
+            if (gamepad1.b){
+                robot.setKickerPosition(kickerForwardPos);
+            } else {
+                robot.setKickerPosition(kickerBackPos);
+            }
+
+            if (gamepad1.a){
+                robot.setKickerLeftPosition(kickerBackPos);
+            } else {
+                robot.setKickerLeftPosition(kickerForwardPos);
+            }
+
+            robot.setIntakePower(intake);
+            robot.setOuttakePower(outtake);
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");

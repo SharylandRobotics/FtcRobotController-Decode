@@ -48,6 +48,9 @@ public class RobotCentric extends LinearOpMode {
         double lateral;
         double yaw;
 
+        double intake;
+        double outtake;
+
         // Initialize all motors, IMU, and hardware configuration
         robot.init();
 
@@ -74,6 +77,12 @@ public class RobotCentric extends LinearOpMode {
 
             // Apply joystick inputs directly to robot-centric drive control
             robot.driveRobotCentric(axial, lateral, yaw);
+
+            intake = gamepad1.right_trigger;
+            outtake = gamepad1.left_trigger;
+
+            robot.setIntakePower(intake);
+            robot.setOuttakePower(outtake);
 
             // Display control instructions and current input values to Driver Station
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
