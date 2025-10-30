@@ -46,8 +46,18 @@ public class FieldCentric extends LinearOpMode {
         double axial    = 0; // forward/back (+ forward)
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
+
         boolean servoOn = false;
         boolean lastServoState = false;
+
+        boolean shooterOn = false;
+        boolean lastShooterState = false;
+
+        boolean intakeOn = false;
+        boolean lastIntakeState = false;
+
+        boolean intakeServoOn = false;
+        boolean lastIntakeServoState = false;
         // --- INIT PHASE ---
         // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
         // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
@@ -71,17 +81,34 @@ public class FieldCentric extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             //shooting mechanism
-            double x12 = gamepad1.right_trigger;
-            if(x12 > .5){
-                robot.shootMotors(5);
 
+            boolean currentShooterState = (gamepad1.right_trigger > .5);
+            if(currentShooterState && !lastShooterState){
+                shooterOn = !shooterOn;
             }
-            //intake mechanism
-            double x13 = gamepad1.left_trigger;
-            if(x13>.5){
-                robot.startIntakeMotor(5);
+            if(shooterOn){
+                robot.turretPower(1);
             }
-            //turret / hood servo
+            else{
+                robot.turretPower(0);
+            }
+            lastShooterState = currentShooterState;
+
+            boolean currentIntakeState = (gamepad1.left_trigger > .5);
+
+            if(currentIntakeState && !lastIntakeState){
+                intakeOn = !intakeOn;
+            }
+            if(intakeOn){
+                robot.intakePower(-.5);
+            }
+            else{
+                robot.intakePower(0);
+            }
+            lastIntakeState = currentIntakeState;
+
+
+            //hood servo
 
             boolean currentServoState = (gamepad1.bWasPressed());
             if(currentServoState && !lastServoState){
@@ -94,6 +121,20 @@ public class FieldCentric extends LinearOpMode {
                 robot.setHoodPositions(0.0);
             }
             lastServoState = currentServoState;
+
+            // intake servo
+
+            boolean currentIntakeServoState = (gamepad1.aWasPressed());
+            if(currentIntakeServoState && !lastIntakeServoState){
+                intakeServoOn = !intakeServoOn;
+            }
+            if(intakeServoOn){
+                robot.setIntakeServo(0.0);
+            }
+            else{
+                robot.setIntakeServo(1);
+            }
+            lastIntakeServoState = currentIntakeServoState;
 
 
             // Keep vision fresh before using pose values each loop
@@ -138,9 +179,7 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
 
             String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
-            telemetry.addData("Obelisk", motif);
 
-            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
             telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
             telemetry.addData("Aim",  "horiz=%.1f in  aboveHoriz=%s",
                     horiz,
@@ -158,9 +197,15 @@ public class FieldCentric extends LinearOpMode {
 
 
             telemetry.addData("-", "-------");
+            telemetry.addData("Obelisk", motif);
+            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
+
+            telemetry.addData("Intake Servo Up/Down", "Button A toggle");
             telemetry.addData("Hood Servo Up/Down", "Button B toggle");
-            telemetry.addData("Turret motor shooter", "Right Trigger toggle");
-            telemetry.addData("intake shooter", "Left Trigger toggle");
+
+            telemetry.addData("Turret Motor", "Right Trigger toggle");
+            telemetry.addData("Intake Motor", "Left Trigger toggle");
+
             telemetry.addData("Drive to tag", "Hold Right Bumper");
             telemetry.addData(" Slow drive to tag", "Hold Left Bumper");
 

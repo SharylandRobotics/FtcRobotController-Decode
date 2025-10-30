@@ -94,7 +94,7 @@ public class RobotHardware {
 
     public static final double MID_SERVO       =  0;
     // intake servo
-    //private Servo intakeServo;
+    private Servo intakeServo;
     // intake motor
     private DcMotor intakeMotor;
     //turret motor
@@ -163,8 +163,8 @@ public class RobotHardware {
         hood = myOpMode.hardwareMap.get(Servo.class, "hood_servo");
         hood.setPosition(MID_SERVO);
         // second servo
-        //intakeServo = myOpMode.hardwareMap.get(Servo.class, "intake_servo");
-        //intakeServo.setPosition(MID_SERVO);
+        intakeServo = myOpMode.hardwareMap.get(Servo.class, "intake_servo");
+        intakeServo.setPosition(1);
         //intake motor
         intakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "intake_motor");
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -318,20 +318,23 @@ public class RobotHardware {
     public void setHoodPositions(double position) {
         hood.setPosition(position);
     }
-    /*public void setIntakeServo(double position){
+    public void setIntakeServo(double position){
         intakeServo.setPosition(position);
     }
 
+
+
+
+    //turret
+    public void turretPower(double power){
+        turretMotor.setPower(power);
+    }
     // intake motor
     public void intakePower(double power){
         intakeMotor.setPower(power);
     }
 
-     */
-    //turret
-    public void turretPower(double power){
-        turretMotor.setPower(power);
-    }
+
 // auto methods
 // Inertial Measurement Unit (IMU) for heading and orientation
 
