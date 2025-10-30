@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team12395.auto;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -14,6 +16,9 @@ public class AutoByEncoder extends LinearOpMode {
 
     @Override
     public void runOpMode(){
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
         robot.init();
         robot.resetDriveEncoder();
 
@@ -22,13 +27,11 @@ public class AutoByEncoder extends LinearOpMode {
         waitForStart();
 
         robot.setShooterVelocity(800);
-        robot.setHoodAngle(0.65);
+        robot.setHoodAngle(0);//0.65
         //5 deg
 
-        robot.setTurretPositionRelative(35);
-        robot.driveEncoder( AXIAL_SPEED, -36, 36, 36, -36);
-
-        sleep(1200);
+        //robot.setTurretPositionRelative(35);
+        robot.driveStraight(AXIAL_SPEED, -40, 0);
 
         //robot.setTurretPositionAbsolute(90);
         //robot.processObelisk();
@@ -38,6 +41,21 @@ public class AutoByEncoder extends LinearOpMode {
         telemetry.addData("Offset: ", robot.homeToAprilTag());
         telemetry.update();
         robot.setTurretPositionRelative(robot.homeToAprilTag());
+
+        sleep(500);
+        robot.setArmPos(0.7);
+        sleep(750);
+        robot.setArmPos(1);
+        sleep(750);
+        robot.spindexerHandler(120);
+
+        robot.setHoodAngle(0.4);
+
+        while(robot.spindexer.isBusy()){
+            telemetry.addData("waiting for spindexer...", "");
+            telemetry.update();
+        }
+        telemetry.clear();
 
         sleep(500);
 
@@ -53,21 +71,7 @@ public class AutoByEncoder extends LinearOpMode {
         }
         telemetry.clear();
 
-        sleep(750);
-
-        robot.setArmPos(0.7);
-        sleep(750);
-        robot.setArmPos(1);
-        sleep(750);
-        robot.spindexerHandler(120);
-
-        while(robot.spindexer.isBusy()){
-            telemetry.addData("waiting for spindexer...", "");
-            telemetry.update();
-        }
-        telemetry.clear();
-
-        sleep(750);
+        sleep(500);
 
         robot.setArmPos(0.7);
         sleep(750);
@@ -82,21 +86,23 @@ public class AutoByEncoder extends LinearOpMode {
 
         robot.spindexerHandler(60);
 
-        robot.driveEncoder(AXIAL_SPEED, -20, 20, 20 ,-20);
+        robot.turnToHeading(0.2, 45);
+
+        robot.driveEncoder(AXIAL_SPEED, -10, 10, 10 ,-10);
 
         robot.setIntakeSpeed(-1000);
 
-        robot.driveStraight(AXIAL_SPEED, 10, 0);
+        robot.driveStraight(AXIAL_SPEED, 14, 45);
+        robot.driveStraight(0.3, 4, 45);
 
-        robot.driveStraight(0.2, 10, 0);
+        sleep(250);
+        robot.spindexerHandler(120);
+        sleep(600);
+        robot.driveStraight(0.2, 5, robot.getHeading());
         sleep(650);
         robot.spindexerHandler(120);
         sleep(600);
-        robot.driveStraight(0.2, 5, 0);
-        sleep(650);
-        robot.spindexerHandler(120);
-        sleep(600);
-        robot.driveStraight(0.2, 5, 0);
+        robot.driveStraight(0.2, 5, robot.getHeading());
         sleep(650);
         robot.setIntakeSpeed(0);
 
@@ -106,28 +112,14 @@ public class AutoByEncoder extends LinearOpMode {
 
         // repeat shooting sequence
 
-        robot.setShooterVelocity(850);
-        robot.setHoodAngle(0.5);
-        robot.driveStraight(AXIAL_SPEED, -30, 0);
+        robot.setTurretPositionRelative(45);
+        robot.setShooterVelocity(800);
+        robot.setHoodAngle(0.4);
+        robot.driveStraight(AXIAL_SPEED, -22,robot.getHeading());
 
 
-        robot.setTurretPositionRelative(robot.homeToAprilTag());
-
-        sleep(1000);
-
-        robot.setArmPos(0.7);
-        sleep(750);
-        robot.setArmPos(1);
-        sleep(750);
-        robot.spindexerHandler(120);
-
-        while(robot.spindexer.isBusy()){
-            telemetry.addData("waiting for spindexer...", "");
-            telemetry.update();
-        }
-        telemetry.clear();
-
-        sleep(750);
+        robot.setTurretPositionRelative(robot.homeToAprilTag() - 5* (robot.homeToAprilTag()/Math.abs(robot.homeToAprilTag())) );
+        sleep(500);
 
         robot.setArmPos(0.7);
         sleep(750);
@@ -141,7 +133,21 @@ public class AutoByEncoder extends LinearOpMode {
         }
         telemetry.clear();
 
+        sleep(500);
+
+        robot.setArmPos(0.7);
         sleep(750);
+        robot.setArmPos(1);
+        sleep(750);
+        robot.spindexerHandler(120);
+
+        while(robot.spindexer.isBusy()){
+            telemetry.addData("waiting for spindexer...", "");
+            telemetry.update();
+        }
+        telemetry.clear();
+
+        sleep(500);
 
         robot.setArmPos(0.7);
         sleep(750);
@@ -153,16 +159,17 @@ public class AutoByEncoder extends LinearOpMode {
         // end shooting sequence
 
         // strafe to next balls
+        /*
 
         robot.spindexerHandler(60);
 
-        robot.driveEncoder(AXIAL_SPEED, 0, 48, 48, 0);
 
-        robot.driveEncoder(AXIAL_SPEED, -24, 24, 24, -24);
+        robot.driveEncoder(AXIAL_SPEED, -28, 28, 28, -28);
+
+        robot.driveStraight(0.6, 24, 0);
 
         robot.setIntakeSpeed(-1000);
 
-        robot.driveStraight(0.2, 10, 0);
         sleep(650);
         robot.spindexerHandler(120);
         sleep(600);
@@ -173,6 +180,8 @@ public class AutoByEncoder extends LinearOpMode {
         robot.driveStraight(0.2, 5, 0);
         sleep(650);
         robot.setIntakeSpeed(0);
+
+         */
 
     }
 

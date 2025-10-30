@@ -77,12 +77,11 @@ public class FieldCentric extends LinearOpMode {
         double slewRate = 0;
 
         double prevHeading = 0;
-        double armClock = 11;
+        double armClock = 9;
         int lastTrackingClock = 10;
 
         boolean xToggle = false;
 
-        NormalizedRGBA RGBcolor;
         float[] hsvValues = new float[3];
 
         robot.init();
@@ -99,8 +98,6 @@ public class FieldCentric extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
-
-            RGBcolor = robot.colorSensor.getNormalizedColors();
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
@@ -151,7 +148,7 @@ public class FieldCentric extends LinearOpMode {
                 spinAngle = 120;
             }
 
-            if (!robot.spindexer.isBusy() && armClock > 10) {
+            if (!robot.spindexer.isBusy() && armClock > 8) {
                 if (gamepad2.leftBumperWasPressed()) { // ccw
                     robot.spindexerHandler((int) spinAngle);
                 } else if (gamepad2.rightBumperWasPressed()) { // cw
@@ -182,7 +179,7 @@ public class FieldCentric extends LinearOpMode {
                         farFudge *= errorDeg/Math.abs(errorDeg);
                     }
 
-                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading) + farFudge);
+                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading) - farFudge);
                     lastTrackingClock = 0;
                 } else if (lastTrackingClock < 2000) {
 
@@ -200,7 +197,7 @@ public class FieldCentric extends LinearOpMode {
 
             robot.setArmPos(armPos);
 
-            Color.colorToHSV(RGBcolor.toColor(), hsvValues);
+            Color.RGBToHSV(robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue(), hsvValues);
 
             // Telemetry for drivers + debugging
             telemetry.addData("Controls G2", "Left & Right Bumpers : Spindexer | B : Arm");
@@ -208,13 +205,13 @@ public class FieldCentric extends LinearOpMode {
                     "\n | Left & Right Dpad : Hood Angle | Up & Down Dpad : Velocity");
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            telemetry.addData("Colors (HSV): ",  "H=%d%n S=%d%n V=%d%n ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ",  hsvValues[0],  hsvValues[1], hsvValues[2]);
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
-            if (armClock <= 10){
+            if (armClock <= 8){
                 armClock++;
             }
 
