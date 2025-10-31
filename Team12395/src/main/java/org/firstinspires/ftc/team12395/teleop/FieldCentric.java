@@ -33,7 +33,6 @@ import android.graphics.Color;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
@@ -54,8 +53,8 @@ public class FieldCentric extends LinearOpMode {
     public static double indexerTarget = 0;
 
     public static double preSetVelocity = 1100;
-    public static double preSetAngleFar = 0.69;
-    public static double preSetAngleClose = 0.2;
+    public static double preSetAngleFar = 0.75;
+    public static double preSetAngleClose = 0.4;
 
     public static double armPos = 1;
 
@@ -80,9 +79,11 @@ public class FieldCentric extends LinearOpMode {
         double armClock = 9;
         int lastTrackingClock = 10;
 
-        boolean xToggle = false;
+        int autoShootClock = 0;
 
-        float[] hsvValues = new float[3];
+        boolean xToggle = false;
+        boolean autoSense = false;
+
 
         robot.init();
 
@@ -109,12 +110,12 @@ public class FieldCentric extends LinearOpMode {
             velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
             if (gamepad1.xWasPressed()){
                 velocity = preSetVelocity;
-                angle = 0.69;
+                angle = preSetAngleFar;
             } else if (gamepad1.bWasPressed()){
                 velocity = 0;
             } else if (gamepad1.aWasPressed()){
                 velocity = 800;
-                angle = 0.4;
+                angle = preSetAngleClose;
             }
 
             angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
@@ -140,29 +141,61 @@ public class FieldCentric extends LinearOpMode {
                 robot.setIntakeSpeed(intakeVel);
             }
 
-
-
-            if (gamepad2.a){
-                spinAngle = 60;
-            } else {
-                spinAngle = 120;
+            if (gamepad1.dpadLeftWasPressed() ){
+                autoSense = true;
+            } else if (gamepad1.dpadRightWasPressed()){
+                autoSense = false;
             }
 
-            if (!robot.spindexer.isBusy() && armClock > 8) {
-                if (gamepad2.leftBumperWasPressed()) { // ccw
-                    robot.spindexerHandler((int) spinAngle);
-                } else if (gamepad2.rightBumperWasPressed()) { // cw
-                    robot.spindexerHandler((int) -spinAngle);
+            if (autoSense && !robot.spindexer.isBusy()){
+                boolean done = robot.senseAutomaticSequence();
+                if (done){
+                    autoSense = false;
                 }
             }
 
-            if (gamepad2.b){
-                armPos =  0.7;
-                armClock = 0;
+            // gamepad 2 --
+
+            if (gamepad2.dpad_up){
+                if (autoShootClock >= 0 && (robot.spindexerTarget % 120) == 0) {
+                    robot.shootAutomaticSequence(autoShootClock);
+                    autoShootClock++;
+                    if (autoShootClock > 11) {
+                        autoShootClock = 0;
+                    }
+                }
+            } else {
+                autoShootClock = 0;
+
+
+                if (gamepad2.a) {
+                    spinAngle = 60;
+                } else {
+                    spinAngle = 120;
+                }
+
+                if (!robot.spindexer.isBusy() && armClock > 8) {
+                    if (gamepad2.leftBumperWasPressed()) { // ccw
+                        robot.spindexerHandler((int) spinAngle);
+                    } else if (gamepad2.rightBumperWasPressed()) { // cw
+                        robot.spindexerHandler((int) -spinAngle);
+                    }
+                }
+
+                if (gamepad2.b) {
+                    armPos = 0.7;
+                    armClock = 0;
+                }
+                if (gamepad2.bWasReleased()) {
+                    armPos = 1;
+                    armClock = 0;
+                }
+
+                robot.setArmPos(armPos);
             }
-            if (gamepad2.bWasReleased()){
-                armPos = 1;
-                armClock = 0;
+
+            if (autoShootClock < 0){
+                autoShootClock++;
             }
 
             if (gamepad2.xWasPressed()){
@@ -179,7 +212,7 @@ public class FieldCentric extends LinearOpMode {
                         farFudge *= errorDeg/Math.abs(errorDeg);
                     }
 
-                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading) - farFudge);
+                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading) + farFudge);
                     lastTrackingClock = 0;
                 } else if (lastTrackingClock < 2000) {
 
@@ -195,17 +228,16 @@ public class FieldCentric extends LinearOpMode {
 
             prevHeading = robot.getHeading();
 
-            robot.setArmPos(armPos);
 
-            Color.RGBToHSV(robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue(), hsvValues);
 
             // Telemetry for drivers + debugging
-            telemetry.addData("Controls G2", "Left & Right Bumpers : Spindexer | B : Arm");
-            telemetry.addData("Controls G1", "Left & Right Triggers : Turret " +
-                    "\n | Left & Right Dpad : Hood Angle | Up & Down Dpad : Velocity");
+            telemetry.addData("color?: ", robot.scanColor());
+            telemetry.addData("busy?: ", robot.spindexer.isBusy());
+            telemetry.addData("current Chamber: ", robot.chamber);
+            telemetry.addData("current Mag: ", mag);
+            telemetry.addData("current Pattern: ", pattern);
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ",  hsvValues[0],  hsvValues[1], hsvValues[2]);
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
             telemetry.update();
 

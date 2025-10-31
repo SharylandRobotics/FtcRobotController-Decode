@@ -56,7 +56,7 @@ public class RobotHardware {
     public ColorSensor colorSensor;
 
     public static String mag = "GPP";
-    public static String pattern = "000";
+    public static String pattern = "PPG";// a pattern is better than no pattern
     public int chamber = 0;
 
     // Drivetrain motors for a mecanum chassis
@@ -83,7 +83,7 @@ public class RobotHardware {
     public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
-    private int spindexerTarget = 0;
+    public int spindexerTarget = 0;
 
     // Servos
     private Servo xArm, hoodAngle, hoodAngle2;
@@ -133,6 +133,9 @@ public class RobotHardware {
     static final double P_AXIAL_GAIN = 0.03;
     static final double P_LATERAL_GAIN = 0.03;
     static final double P_YAW_GAIN = 0.02;
+
+    public int[] prevColor = null;
+    public int[] currentColor;
 
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
@@ -791,18 +794,18 @@ public class RobotHardware {
                     return new int[] {0, 2};// don't move, turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
                     // if the color to my right isn't green, turn left, then turn right twice
-                    return new int[] {-1, 2};
+                    return new int[] {1, 2};
                 } else {
                     // the color to my right is green, turn right, then turn right twice
-                    return new int[] {1, 2};
+                    return new int[] {-1, 2};
                 }
 
             } else if (pattern.equals("PGP")){
                 if (greenIndex == chamber){ // if green is selected
-                    return new int[] {-1, 2}; //  turn left, then turn right twice
+                    return new int[] {1, 2}; //  turn left, then turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
                     // if the color to my right isn't green, turn right, then turn right twice
-                    return new int[] {1, 2};
+                    return new int[] {-1, 2};
                 } else {
                     // the color to my right is green, don't move, turn right twice
                     return new int[] {0, 2};
@@ -810,13 +813,13 @@ public class RobotHardware {
 
             } else if (pattern.equals("PPG")){
                 if (greenIndex == chamber){ // if green is selected
-                    return new int[] {1, 2}; //  turn right, then turn right twice
+                    return new int[] {-1, 2}; //  turn right, then turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
                     // if the color to my right isn't green, don't move, turn right twice
                     return new int[] {0, 2};
                 } else {
                     // the color to my right is green, turn left, then turn right twice
-                    return new int[] {-1, 2};
+                    return new int[] {1, 2};
                 }
             }
         }
@@ -824,15 +827,22 @@ public class RobotHardware {
     }
 
     public char scanColor(){
-        float[] hsvValues = new float[3];
-        Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
+        currentColor = new int[] {colorSensor.red(), colorSensor.green(), colorSensor.red()};
+        if (currentColor != prevColor) {
+            float[] hsvValues = new float[3];
+            Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
 
-        if (hsvValues[0] > 250 || hsvValues[0] <= 40){
-            return 'P';
-        } else if (hsvValues[0] > 90 && hsvValues[0] < 160){
-            return 'G';
+            prevColor = currentColor;
+
+            if (hsvValues[0] > 250 || hsvValues[0] <= 40) {
+                return 'P';
+            } else if (hsvValues[0] > 90 && hsvValues[0] < 160) {
+                return 'G';
+            } else {
+                return '0';
+            }
         } else {
-            return '0';
+            return 'N';
         }
     }
 
@@ -844,40 +854,51 @@ public class RobotHardware {
         return null;
     }
 
-    public void shootAutomaticSequence(){
+    public void shootAutomaticSequence(int clock){
         if (!spindexer.isBusy()) {
-            myOpMode.sleep(500);
+            if (clock == 0) {// 500/50
+                setArmPos(0.7);
+                StringBuilder magBuilder = new StringBuilder(mag);
+                magBuilder.setCharAt(chamber, '0');
+                mag = magBuilder.toString();
+            } else if (clock == 2+ 3) {// 750/50
+                setArmPos(1);
+            } else if (clock == 2+3+ 3){
+                spindexerHandler(-120);
+            }
 
-            setArmPos(0.7);
-            myOpMode.sleep(750);
-            setArmPos(1);
-            myOpMode.sleep(750);
-            spindexerHandler(-120);
+
         }
     }
 
     public boolean senseAutomaticSequence(){
-        if (!spindexer.isBusy() && scanColor() != '0'){
+        char scannedColor = scanColor();
+        if (scannedColor != '0'){
+            myOpMode.telemetry.addData("Found color ", "");
             // runs when ball is already secured in socket
             StringBuilder magBuilder = new StringBuilder(mag);
-            magBuilder.setCharAt(chamber, scanColor());
+            magBuilder.setCharAt(chamber, scannedColor);
             mag = magBuilder.toString();
-            if (solvePattern() == null ){
-                if (mag.charAt((chamber + 1) % mag.length())  == '0'){
+
+            int [] solution = solvePattern();
+            if (solution == null ){
+                if (mag.charAt( (chamber + 1) % mag.length())  == '0'){
                     spindexerHandler(-120);//cw
-                    return false;
+                    myOpMode.telemetry.addData("turning right", "...");
                 } else {
                     spindexerHandler(120);//ccw
-                    return false;
+                    myOpMode.telemetry.addData("turning left", "...");
                 }
+                return false;
             } else {
                 // turn to solution
-                spindexerHandler(solvePattern()[0]* 120);
+                spindexerHandler(solution[0]* 120);
+                myOpMode.telemetry.addData("solving", "...");
                 return true;
             }
 
+        } else {
+            return false;
         }
-
-        return false;
     }
 }
