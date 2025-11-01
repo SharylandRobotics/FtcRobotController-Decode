@@ -29,14 +29,13 @@ public class AutoByEncoderBlue extends LinearOpMode {
         robot.setTurretPositionRelative(70);
 
         robot.setShooterVelocity(800);
-        robot.setHoodAngle(0);//0.65
+        robot.setHoodAngle(0.1);//0.65
         //5 deg
 
         //robot.setTurretPositionRelative(35);
-        robot.driveStraight(AXIAL_SPEED, -40, 0);
+        robot.driveStraight(AXIAL_SPEED, -40, 0, true);
 
         sleep(200);
-        robot.processObelisk();
         robot.setTurretPositionRelative(-70);
         robot.spindexerHandler(120*robot.solvePattern()[0]);
         sleep(1000);
@@ -103,17 +102,17 @@ public class AutoByEncoderBlue extends LinearOpMode {
 
         robot.setIntakeSpeed(-1000);
 
-        robot.driveStraight(AXIAL_SPEED, 14, 45);
-        robot.driveStraight(0.3, 4.5, 45);
+        robot.driveStraight(AXIAL_SPEED, 14, 45, false);
+        robot.driveStraight(0.3, 4.25, 45, false);
 
         sleep(250);
         robot.spindexerHandler(120);
         sleep(600);
-        robot.driveStraight(0.2, 5, robot.getHeading());
+        robot.driveStraight(0.2, 5, robot.getHeading(), false);
         sleep(650);
         robot.spindexerHandler(120);
         sleep(600);
-        robot.driveStraight(0.2, 5, robot.getHeading());
+        robot.driveStraight(0.2, 5, robot.getHeading(), false);
         sleep(650);
         robot.setIntakeSpeed(0);
 
@@ -130,7 +129,7 @@ public class AutoByEncoderBlue extends LinearOpMode {
         robot.setTurretPositionRelative(45);
         robot.setShooterVelocity(800);
         robot.setHoodAngle(0.4);
-        robot.driveStraight(AXIAL_SPEED, -22,robot.getHeading());
+        robot.driveStraight(AXIAL_SPEED, -22,robot.getHeading(), false);
 
 
         robot.setTurretPositionRelative(robot.homeToAprilTagBlue() - 5* (robot.homeToAprilTagBlue()/Math.abs(robot.homeToAprilTagBlue())) );

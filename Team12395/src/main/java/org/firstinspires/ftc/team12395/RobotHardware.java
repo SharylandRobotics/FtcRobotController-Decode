@@ -583,7 +583,7 @@ public class RobotHardware {
         return new double[]{ xDistance, yDistance, groundDistance};
     }
 
-    public void driveStraight(double maxAxialSpeed, double distance, double heading) {
+    public void driveStraight(double maxAxialSpeed, double distance, double heading, boolean scan) {
 
         if (myOpMode.opModeIsActive()) {
 
@@ -620,6 +620,10 @@ public class RobotHardware {
                 // Invert correction when backing up
                 if (distance < 0)
                     yawSpeed *= -1.0;
+
+                if (scan){
+                    processObelisk();
+                }
 
                 driveRobotCentric(axialSpeed, 0, yawSpeed);
 

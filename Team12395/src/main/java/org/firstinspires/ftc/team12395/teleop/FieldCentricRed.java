@@ -233,8 +233,7 @@ public class FieldCentricRed extends LinearOpMode {
 
 
             // Telemetry for drivers + debugging
-            telemetry.addData("color?: ", robot.scanColor());
-            telemetry.addData("busy?: ", robot.spindexer.isBusy());
+            telemetry.addData("CAMERA STATUS: ", xToggle ? " ON " : " OFF ");
             telemetry.addData("current Chamber: ", robot.chamber);
             telemetry.addData("current Mag: ", mag);
             telemetry.addData("current Pattern: ", pattern);
