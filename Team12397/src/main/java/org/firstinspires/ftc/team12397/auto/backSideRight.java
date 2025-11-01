@@ -32,16 +32,13 @@ package org.firstinspires.ftc.team12397.auto;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team12397.RobotHardware;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-
-import java.util.List;
 
 import static org.firstinspires.ftc.team12397.RobotHardware.*;
 
-@Autonomous(name = "Gyro", group = "opMode")
+@Autonomous(name = "backSideRight", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class Gyro extends LinearOpMode {
+public class backSideRight extends LinearOpMode {
 
 
     // Instantiate RobotHardware and link this OpMode
@@ -75,9 +72,9 @@ public class Gyro extends LinearOpMode {
 
               while(phase1){
 
-                  robot.driveStraight(AXIAL_SPEED, 60, 0);
-                  robot.turnToHeading(AXIAL_SPEED, -90);
-                  robot.driveStraight(AXIAL_SPEED, 24, 90);
+                  robot.driveStraight(AXIAL_SPEED, 24, 0);
+                  robot.turnToHeading(AXIAL_SPEED, 90);
+
                   //to due: calculate offset for auto  & config shoot motors & servo
                  // robot.autoDriveToGoalStep();
                   //robot.startIntakeMotor();

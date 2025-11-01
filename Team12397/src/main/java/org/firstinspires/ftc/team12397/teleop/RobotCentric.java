@@ -56,8 +56,7 @@ public class RobotCentric extends LinearOpMode {
         boolean intakeOn = false;
         boolean lastIntakeState = false;
 
-        boolean intakeServoOn = false;
-        boolean lastIntakeServoState = false;
+
         // --- INIT PHASE ---
         // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
         // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
@@ -124,19 +123,21 @@ public class RobotCentric extends LinearOpMode {
 
             // intake servo
 
-            boolean currentIntakeServoState = (gamepad1.aWasPressed());
-            if(currentIntakeServoState && !lastIntakeServoState){
-                intakeServoOn = !intakeServoOn;
-            }
-            if(intakeServoOn){
+            if(gamepad1.a){
+
                 robot.setIntakeServo(0);
             }
             else{
                 robot.setIntakeServo(1);
             }
-            lastIntakeServoState = currentIntakeServoState;
 
+            //inverse intake
+            if(gamepad1.x){
+                intakeOn = false;
+                lastIntakeState = !lastIntakeState;
+                robot.intakePower(.5);
 
+            }
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
 
@@ -144,9 +145,9 @@ public class RobotCentric extends LinearOpMode {
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
 
-            axial = -gamepad1.left_stick_y * scale;
-            lateral = gamepad1.left_stick_x * scale;
-            yaw = gamepad1.right_stick_x * scale;
+            axial = -gamepad2.left_stick_y * scale;
+            lateral = gamepad2.left_stick_x * scale;
+            yaw = gamepad2.right_stick_x * scale;
 
             // --- Vision helpers for concise telemetry ---
             Integer goalId = robot.getGoalTagId();
@@ -197,10 +198,12 @@ public class RobotCentric extends LinearOpMode {
 
 
             telemetry.addData("-", "-------");
+
             telemetry.addData("Obelisk", motif);
             telemetry.addData("Goal", (goalId != null) ? goalId : "–");
 
-            telemetry.addData("Intake Servo Up/Down", "Button A toggle");
+            telemetry.addData("Intake Servo Up/Down", "Hold A");
+            telemetry.addData("Reverse Intake Motor", "Hold x");
             telemetry.addData("Hood Servo Up/Down", "Button B toggle");
 
             telemetry.addData("Turret Motor", "Right Trigger toggle");

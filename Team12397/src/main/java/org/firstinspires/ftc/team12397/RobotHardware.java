@@ -658,13 +658,17 @@ public class RobotHardware {
     public void shootMotors(double durationSeconds) {
         // Turn both turret and intake on full speed
         turretMotor.setPower(1);
-        intakeMotor.setPower(-1);
 
         myOpMode.sleep((long)(durationSeconds * 1000)); // Wait for specified time
-
+        /*
+        intakeMotor.setPower(-1);
+        intakeServo.setPosition(0);
+        intakeServo.setPosition(0);
         // Turn motors off
         turretMotor.setPower(0);
         intakeMotor.setPower(0);
+        */
+
     }
 
     public void startIntakeMotor(double durationSeconds) {
