@@ -9,8 +9,8 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
-@Autonomous(name =  "Auto By Encoder", group = "Robot")
-public class AutoByEncoder extends LinearOpMode {
+@Autonomous(name =  "Auto By Encoder (Blue)", group = "Robot")
+public class AutoByEncoderBlue extends LinearOpMode {
     RobotHardware robot = new RobotHardware(this);
     ElapsedTime runtime = new ElapsedTime();
 
@@ -26,6 +26,8 @@ public class AutoByEncoder extends LinearOpMode {
 
         waitForStart();
 
+        robot.setTurretPositionRelative(70);
+
         robot.setShooterVelocity(800);
         robot.setHoodAngle(0);//0.65
         //5 deg
@@ -33,21 +35,30 @@ public class AutoByEncoder extends LinearOpMode {
         //robot.setTurretPositionRelative(35);
         robot.driveStraight(AXIAL_SPEED, -40, 0);
 
+        sleep(200);
+        robot.processObelisk();
+        robot.setTurretPositionRelative(-70);
+        robot.spindexerHandler(120*robot.solvePattern()[0]);
+        sleep(1000);
+
         //robot.setTurretPositionAbsolute(90);
         //robot.processObelisk();
         //robot.pattern.
         // shooter setup
 
-        telemetry.addData("Offset: ", robot.homeToAprilTag());
+        telemetry.addData("Offset: ", robot.homeToAprilTagBlue());
         telemetry.update();
-        robot.setTurretPositionRelative(robot.homeToAprilTag());
+        while (Double.isNaN(robot.homeToAprilTagBlue())){
+            telemetry.addData("scanning","");
+        }
+        robot.setTurretPositionRelative(robot.homeToAprilTagBlue());
 
         sleep(500);
         robot.setArmPos(0.7);
         sleep(750);
         robot.setArmPos(1);
         sleep(750);
-        robot.spindexerHandler(120);
+        robot.spindexerHandler(-120);
 
         robot.setHoodAngle(0.4);
 
@@ -63,7 +74,7 @@ public class AutoByEncoder extends LinearOpMode {
         sleep(750);
         robot.setArmPos(1);
         sleep(750);
-        robot.spindexerHandler(120);
+        robot.spindexerHandler(-120);
 
         while(robot.spindexer.isBusy()){
             telemetry.addData("waiting for spindexer...", "");
@@ -93,7 +104,7 @@ public class AutoByEncoder extends LinearOpMode {
         robot.setIntakeSpeed(-1000);
 
         robot.driveStraight(AXIAL_SPEED, 14, 45);
-        robot.driveStraight(0.3, 4, 45);
+        robot.driveStraight(0.3, 4.5, 45);
 
         sleep(250);
         robot.spindexerHandler(120);
@@ -106,7 +117,11 @@ public class AutoByEncoder extends LinearOpMode {
         sleep(650);
         robot.setIntakeSpeed(0);
 
+        robot.setMagManual("GPP");
+
         robot.spindexerHandler(60);
+        robot.spindexerHandler(120*robot.solvePattern()[0]);
+
 
         // end pick up
 
@@ -118,14 +133,14 @@ public class AutoByEncoder extends LinearOpMode {
         robot.driveStraight(AXIAL_SPEED, -22,robot.getHeading());
 
 
-        robot.setTurretPositionRelative(robot.homeToAprilTag() - 5* (robot.homeToAprilTag()/Math.abs(robot.homeToAprilTag())) );
+        robot.setTurretPositionRelative(robot.homeToAprilTagBlue() - 5* (robot.homeToAprilTagBlue()/Math.abs(robot.homeToAprilTagBlue())) );
         sleep(500);
 
         robot.setArmPos(0.7);
         sleep(750);
         robot.setArmPos(1);
         sleep(750);
-        robot.spindexerHandler(120);
+        robot.spindexerHandler(-120);
 
         while(robot.spindexer.isBusy()){
             telemetry.addData("waiting for spindexer...", "");
@@ -139,7 +154,7 @@ public class AutoByEncoder extends LinearOpMode {
         sleep(750);
         robot.setArmPos(1);
         sleep(750);
-        robot.spindexerHandler(120);
+        robot.spindexerHandler(-120);
 
         while(robot.spindexer.isBusy()){
             telemetry.addData("waiting for spindexer...", "");
@@ -155,6 +170,10 @@ public class AutoByEncoder extends LinearOpMode {
         sleep(750);
 
         robot.setShooterVelocity(0);
+        robot.setTurretPositionAbsolute(0);
+        robot.setHoodAngle(1);
+        robot.driveEncoder(AXIAL_SPEED, -20, 20, 20, -20);
+
 
         // end shooting sequence
 

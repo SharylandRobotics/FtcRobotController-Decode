@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
-import android.graphics.Color;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -38,9 +37,9 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
-@TeleOp(name="Field Centric", group="TeleOp")
+@TeleOp(name="Field Centric (Blue)", group="TeleOp")
 @Config
-public class FieldCentric extends LinearOpMode {
+public class FieldCentricBlue extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
@@ -53,7 +52,7 @@ public class FieldCentric extends LinearOpMode {
     public static double indexerTarget = 0;
 
     public static double preSetVelocity = 1100;
-    public static double preSetAngleFar = 0.75;
+    public static double preSetAngleFar = 0.8;
     public static double preSetAngleClose = 0.4;
 
     public static double armPos = 1;
@@ -206,7 +205,7 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (xToggle){
-                double errorDeg = robot.homeToAprilTag();
+                double errorDeg = robot.homeToAprilTagBlue();
 
                 if (!Double.isNaN(errorDeg) ) {
 

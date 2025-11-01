@@ -133,7 +133,7 @@ public class RobotHardware {
 
     static final double P_AXIAL_GAIN = 0.03;
     static final double P_LATERAL_GAIN = 0.03;
-    static final double P_YAW_GAIN = 0.02;
+    static final double P_YAW_GAIN = 0.04;
 
     public int[] prevColor = null;
     public int[] currentColor;
@@ -722,11 +722,13 @@ public class RobotHardware {
 
     public boolean processLLresult(){
         result = limelight.getLatestResult();
-        return result != null && result.isValid();
+        return ((result != null && result.isValid()) &&
+                (result.getFiducialResults() != null && !result.getFiducialResults().isEmpty()));
     }
 
-    public double homeToAprilTag(){
-        if (processLLresult()){
+    public double homeToAprilTagBlue(){
+        boolean check = processLLresult();
+        if (check){
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
             List<LLResultTypes.FiducialResult> fresultCC = fresult;
@@ -737,6 +739,37 @@ public class RobotHardware {
 
             for (LLResultTypes.FiducialResult fiducial : fresultCC){
                 if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 24){
+                    fresult.remove(fiducial);
+                }
+            }
+
+            if (!fresult.isEmpty()) {
+
+
+                double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
+
+                myOpMode.telemetry.addData("turning deg: ", tx);
+                return tx;
+
+            }
+
+        }
+        return Double.NaN;
+    }
+
+    public double homeToAprilTagRed(){
+        boolean check = processLLresult();
+        if (check){
+
+            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
+            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+
+            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Tags: ", fresult.size());
+
+
+            for (LLResultTypes.FiducialResult fiducial : fresultCC){
+                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 20){
                     fresult.remove(fiducial);
                 }
             }
@@ -824,6 +857,7 @@ public class RobotHardware {
                 }
             }
         }
+        myOpMode.telemetry.addData(":", mag, pattern, chamber);
         return null;
     }
 
@@ -902,4 +936,13 @@ public class RobotHardware {
             return false;
         }
     }
+
+    public void setMagManual(String set){
+        for (int i=0; i<3; i++) {
+            StringBuilder magBuilder = new StringBuilder(mag);
+            magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
+            mag = magBuilder.toString();
+        }
+    }
+
 }
