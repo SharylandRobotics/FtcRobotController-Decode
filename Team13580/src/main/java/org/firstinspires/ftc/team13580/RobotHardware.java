@@ -94,10 +94,10 @@ public class RobotHardware {
     // Student Note: Camera pose (robot frame). +X forward, +Y left, +Z up (in).
     // Pitch +15° = camera looks UP 15°. Update if you remount the camera.
     // TODO(students): Measure real offsets when you rely on precise vision assists.
-    private final Position cameraPosition = new Position(DistanceUnit.INCH,
-            0, 0, 0, 0);
-    private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, 15, 0, 0);
+   // private final Position cameraPosition = new Position(DistanceUnit.INCH,
+         //   0, 0, 0, 0);
+   // private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
+           // 0, 15, 0, 0);
 
     private AprilTagProcessor aprilTag = null;
 
@@ -194,7 +194,7 @@ public class RobotHardware {
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
-        initAprilTag();
+        //initAprilTag();
         kickerLeft.setPosition(.05);
         kicker.setPosition(.35);
     }
@@ -247,7 +247,7 @@ public class RobotHardware {
                         headingError, yawSpeed);
                 myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
                         frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-                updateAprilTagDetections();
+                //updateAprilTagDetections();
                 myOpMode.telemetry.update();
             }
 
@@ -281,7 +281,7 @@ public class RobotHardware {
                     headingError, yawSpeed);
             myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
                     frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            updateAprilTagDetections();
+            //updateAprilTagDetections();
             myOpMode.telemetry.update();
         }
 
@@ -309,7 +309,7 @@ public class RobotHardware {
                     headingError, yawSpeed);
             myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
                     frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            updateAprilTagDetections();
+            //updateAprilTagDetections();
             myOpMode.telemetry.update();
         }
 
@@ -399,7 +399,7 @@ public class RobotHardware {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
     }
-
+/*
     private void initAprilTag() {
         // Student Note: Build AprilTag processor with camera pose + intrinsics; start Dashboard stream.
         // TODO(students): If Dashboard video looks flipped, add a display‑only flip in a processor.
@@ -422,7 +422,7 @@ public class RobotHardware {
                 .addProcessor(aprilTag)
                 .build();
 
-        FtcDashboard.getInstance().startCameraStream(visionPortal, 0);
+        //FtcDashboard.getInstance().startCameraStream(visionPortal, 0);
         visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
@@ -530,7 +530,7 @@ public class RobotHardware {
         driveRobotCentric(axial, lateral, yaw);
         return true;
     }
-
+*/
     public void setKickerPosition(double pos){
         kicker.setPosition(pos);
     }

@@ -86,7 +86,7 @@ public class Gyro extends LinearOpMode {
             //robot.holdHeading(MAX_AUTO_YAW, 45.0, 0.5);
 
             //robot.driveStraight(MAX_AUTO_AXIAL, 17.0, 45.0);
-            //robot.turnToHeading(MAX_AUTO_YAW, 0.0);
+            //robot.turnToHeading(MAX_AUTO_YAW, 0.0);f
             //robot.holdHeading(MAX_AUTO_YAW, 0.0, 1.0);
 
             //robot.driveStraight(MAX_AUTO_AXIAL, -48.0, 0.0);
