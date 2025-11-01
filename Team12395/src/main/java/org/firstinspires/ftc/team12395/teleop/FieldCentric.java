@@ -99,6 +99,9 @@ public class FieldCentric extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
+            if (gamepad1.right_bumper){
+                axial *= 0.6; lateral *= 0.6; yaw *= 0.6;
+            }
 
             robot.driveFieldCentric(axial, lateral, yaw);
 

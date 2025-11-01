@@ -43,6 +43,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import java.util.Arrays;
 import java.util.List;
 @Config
 public class RobotHardware {
@@ -828,7 +829,7 @@ public class RobotHardware {
 
     public char scanColor(){
         currentColor = new int[] {colorSensor.red(), colorSensor.green(), colorSensor.red()};
-        if (currentColor != prevColor) {
+        if (!Arrays.equals(currentColor, prevColor)) {
             float[] hsvValues = new float[3];
             Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
 
@@ -873,7 +874,7 @@ public class RobotHardware {
 
     public boolean senseAutomaticSequence(){
         char scannedColor = scanColor();
-        if (scannedColor != '0'){
+        if (scannedColor != '0' && scannedColor != 'N'){
             myOpMode.telemetry.addData("Found color ", "");
             // runs when ball is already secured in socket
             StringBuilder magBuilder = new StringBuilder(mag);
