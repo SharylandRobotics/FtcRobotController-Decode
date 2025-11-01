@@ -195,6 +195,8 @@ public class RobotHardware {
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
         initAprilTag();
+        kickerLeft.setPosition(.05);
+        kicker.setPosition(.35);
     }
 
     public void driveStraight(double maxAxialSpeed, double distance, double heading) {

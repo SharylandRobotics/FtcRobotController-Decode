@@ -109,8 +109,13 @@ public class FieldCentric extends LinearOpMode {
                 robot.driveFieldCentric(axial, lateral, yaw);
             }
 
-            intake = gamepad1.right_trigger;
-            if (gamepad1.y){
+            if (gamepad1.right_trigger == 1) {
+                intake = .5;
+            } else {
+                intake = 0;
+            }
+
+            if (gamepad2.y){
                 outtake = 0.7;
             } else {
                 outtake = gamepad1.left_trigger;
