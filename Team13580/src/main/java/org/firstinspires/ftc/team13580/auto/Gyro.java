@@ -66,11 +66,19 @@ public class Gyro extends LinearOpMode {
 
             // Drive 24" forward, then turn and hold headings as defined
             robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
+            robot.setOuttakePower(1.0);
             //robot.turnToHeading(MAX_AUTO_YAW, -45.0);
            // robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
             sleep(2000);
+            robot.setOuttakePower(1.0);
             robot.setKickerLeftPosition(.35);
             robot.setKickerPosition(0);
+            sleep(3000);
+            robot.setOuttakePower(0);
+            robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
+          //  robot.turnToHeading(MAX_AUTO_YAW,45);
+           // robot.holdHeading(MAX_AuTO_YAW,);
+
 
 
             //robot.driveStraight(MAX_AUTO_AXIAL, 17.0, -45.0);
