@@ -37,15 +37,29 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 @TeleOp(name="Field Centric", group="TeleOp")
 @Config
-// TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class FieldCentric extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double baseBarrier = 0.13; // TODO placeholder, should be where elbow starts hitting the ground.
-    public static double barrierSlope = 0.5/(0.285-0.13); // TODO placeholder, should be the slope where elbow starts hitting ground and base being straight out.
-    public static double basePos, elbowPos, pinchPos, basePos2  = 0; // TODO placeholder, set correct starting pos and put in INIT
+    public static double velocity = 0;
+    public static double angle = 0.1;
+
+    public static double slewTarget = 0;
+    public static double maxTurnR = 90;
+    public static double maxTurnL = 180;
+
+    public static double indexerTarget = 0;
+
+    public static double preSetVelocity = 1100;
+    public static double preSetAngleFar = 0.69;
+    public static double preSetAngleClose = 0.2;
+
+    public static double armPos = 1;
+
+
+
+
 
     @Override
     public void runOpMode() {
@@ -54,9 +68,10 @@ public class FieldCentric extends LinearOpMode {
         double lateral  = 0; // strafe left/right (+ right)
         double yaw      = 0; // rotation (+ CCW/left turn)
 
-        elbowPos = 0.5;
-        pinchPos = 0.32;
+        double slewRate = 0;
 
+        boolean checkSpinBusy = false;
+        double armClock = 30;
 
         robot.init();
 
@@ -65,44 +80,67 @@ public class FieldCentric extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            axial   = -gamepad1.left_stick_y/2;
-            lateral =  gamepad1.left_stick_x/2;
-            yaw     =  gamepad1.right_stick_x/2;
+            axial   = -gamepad1.left_stick_y;
+            lateral =  gamepad1.left_stick_x;
+            yaw     =  gamepad1.right_stick_x;
+
+
+
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            // + goes down
-            basePos  += 0.015*(gamepad1.left_trigger - gamepad1.right_trigger);
+            slewRate = Math.abs(gamepad1.right_trigger - gamepad1.left_trigger)*0.085;
+            slewTarget = (gamepad1.left_trigger > 0 ? -maxTurnL : (gamepad1.right_trigger > 0 ? maxTurnR : robot.getCurrentTurretDegreePos() ));
 
-            elbowPos += (gamepad1.right_bumper ? 0.02 : 0) - (gamepad1.left_bumper ? 0.02 : 0);
-            if (gamepad1.bWasPressed()){
-                if (pinchPos != 0){
-                    pinchPos = 0;
-                }
-                else {
-                    pinchPos = 0.32;
+            robot.setTurretPositionAbsolute(slewTarget, slewRate);
+
+            velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
+            if (gamepad1.xWasPressed()){
+                velocity = preSetVelocity;
+            } else if (gamepad1.bWasPressed()){
+                velocity = 0;
+            }
+
+            angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
+            angle = Range.clip(angle, 0.19, 1);
+
+            robot.setShooterVelocity(velocity);
+            robot.setHoodAngle(angle);
+
+            if (!robot.spindexer.isBusy() && armClock > 30) {
+                if (gamepad2.leftBumperWasPressed()) {
+                    robot.setSpindexerRelativeAngle(120);
+                } else if (gamepad2.rightBumperWasPressed()) {
+                    robot.setSpindexerRelativeAngle(-120);
                 }
             }
 
-            basePos = Range.clip(basePos, 0, 0.285);
-            elbowPos = Range.clip(elbowPos, 0 ,1);
-
-            if (elbowPos <= (basePos*barrierSlope) -0.5 && basePos >= baseBarrier){
-                elbowPos = (basePos*barrierSlope )-0.5;
+            if (gamepad2.b){
+                armPos =  0.7;
+                armClock = 0;
+            }
+            if (gamepad2.bWasReleased()){
+                armPos = 1;
+                armClock = 0;
             }
 
-            robot.setBaseServo(basePos);
-            robot.setElbowPos(elbowPos);
-            robot.setPinchPos(pinchPos);
+            robot.setArmPos(armPos);
+
 
             // Telemetry for drivers + debugging
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
-            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
+            telemetry.addData("Controls G2", "Left & Right Bumpers : Spindexer | B : Arm");
+            telemetry.addData("Controls G1", "Left & Right Triggers : Turret " +
+                    "\n | Left & Right Dpad : Hood Angle | Up & Down Dpad : Velocity");
+            telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
+            telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
+            if (armClock <= 30){
+                armClock++;
+            }
         }
     }
 }

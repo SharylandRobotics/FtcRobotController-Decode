@@ -146,8 +146,8 @@ public class RobotHardware {
         // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
+                RevHubOrientationOnRobot.UsbFacingDirection.DOWN));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);

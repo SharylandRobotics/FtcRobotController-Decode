@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.team13588.teleop;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13588.RobotHardware;
@@ -71,6 +72,11 @@ public class RobotCentric extends LinearOpMode {
             axial = -gamepad1.left_stick_y * scale;
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
+
+            if (gamepad1.dpad_up) { axial = scale; }
+            if (gamepad1.dpad_down) { axial = -scale; }
+            if (gamepad1.dpad_right) { yaw = scale; }
+            if (gamepad1.dpad_left) { yaw = -scale; }
 
             // Apply joystick inputs directly to robot-centric drive control
             robot.driveRobotCentric(axial, lateral, yaw);

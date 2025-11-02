@@ -29,23 +29,51 @@
 
 package org.firstinspires.ftc.team12395;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.*;
+import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 public class RobotHardware {
 
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
 
+    public Limelight3A limelight;
+
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
+    private final double wheelDiameterInches = 3.77953;
+    private final double wheelsTicksPerRev = ((((1+(46./17))) * (1+(46./11))) * 28);
+    private final double wheelsTicksPerInch = wheelsTicksPerRev/(wheelDiameterInches*Math.PI);
+
+
+
+    public DcMotorEx turret, shooter, spindexer;
+
+    private final double spoolToTurretRatio = 4; // 4 rotations to 1
+    private final double turretTicksPerRevolution = spoolToTurretRatio*((((1+(46./17))) * (1+(46./11))) * 28);
+    private final double turretTicksPerDegree = turretTicksPerRevolution/360;
+    private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
+    private final int shooterMaxTPM = 2800;
+
+    private final double spoolToSpindexerRatio = 1;
+    private final double spindexerTicksPerRevolution = spoolToSpindexerRatio*((((1+(46./17))) * (1+(46./11))) * 28);
+    private final double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
+    private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
     // Servos
-    public Servo baseLeft, baseRight, elbowMid, pincher;
+    private Servo xArm, hoodAngle, gate;
+
+    // physics
+
+    private final double g = 9.81;
+    private final double xOffset = 5.5; //cm
+    private final double yOffset = 16.5*2.54; //cm
+    private final double verticalTargetDistance = 70-yOffset;
 
 
     // IMU is used for field-centric heading
@@ -61,23 +89,29 @@ public class RobotHardware {
      */
     public void init() {
         // --- HARDWARE MAP NAMES ---
+        //limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
+
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        baseLeft = myOpMode.hardwareMap.get(Servo.class, "base_left");
-        baseRight = myOpMode.hardwareMap.get(Servo.class, "base_right");
-        elbowMid = myOpMode.hardwareMap.get(Servo.class, "elbow_mid");
-        pincher = myOpMode.hardwareMap.get(Servo.class, "pincher");
+        turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+        shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
+        spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
+
+
+        xArm = myOpMode.hardwareMap.get(Servo.class, "counter_flip");
+        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
+        gate = myOpMode.hardwareMap.get(Servo.class, "gate");
 
         // --- IMU ORIENTATION ---
         // TODO(STUDENTS): Update if your Control/Expansion Hub is mounted differently.
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,        // e.g., logo pointing up
-                RevHubOrientationOnRobot.UsbFacingDirection.LEFT));  // e.g., USB ports towards right
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards right
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
@@ -93,6 +127,10 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
+        turret.setDirection(DcMotorEx.Direction.FORWARD);
+        shooter.setDirection(DcMotorEx.Direction.REVERSE);
+        spindexer.setDirection(DcMotorEx.Direction.FORWARD);
+
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -100,20 +138,47 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         // NOTE: BRAKE helps with precise stopping; FLOAT cna feel smoother when coasting.
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        turret.setTargetPosition(0);
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        spindexer.setTargetPosition(0);
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        spindexer.setPositionPIDFCoefficients(20);
+        spindexer.setPower(0.25);
+
+        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter.setVelocityPIDFCoefficients(100, 3, 3, 0);
+
         // SERVO POSITIONS
 
+        hoodAngle.setPosition(1);
+        xArm.setPosition(1);
+
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
+        myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
     }
 
@@ -188,20 +253,252 @@ public class RobotHardware {
 
     }
 
+    public void resetDriveEncoder(){
+        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
+    public void driveToEncoderRobotCentric(double distance, double directionAngle, double power){
+        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+        directionAngle = Math.toRadians(directionAngle);
+
+        double lateralTicks = directionAngle/Math.abs(directionAngle)*
+                distance*Math.cos((Math.abs(directionAngle)));
+
+        double axialTicks = directionAngle/Math.abs(directionAngle)*
+                distance*Math.sin((Math.abs(directionAngle)));
+
+
+        // Input rotation for field frame
+        double lateralRotation =  (Math.cos(directionAngle) -  Math.sin(directionAngle));
+        double axialRotation =  (Math.sin(directionAngle) +  Math.cos(directionAngle));
+
+        // WHY: Standard mecanum mixing (A + L + Y. etc.). Values may exceed |1|; we normalize below.
+        double frontLeftPower  = axialRotation + lateralRotation ;
+        double frontRightPower = axialRotation - lateralRotation ;
+        double backLeftPower   = axialRotation - lateralRotation ;
+        double backRightPower  = axialRotation + lateralRotation ;
+
+        // Normalize so that the highest magnitude is 1.0, preserving ratios
+        double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
+                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
+
+        max *= Range.clip(power,0,1);
+        if (max > 1.0) {
+            frontLeftPower  /= max;
+            frontRightPower /= max;
+            backLeftPower   /= max;
+            backRightPower  /= max;
+        }
+
+
+
+        setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
+    }
+
+    public void driveEncoder(double speed, double leftFrontInches, double leftBackInches, double rightFrontInches, double rightBackInches){
+        // drives only while myOpMode is active
+        if(myOpMode.opModeIsActive()){
+
+
+            //determine new target position
+            int leftFrontTarget = frontLeftDrive.getCurrentPosition() + (int)(leftFrontInches * wheelsTicksPerInch);
+            int leftBackTarget = backLeftDrive.getCurrentPosition() + (int)(leftBackInches * wheelsTicksPerInch);
+            int rightFrontTarget = frontRightDrive.getCurrentPosition() + (int)(rightFrontInches * wheelsTicksPerInch);
+            int rightBackTarget = backRightDrive.getCurrentPosition() + (int)(rightBackInches * wheelsTicksPerInch);
+
+            frontLeftDrive.setTargetPosition(leftFrontTarget - 1);
+            backLeftDrive.setTargetPosition(leftBackTarget - 1 );
+            frontRightDrive.setTargetPosition(rightFrontTarget - 1);
+            backRightDrive.setTargetPosition(rightBackTarget - 1 );
+
+            //turn on RUN_TO_POSITION
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            setDrivePower(Math.abs(speed), Math.abs(speed), Math.abs(speed), Math.abs(speed));
+
+            while ((myOpMode.opModeIsActive() &&
+                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
+                            frontRightDrive.isBusy() && backRightDrive.isBusy()))){
+
+                //display it for driver
+
+                myOpMode.telemetry.addData("Running to ", " %7d :%7d :%7d :%7d",
+                        leftFrontTarget, leftBackTarget, rightFrontTarget, rightBackTarget);
+                myOpMode.telemetry.addData("Currently at ", "%7d ;%7d :%7d :%7d",
+                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
+                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
+                myOpMode.telemetry.update();
+            }
+
+            setDrivePower(0, 0, 0, 0 );
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            myOpMode.sleep(200); //optional pause after each move
+        }
+    }
+
     /**
      *
-     * @param pos 0 - 1, based on baseLeft
+     * @param speed 0-1
+     * @param degrees + cw/ - ccw
      */
-    public void setBaseServo(double pos){
-        baseLeft.setPosition(pos);
-        baseRight.setPosition(1 - pos);
+    public void turnEncoderTrue(double speed, double degrees){
+
+        double angle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + Math.toRadians(degrees);
+
+        int turnWay = (angle > 0 ? 1 : -1);
+
+
+        setDrivePower(turnWay* Math.abs(speed),-turnWay* Math.abs(speed),
+                turnWay* Math.abs(speed),-turnWay* Math.abs(speed));
+
+        while ( !((Math.round(angle)< Math.toRadians(degrees*1.05)) && (Math.round(angle)> Math.toRadians(degrees*0.95))) ){
+            if ( !((Math.round(angle)< Math.toRadians(degrees*1.25)) && (Math.round(angle)> Math.toRadians(degrees*0.75))) ){
+                setDrivePower(turnWay* Math.abs(speed*0.7),-turnWay* Math.abs(speed*0.7),
+                        turnWay* Math.abs(speed*0.7),-turnWay* Math.abs(speed*0.7));
+            }
+
+        }
     }
 
-    public void setElbowPos(double pos){
-        elbowMid.setPosition(pos);
+    public void setTurretPositionAbsolute(double deg){
+        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
+
+        turret.setVelocity(turretMaxTPS);
+
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
-    public void setPinchPos(double pos){
-        pincher.setPosition(pos);
+    public void setTurretPositionAbsolute(double deg, double tps){
+        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
+
+        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
+
+        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void setShooterVelocity(double tPs){
+        shooter.setVelocity(Range.clip(tPs, 0, shooterMaxTPM));
+    }
+
+    /**
+     *
+     * @return rpm in rps, not tps
+     * max rpm is 100. (6000 mRPM / 60 sec = 100 mRPS * 28 TPR = 2800 mTPS)
+     */
+    public double getShooterVelocity(){
+        return shooter.getVelocity()/28;
+    }
+
+    public void setHoodAngle(double angle){
+        hoodAngle.setPosition(angle);
+    }
+
+
+    private int encoderToDegTurret(double deg){
+        return (int) (deg* turretTicksPerDegree);
+    }
+
+    public double[] getTurretAzimuth(){
+        double tDeg = turret.getCurrentPosition()/ turretTicksPerDegree;
+        double deg = (tDeg) % 360;
+        return new double[]{ (tDeg-deg)/360, tDeg % 360};
+    }
+
+    public double getCurrentTurretDegreePos(){
+        return turret.getCurrentPosition()/ turretTicksPerDegree;
+    }
+
+    /**
+     * angle solver
+     * @param xT x which the curve will fall on (distance)
+     * @param v given velocity
+     * @return (0) the low arc, (1) the high arc)
+     */
+    public double[] findTurretAngles(double xT, double v){
+        double yT = 38.75;
+        double discriminant = Math.sqrt( Math.pow(v,4) - g*((g*xT*xT) + (2*yT*v*v)));
+
+        return new double[] {Math.atan((v * v - discriminant) / g * xT), Math.atan((v * v + discriminant) / g * xT)};
+    }
+
+    /**
+     * graph function
+     * @param x distance to check
+     * @param v given velocity
+     * @param z given angle
+     * @return distance from floor + offset the projectile will be at
+     */
+    public double trajectoryOf(double x, double v, double z){
+        return ( x*Math.tan(z) -( (g*x*x)/(2*v*v*Math.cos(z)*Math.cos(z) ) ) );
+    }
+
+    /**
+     * checks if a given velocity can reach a given coordinate
+     * @param x target x
+     * @param y target y
+     * @param v given velocity
+     * @return boolean response
+     */
+    public boolean shotPossible(double x, double y, double v){
+
+        return Math.sqrt( (x*2*g)/(Math.sin(2*(Math.atan(2*y/x)))) ) == v;
+    }
+
+    public double getCurrentSpindexerDegreesPos(){
+        return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
+    }
+
+    public double[] getSpindexerAzimuth(){
+        double tDeg = spindexer.getCurrentPosition()/ spindexerTicksPerDegree;
+        double deg = (tDeg) % 360;
+        return new double[]{ (tDeg-deg)/360, tDeg % 360};
+    }
+
+    public void setSpindexerRelativeAngle(double angle){
+        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
+
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void setSpindexerRelativeRevolutionAbsoluteAngle(double angle){
+        spindexer.setTargetPosition( (int) (  (getSpindexerAzimuth()[0]*spindexerTicksPerRevolution)
+                                            + (angle*spindexerTicksPerDegree) ) );
+    }
+
+    public void setSpindexerAbsoluteRevolutionAbsoluteAngle(double revolutions, double angle){
+        spindexer.setTargetPosition( (int) ( (revolutions*spindexerTicksPerRevolution) + (angle*spindexerTicksPerDegree) ) );
+    }
+
+    public void setSpindexerAbsoluteAngle(double angle){
+        spindexer.setTargetPosition( (int) (angle*spindexerTicksPerDegree) );
+    }
+
+    public void setArmPos(double pos){
+        xArm.setPosition(Range.clip(pos, 0, 1));
+    }
+
+    private double[] getValuesToTarget(){
+        double tx = limelight.getLatestResult().getTx();
+        double ty = limelight.getLatestResult().getTy();
+        Position pose = limelight.getLatestResult().getBotpose_MT2().getPosition();
+
+        double yDistance = verticalTargetDistance /Math.tan(ty);
+        double xDistance = Math.tan(tx)*yDistance;
+
+        double groundDistance = yDistance/Math.cos(tx);
+
+        return new double[]{ xDistance, yDistance, groundDistance};
     }
 }

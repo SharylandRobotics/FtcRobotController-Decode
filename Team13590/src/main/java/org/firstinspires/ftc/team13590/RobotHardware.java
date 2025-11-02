@@ -92,8 +92,8 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
-                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
