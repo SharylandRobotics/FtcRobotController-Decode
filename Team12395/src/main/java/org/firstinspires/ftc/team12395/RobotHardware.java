@@ -30,6 +30,8 @@
 package org.firstinspires.ftc.team12395;
 
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -51,6 +53,8 @@ public class RobotHardware {
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
 
+    public SoundPool lightBeep, darkBeep;
+    public int lightBeepID, darkBeepID;
     public Limelight3A limelight;
     public LLResult result;
 
@@ -168,7 +172,7 @@ public class RobotHardware {
         hoodAngle2 = myOpMode.hardwareMap.get(Servo.class, "hood_angle2");
 
         // --- IMU ORIENTATION ---
-        // TODO(STUDENTS): Update if your Control/Expansion Hub is mounted differently.
+        // TODO: UPDATE ALONGSIDE ROADRUNNER
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -245,6 +249,14 @@ public class RobotHardware {
         hoodAngle.setPosition(1);
 
         xArm.setPosition(1);
+
+        // SOUND
+
+        lightBeep = new SoundPool.Builder().build();
+        lightBeepID = lightBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb, 1);
+
+        darkBeep = new SoundPool(1, AudioManager.STREAM_MUSIC, 0); // PSM
+        darkBeepID = darkBeep.load(myOpMode.hardwareMap.appContext, R.raw.orbDeep, 1); // PSM
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
