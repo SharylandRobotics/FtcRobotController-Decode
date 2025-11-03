@@ -33,9 +33,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13581.RobotHardware;
 
-@TeleOp(name="Robot Centric", group="TeleOp")
+@TeleOp(name="Field Centric Blue Team", group="TeleOp")
 
-public class RobotCentric extends LinearOpMode {
+public class FieldCentricR extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -53,17 +53,15 @@ public class RobotCentric extends LinearOpMode {
         while (opModeIsActive()) {
 
             axial   =  -gamepad1.left_stick_y;
-            lateral =  -gamepad1.left_stick_x;
+            lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
-            robot.teleOpRobotCentric(axial, lateral, yaw);
-
+            robot.teleOpFieldCentric(axial, lateral, yaw);
 
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             telemetry.addData("Servo Angle: ", robot.getAimPos());
             telemetry.addData("Power: ", robot.getBackPower());
-
 
             telemetry.update();
 
@@ -77,14 +75,14 @@ public class RobotCentric extends LinearOpMode {
                 robot.setFrontPower(-1);
             }
 
-            if (gamepad2.y) {
+            if (gamepad2.y && robot.getBackPower() < 0.75) {
                 robot.setBackPower(robot.getBackPower() + 0.05);
             }
-            if (gamepad2.x) {
+            if (gamepad2.x && robot.getBackPower() > 0.5) {
                 robot.setBackPower(robot.getBackPower() - 0.05);
             }
             if (gamepad2.a) {
-                robot.setBackPower(1);
+                robot.setBackPower(0.75);
             }
             if (gamepad2.b) {
                 robot.setBackPower(0);
@@ -99,7 +97,7 @@ public class RobotCentric extends LinearOpMode {
             }
 
             if (gamepad2.dpad_left) {
-                robot.setAimPos(0.55);
+                robot.setAimPos(0.45);
             }
 
             if (gamepad2.dpad_up) {
@@ -124,6 +122,13 @@ public class RobotCentric extends LinearOpMode {
             }
             if (gamepad2.right_trigger > 0) {
                 robot.setTurrentPositionRelative(15 *gamepad2.right_trigger);// increase number to increase sensitivity
+            }
+
+            if (gamepad2.left_bumper) {
+                robot.setTurretPos(-50); //turret set positions
+            }
+            if (gamepad2.right_bumper) {
+                robot.setTurretPos(50);
             }
         }
     }

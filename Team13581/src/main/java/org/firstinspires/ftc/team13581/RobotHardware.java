@@ -29,20 +29,27 @@
 
 package org.firstinspires.ftc.team13581;
 
+import android.graphics.Color;
+import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 public class RobotHardware {
 
     private LinearOpMode myOpMode = null;
+
+    private double spoolToTurretRatio = 92/24.;
+    private double turretTicksPerRevolution = spoolToTurretRatio* ((((1+(46./17))) * (1+(46./11))) * 28);
+    private double turretTicksPerDegree = turretTicksPerRevolution/360;
 
     private DcMotor frontLeftDrive  = null;
     private DcMotor backLeftDrive   = null;
@@ -50,7 +57,7 @@ public class RobotHardware {
     private DcMotor backRightDrive  = null;
     private DcMotor frontIntakeMotor = null;
     private DcMotor outtakeMotor = null;
-    private DcMotor hAim = null;
+    private DcMotorEx hAim = null;
     private Servo vAim = null;
     private Servo lever = null;
 
@@ -96,12 +103,12 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
         frontIntakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "front_intake_motor");
         outtakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "outtake_motor");
-        hAim = myOpMode.hardwareMap.get(DcMotor.class, "h_aim");
+        hAim = myOpMode.hardwareMap.get(DcMotorEx.class, "h_aim");
 
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT));
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
@@ -121,6 +128,7 @@ public class RobotHardware {
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hAim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -135,6 +143,11 @@ public class RobotHardware {
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        hAim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        hAim.setTargetPosition(0);
+        hAim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        hAim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         vAim = myOpMode.hardwareMap.get(Servo.class, "v_aim");
         lever = myOpMode.hardwareMap.get(Servo.class, "lever");
@@ -171,14 +184,27 @@ public class RobotHardware {
     public void setAimPos(double pos) {vAim.setPosition(pos);}
     public double getAimPos() { return vAim.getPosition();}
     public void setLeverPos(double l) {lever.setPosition(l);}
+    public double hAimPos(){
+        return hAim.getCurrentPosition()/turretTicksPerDegree;
+    }
+    public void setTurrentPositionRelative(double deg) {
+        deg += hAimPos();
+        deg = Range.clip(deg, -100, 100);
+
+        hAim.setTargetPosition((int) (deg*turretTicksPerDegree ));
+
+        hAim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        hAim.setVelocity(2500);// increase speed
+    }
 
 
     public void teleOpFieldCentric(double axial, double lateral, double yaw) {
 
         double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
-        double lateralRotation = lateral * Math.cos(-botHeading) - axial * Math.sin(-botHeading);
-        double axialRotation = lateral * Math.sin(-botHeading) + axial * Math.cos(-botHeading);
+        double axialRotation = lateral * Math.cos(-botHeading) - axial * Math.sin(-botHeading);
+        double lateralRotation = lateral * Math.sin(-botHeading) + axial * Math.cos(-botHeading);
 
         double frontLeftPower  = axialRotation + lateralRotation + yaw;
         double frontRightPower = axialRotation - lateralRotation - yaw;
@@ -289,5 +315,15 @@ public class RobotHardware {
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
+    }
+
+    public void setTurretPos(double pos) {
+        hAim.setTargetPosition((int) (pos*turretTicksPerDegree));
+
+        hAim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        ((DcMotorEx) hAim).setVelocity(1750);
+
+
     }
 }
