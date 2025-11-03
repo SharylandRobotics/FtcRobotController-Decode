@@ -65,8 +65,6 @@ public class RobotHardware {
     private final double wheelsTicksPerRev = ((((1+(46./17))) * (1+(46./11))) * 28);
     private final double wheelsTicksPerInch = wheelsTicksPerRev/(wheelDiameterInches*Math.PI);
 
-
-
     public DcMotorEx turret, shooter, spindexer, intake;
 
     public static int maxTurnR = 100 ;

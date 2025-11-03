@@ -27,28 +27,28 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team00000.teleop;
+package org.firstinspires.ftc.team13588.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.team00000.RobotHardware;
+import org.firstinspires.ftc.team13588.RobotHardware;
 
-@TeleOp(name = "Robot Centric", group = "opMode")
+// Student Notes: Field‑centric TeleOp. Left stick = drive/strafe, Right stick = turn, LB = slow mode.
+// TODO(students): Adjust slow‑mode scale if you want finer aiming.
+@TeleOp(name = "Field Centric", group = "opMode")
 
-public class RobotCentric extends LinearOpMode {
+public class FieldCentric extends LinearOpMode {
 
-    // Create hardware instance and pass current OpMode reference
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
 
-        // Variables for joystick input: forward/back (axial), strafe (lateral), rotation (yaw)
         double axial;
         double lateral;
         double yaw;
 
-        // Initialize all motors, IMU, and hardware configuration
+        // Student Note: Initialize hardware (motors, IMU, vision).
         robot.init();
 
         while(opModeInInit()) {
@@ -66,13 +66,15 @@ public class RobotCentric extends LinearOpMode {
         waitForStart();
         if (isStopRequested()) return;
 
-        // Main control loop: continuously while TeleOp is active
         while (opModeIsActive()) {
 
+            // Keep vision fresh before using pose values each loop
+            robot.updateAprilTagDetections();
+
+            // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
 
-            // Read real-time joystick values from gamepad
             axial = -gamepad1.left_stick_y * scale;
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
@@ -99,8 +101,7 @@ public class RobotCentric extends LinearOpMode {
 
             // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
             if (!didAuto) {
-                // Apply joystick inputs directly to robot-centric drive control
-                robot.driveRobotCentric(axial, lateral, yaw);
+                robot.driveFieldCentric(axial, lateral, yaw);
             }
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
@@ -119,9 +120,7 @@ public class RobotCentric extends LinearOpMode {
             telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
-            // Small delay to prevent telemetry flooding
             sleep(50);
         }
     }
 }
-
