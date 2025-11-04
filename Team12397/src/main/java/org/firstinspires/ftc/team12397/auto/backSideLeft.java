@@ -72,8 +72,7 @@ public class backSideLeft extends LinearOpMode {
 
             while(phase1){
 
-                robot.driveStraight(AXIAL_SPEED, 24, 0);
-                robot.turnToHeading(AXIAL_SPEED, -90);
+               robot.straif(.5,36,0);
 
                 //to due: calculate offset for auto  & config shoot motors & servo
                 // robot.autoDriveToGoalStep();

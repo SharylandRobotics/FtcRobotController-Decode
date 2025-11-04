@@ -435,7 +435,71 @@ public class RobotHardware {
             backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
+    //positive straif right negative straif left
+    public void straif(double maxAxialSpeed, double distance, double heading) {
 
+        if (myOpMode.opModeIsActive()) {
+
+            // Convert inches to encoder counts for straight motion
+            int moveCounts = (int)(distance * COUNTS_PER_INCH);
+            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
+            backLeftTarget = backLeftDrive.getCurrentPosition() - moveCounts;
+            frontRightTarget = frontRightDrive.getCurrentPosition() - moveCounts;
+            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
+
+            // Same target on all wheels → straight move
+            frontLeftDrive.setTargetPosition(frontLeftTarget);
+            backLeftDrive.setTargetPosition(backLeftTarget);
+            frontRightDrive.setTargetPosition(frontRightTarget);
+            backRightDrive.setTargetPosition(backRightTarget);
+
+            // Use built-in position control to reach targets
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // RUN_TO_POSITION requires positive power magnitude
+            axialSpeed = Math.abs(maxAxialSpeed);
+            driveRobotCentric(axialSpeed, 0, 0);
+
+            while (myOpMode.opModeIsActive() &&
+                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
+                            frontRightDrive.isBusy() && backRightDrive.isBusy())) {
+
+                // Proportional yaw correction to stay on heading while driving
+                yawSpeed = getSteeringCorrection(heading, P_AXIAL_GAIN);
+
+                // Invert correction when backing up
+                if (distance < 0)
+                    yawSpeed *= -1.0;
+
+                driveRobotCentric(axialSpeed, 0, yawSpeed);
+
+                myOpMode.telemetry.addData("Motion", "Drive Straight");
+                myOpMode.telemetry.addData("Target Pos FL:BL:FR:BR", "%7d:%7d:%7d:%7d",
+                        frontLeftTarget,  backLeftTarget, frontRightTarget, backRightTarget);
+                myOpMode.telemetry.addData("Actual Pos FL:BL:FR:BR","%7d:%7d:%7d:%7d",
+                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
+                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
+                myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
+                        targetHeading, getHeading());
+                myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
+                        headingError, yawSpeed);
+                myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
+                        frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
+                myOpMode.telemetry.update();
+            }
+
+            driveRobotCentric(0, 0, 0);
+
+            // Restore TeleOp run mode after completing the move
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
     // Turn in place to target heading using proportional control
     public void turnToHeading(double maxYawSpeed, double heading) {
 

@@ -73,7 +73,10 @@ frontSideLeft extends LinearOpMode {
 
             while(phase1){
                 robot.driveStraight(AXIAL_SPEED, -36, 0);
+                robot.turnToHeading(AXIAL_SPEED,90);
 
+                robot.driveStraight(AXIAL_SPEED, 20, 0);
+                robot.turnToHeading(AXIAL_SPEED,(-125));
                 robot.turretPower(1);
                 robot.holdHeading(robot.YAW_SPEED, 0, 3);
                 robot.turretPower(1);
@@ -98,7 +101,7 @@ frontSideLeft extends LinearOpMode {
                 // Turn motors off
                 robot.turretPower(0);
                 robot.intakePower(0);
-                robot.turnToHeading(AXIAL_SPEED,-45);
+
 
 
 
