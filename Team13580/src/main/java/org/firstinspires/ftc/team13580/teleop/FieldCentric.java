@@ -27,68 +27,100 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team13580.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team13580.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name="Field Centric", group="TeleOp")
-// TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
+// Student Notes: Field‑centric TeleOp. Left stick = drive/strafe, Right stick = turn, LB = slow mode.
+// TODO(students): Adjust slow‑mode scale if you want finer aiming.
+@TeleOp(name = "Field Centric", group = "opMode")
+
 public class FieldCentric extends LinearOpMode {
 
-    // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
-        // Driver inputs (range roughly [-1, 1])
-        double axial    = 0; // forward/back (+ forward)
-        double lateral  = 0; // strafe left/right (+ right)
-        double yaw      = 0; // rotation (+ CCW/left turn)
 
-        // --- INIT PHASE ---
-        // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
-        // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
+        double axial;
+        double lateral;
+        double yaw;
+
+        // Student Note: Initialize hardware (motors, IMU, vision).
         robot.init();
 
-        // Wait for driver to press START on Driver Station
-        waitForStart();
+        while(opModeInInit()) {
+            // Student Note: Pre‑start check — rotate robot by hand; heading should change.
+            // "Vision: Ready (AprilTag)" means camera + processor initialized.
+            telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Vision", "Ready (AprilTag)");
+            telemetry.addData("Mode", "INIT");
+            telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
+                    robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
+            telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            telemetry.update();
+        }
 
-        // --- TELEOP LOOP ---
+        waitForStart();
+        if (isStopRequested()) return;
+
         while (opModeIsActive()) {
 
-            // READ sticks
-            // NOTE: FTC gamepads support negative when pushing left_stick_y forward, so we invert it.
-            axial   = -gamepad1.left_stick_y * 0.5;
-            lateral =  gamepad1.left_stick_x * 0.5;
-            yaw     =  gamepad1.right_stick_x * 0.5;
+            // Keep vision fresh before using pose values each loop
+            robot.updateAprilTagDetections();
 
-            // Optional: Deadband to ignore tiny stick noise (uncomment to use)
-            // double dead = 0.05: // TODO(STUDENTS): tune
-            // axial   = (Math.abs(axial)   < dead) ? 0 : axial;
-            // lateral = (Math.abs(lateral) < dead) ? 0 : lateral;
-            // yaw     = (Math.abs(yaw)     < dead) ? 0 : yaw;
+            // Student Note: Hold LB for precision (slow) mode.
+            boolean slow = gamepad1.left_bumper;
+            double scale = slow ? 0.4 : 1.0;
 
-            // Optional: Precision/slow mode (hold Left Trigger to reduce sensitivity)
-            // double slow = 1.0 - (0.6 * gamepad1.left_trigger); // 1.0 → 0.4
-            // axial *= slow; lateral *= slow; yaw *= slow;
+            axial = -gamepad1.left_stick_y * scale;
+            lateral = gamepad1.left_stick_x * scale;
+            yaw = gamepad1.right_stick_x * scale;
 
-            // Optional: Zero heading on button (keeps field-forward aligned to current front)
-            // if (gamepad1.a) { robot.zeroHeading(); } // Implement zeroHeading in Robot Hardware to call imu.resetYaw()
+            // --- Vision helpers for concise telemetry ---
+            Integer goalId = robot.getGoalTagId();
+            double range = robot.getGoalRangeIn();
+            double bearing = robot.getGoalBearingDeg();
+            double elevation = robot.getGoalElevationDeg();
 
-            // Drive field-centric (rotates axial/lateral by -IMU heading so "forward" = field-forward)
-            robot.driveFieldCentric(axial, lateral, yaw);
+            // Approx horizontal distance and aim-above-horizontal (camera pitched up 15°)
+            double horiz = (Double.isNaN(range) || Double.isNaN(bearing))
+                    ? Double.NaN
+                    : range * Math.cos(Math.toRadians(bearing));
+            double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (15.0 + elevation));
 
-            // Telemetry for drivers + debugging
-            telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
-            telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
-            // Optional: expose heading during tuning
-            // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
+            // Driver Assist: hold RB to auto-drive toward the visible goal tag (range->drive, yaw->strafe, bearing->turn).
+            boolean autoAssist = gamepad1.right_bumper;
+            boolean didAuto = false;
+            if (autoAssist) {
+                robot.updateAprilTagDetections();
+                didAuto = robot.autoDriveToGoalStep();
+            }
+
+            // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
+            if (!didAuto) {
+                robot.driveFieldCentric(axial, lateral, yaw);
+            }
+
+            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+            telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
+            telemetry.addData("Heading", "%4.0f°", robot.getHeading());
+            telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+
+            String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
+            telemetry.addData("Obelisk", motif);
+
+            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
+            telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
+            telemetry.addData("Aim",  "horiz=%.1f in  aboveHoriz=%s",
+                    horiz,
+                    Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal));
+            telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
-            // Pace loop-helps with readability and prevents spamming the DS
-            sleep(50); // ~20 Hz; TODO(STUDENTS): adjust for your robot feel (e.g., 20-30 ms for snappier control)
+            sleep(50);
         }
     }
 }
