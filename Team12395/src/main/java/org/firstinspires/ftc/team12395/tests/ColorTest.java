@@ -60,6 +60,7 @@ public class ColorTest extends LinearOpMode {
         int[] solution = null;
         int spinAngle;
         String chamberString = "_  ";
+        NormalizedRGBA colors;
 
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -70,7 +71,8 @@ public class ColorTest extends LinearOpMode {
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            Color.RGBToHSV(robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue(), hsvValues);
+            colors = robot.colorSensor.getNormalizedColors();
+            Color.colorToHSV(colors.toColor(), hsvValues);
             if (gamepad2.a){
                 spinAngle = 60;
             } else {
@@ -117,7 +119,7 @@ public class ColorTest extends LinearOpMode {
                 telemetry.addData("current solution: ", "no solution");
             }
             telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
-            telemetry.addData("Colors (HSV): ",  "R=%d%n G=%d%n B=%d%n ", robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue());
+            telemetry.addData("Colors (HSV): ",  "R=%d%n G=%d%n B=%d%n ", colors.red, colors.green, colors.blue);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

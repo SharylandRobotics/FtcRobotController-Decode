@@ -58,7 +58,7 @@ public class RobotHardware {
     public Limelight3A limelight;
     public LLResult result;
 
-    public ColorSensor colorSensor;
+    public NormalizedColorSensor colorSensor;
 
     public static String mag = "GPP";
     public static String pattern = "PPG";// a pattern is better than no pattern
@@ -165,7 +165,7 @@ public class RobotHardware {
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
-        colorSensor = myOpMode.hardwareMap.get(ColorSensor.class, "color_sensor");
+        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
 
         xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
@@ -249,6 +249,8 @@ public class RobotHardware {
         hoodAngle.setPosition(1);
 
         xArm.setPosition(1);
+
+        colorSensor.setGain(2);
 
         // SOUND
 
@@ -456,7 +458,7 @@ public class RobotHardware {
     public void setTurretPositionRelative(double deg, double tps){
         deg += getCurrentTurretDegreePos();
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) deg);
+        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -878,10 +880,10 @@ public class RobotHardware {
     }
 
     public char scanColor(){
-        currentColor = new int[] {colorSensor.red(), colorSensor.green(), colorSensor.red()};
+        NormalizedRGBA colors = colorSensor.getNormalizedColors();
         if (!Arrays.equals(currentColor, prevColor)) {
             float[] hsvValues = new float[3];
-            Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
+            Color.colorToHSV(colors.toColor(), hsvValues);
 
             prevColor = currentColor;
 
