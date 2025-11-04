@@ -30,6 +30,8 @@
 package org.firstinspires.ftc.team12395;
 
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -43,6 +45,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import java.util.Arrays;
 import java.util.List;
 @Config
 public class RobotHardware {
@@ -50,13 +53,15 @@ public class RobotHardware {
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
 
+    public SoundPool lightBeep, darkBeep;
+    public int lightBeepID, darkBeepID;
     public Limelight3A limelight;
     public LLResult result;
 
-    public ColorSensor colorSensor;
+    public NormalizedColorSensor colorSensor;
 
     public static String mag = "GPP";
-    public static String pattern = "000";
+    public static String pattern = "PPG";// a pattern is better than no pattern
     public int chamber = 0;
 
     // Drivetrain motors for a mecanum chassis
@@ -64,6 +69,8 @@ public class RobotHardware {
     private final double wheelDiameterInches = 3.77953;
     private final double wheelsTicksPerRev = ((((1+(46./17))) * (1+(46./11))) * 28);
     private final double wheelsTicksPerInch = wheelsTicksPerRev/(wheelDiameterInches*Math.PI);
+
+
 
     public DcMotorEx turret, shooter, spindexer, intake;
 
@@ -81,7 +88,7 @@ public class RobotHardware {
     public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
-    private int spindexerTarget = 0;
+    public int spindexerTarget = 0;
 
     // Servos
     private Servo xArm, hoodAngle, hoodAngle2;
@@ -130,7 +137,10 @@ public class RobotHardware {
 
     static final double P_AXIAL_GAIN = 0.03;
     static final double P_LATERAL_GAIN = 0.03;
-    static final double P_YAW_GAIN = 0.02;
+    static final double P_YAW_GAIN = 0.04;
+
+    public int[] prevColor = null;
+    public int[] currentColor;
 
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
@@ -155,14 +165,14 @@ public class RobotHardware {
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
-        colorSensor = myOpMode.hardwareMap.get(ColorSensor.class, "color_sensor");
+        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
 
         xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
         hoodAngle2 = myOpMode.hardwareMap.get(Servo.class, "hood_angle2");
 
         // --- IMU ORIENTATION ---
-        // TODO(STUDENTS): Update if your Control/Expansion Hub is mounted differently.
+        // TODO: UPDATE ALONGSIDE ROADRUNNER
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -239,6 +249,16 @@ public class RobotHardware {
         hoodAngle.setPosition(1);
 
         xArm.setPosition(1);
+
+        colorSensor.setGain(2);
+
+        // SOUND
+
+        lightBeep = new SoundPool.Builder().build();
+        lightBeepID = lightBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb, 1);
+
+        darkBeep = new SoundPool(1, AudioManager.STREAM_MUSIC, 0); // PSM
+        darkBeepID = darkBeep.load(myOpMode.hardwareMap.appContext, R.raw.orbDeep, 1); // PSM
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
@@ -438,7 +458,7 @@ public class RobotHardware {
     public void setTurretPositionRelative(double deg, double tps){
         deg += getCurrentTurretDegreePos();
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) deg);
+        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -577,7 +597,7 @@ public class RobotHardware {
         return new double[]{ xDistance, yDistance, groundDistance};
     }
 
-    public void driveStraight(double maxAxialSpeed, double distance, double heading) {
+    public void driveStraight(double maxAxialSpeed, double distance, double heading, boolean scan) {
 
         if (myOpMode.opModeIsActive()) {
 
@@ -614,6 +634,10 @@ public class RobotHardware {
                 // Invert correction when backing up
                 if (distance < 0)
                     yawSpeed *= -1.0;
+
+                if (scan){
+                    processObelisk();
+                }
 
                 driveRobotCentric(axialSpeed, 0, yawSpeed);
 
@@ -716,11 +740,13 @@ public class RobotHardware {
 
     public boolean processLLresult(){
         result = limelight.getLatestResult();
-        return result != null && result.isValid();
+        return ((result != null && result.isValid()) &&
+                (result.getFiducialResults() != null && !result.getFiducialResults().isEmpty()));
     }
 
-    public double homeToAprilTag(){
-        if (processLLresult()){
+    public double homeToAprilTagBlue(){
+        boolean check = processLLresult();
+        if (check){
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
             List<LLResultTypes.FiducialResult> fresultCC = fresult;
@@ -731,6 +757,37 @@ public class RobotHardware {
 
             for (LLResultTypes.FiducialResult fiducial : fresultCC){
                 if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 24){
+                    fresult.remove(fiducial);
+                }
+            }
+
+            if (!fresult.isEmpty()) {
+
+
+                double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
+
+                myOpMode.telemetry.addData("turning deg: ", tx);
+                return tx;
+
+            }
+
+        }
+        return Double.NaN;
+    }
+
+    public double homeToAprilTagRed(){
+        boolean check = processLLresult();
+        if (check){
+
+            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
+            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+
+            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Tags: ", fresult.size());
+
+
+            for (LLResultTypes.FiducialResult fiducial : fresultCC){
+                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 20){
                     fresult.remove(fiducial);
                 }
             }
@@ -789,18 +846,18 @@ public class RobotHardware {
                     return new int[] {0, 2};// don't move, turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
                     // if the color to my right isn't green, turn left, then turn right twice
-                    return new int[] {-1, 2};
+                    return new int[] {1, 2};
                 } else {
                     // the color to my right is green, turn right, then turn right twice
-                    return new int[] {1, 2};
+                    return new int[] {-1, 2};
                 }
 
             } else if (pattern.equals("PGP")){
                 if (greenIndex == chamber){ // if green is selected
-                    return new int[] {-1, 2}; //  turn left, then turn right twice
+                    return new int[] {1, 2}; //  turn left, then turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
                     // if the color to my right isn't green, turn right, then turn right twice
-                    return new int[] {1, 2};
+                    return new int[] {-1, 2};
                 } else {
                     // the color to my right is green, don't move, turn right twice
                     return new int[] {0, 2};
@@ -808,29 +865,37 @@ public class RobotHardware {
 
             } else if (pattern.equals("PPG")){
                 if (greenIndex == chamber){ // if green is selected
-                    return new int[] {1, 2}; //  turn right, then turn right twice
+                    return new int[] {-1, 2}; //  turn right, then turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
                     // if the color to my right isn't green, don't move, turn right twice
                     return new int[] {0, 2};
                 } else {
                     // the color to my right is green, turn left, then turn right twice
-                    return new int[] {-1, 2};
+                    return new int[] {1, 2};
                 }
             }
         }
+        myOpMode.telemetry.addData(":", mag, pattern, chamber);
         return null;
     }
 
     public char scanColor(){
-        float[] hsvValues = new float[3];
-        Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
+        NormalizedRGBA colors = colorSensor.getNormalizedColors();
+        if (!Arrays.equals(currentColor, prevColor)) {
+            float[] hsvValues = new float[3];
+            Color.colorToHSV(colors.toColor(), hsvValues);
 
-        if (hsvValues[0] > 250 || hsvValues[0] <= 40){
-            return 'P';
-        } else if (hsvValues[0] > 90 && hsvValues[0] < 160){
-            return 'G';
+            prevColor = currentColor;
+
+            if (hsvValues[0] > 250 || hsvValues[0] <= 40) {
+                return 'P';
+            } else if (hsvValues[0] > 90 && hsvValues[0] < 160) {
+                return 'G';
+            } else {
+                return '0';
+            }
         } else {
-            return '0';
+            return 'N';
         }
     }
 
@@ -842,40 +907,60 @@ public class RobotHardware {
         return null;
     }
 
-    public void shootAutomaticSequence(){
+    public void shootAutomaticSequence(int clock){
         if (!spindexer.isBusy()) {
-            myOpMode.sleep(500);
+            if (clock == 0) {// 500/50
+                setArmPos(0.7);
+                StringBuilder magBuilder = new StringBuilder(mag);
+                magBuilder.setCharAt(chamber, '0');
+                mag = magBuilder.toString();
+            } else if (clock == 2+ 3) {// 750/50
+                setArmPos(1);
+            } else if (clock == 2+3+ 3){
+                spindexerHandler(-120);
+            }
 
-            setArmPos(0.7);
-            myOpMode.sleep(750);
-            setArmPos(1);
-            myOpMode.sleep(750);
-            spindexerHandler(-120);
+
         }
     }
 
     public boolean senseAutomaticSequence(){
-        if (!spindexer.isBusy() && scanColor() != '0'){
+        char scannedColor = scanColor();
+        if (scannedColor != '0' && scannedColor != 'N'){
+            myOpMode.telemetry.addData("Found color ", "");
             // runs when ball is already secured in socket
             StringBuilder magBuilder = new StringBuilder(mag);
-            magBuilder.setCharAt(chamber, scanColor());
+            magBuilder.setCharAt(chamber, scannedColor);
             mag = magBuilder.toString();
-            if (solvePattern() == null ){
-                if (mag.charAt((chamber + 1) % mag.length())  == '0'){
+
+            int [] solution = solvePattern();
+            if (solution == null ){
+                if (mag.charAt( (chamber + 1) % mag.length())  == '0'){
                     spindexerHandler(-120);//cw
-                    return false;
+                    myOpMode.telemetry.addData("turning right", "...");
                 } else {
                     spindexerHandler(120);//ccw
-                    return false;
+                    myOpMode.telemetry.addData("turning left", "...");
                 }
+                return false;
             } else {
                 // turn to solution
-                spindexerHandler(solvePattern()[0]* 120);
+                spindexerHandler(solution[0]* 120);
+                myOpMode.telemetry.addData("solving", "...");
                 return true;
             }
 
+        } else {
+            return false;
         }
-
-        return false;
     }
+
+    public void setMagManual(String set){
+        for (int i=0; i<3; i++) {
+            StringBuilder magBuilder = new StringBuilder(mag);
+            magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
+            mag = magBuilder.toString();
+        }
+    }
+
 }
