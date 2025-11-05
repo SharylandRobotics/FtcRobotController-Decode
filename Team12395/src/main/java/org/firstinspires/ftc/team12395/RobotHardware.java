@@ -33,6 +33,7 @@ import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.ftc.Encoder;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -66,13 +67,12 @@ public class RobotHardware {
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
-    private final double wheelDiameterInches = 3.77953;
-    private final double wheelsTicksPerRev = ((((1+(46./17))) * (1+(46./11))) * 28);
-    private final double wheelsTicksPerInch = wheelsTicksPerRev/(wheelDiameterInches*Math.PI);
-
-
 
     public DcMotorEx turret, shooter, spindexer, intake;
+    public CRServo turretR, turretL;
+    public DcMotorEx turretE;
+
+    public servoDrivenEncoder turretHandler;
 
     public static int maxTurnR = 100 ;
     public static int maxTurnL = 100; // negative
@@ -91,7 +91,7 @@ public class RobotHardware {
     public int spindexerTarget = 0;
 
     // Servos
-    private Servo xArm, hoodAngle, hoodAngle2;
+    private Servo xArm, hoodAngle;
 
     // physics
 
@@ -104,40 +104,7 @@ public class RobotHardware {
     // IMU is used for field-centric heading
     private IMU imu;
 
-    // lemoine stuff
-
-    private double headingError;
-
-    private double targetHeading;
-
-    private double axialSpeed;
-    private double lateralSpeed;
-    private double yawSpeed;
-    private double frontLeftSpeed;
-    private double backLeftSpeed;
-    private double frontRightSpeed;
-    private double backRightSpeed;
-    private int frontLeftTarget;
-    private int backLeftTarget;
-    private int frontRightTarget;
-    private int backRightTarget;
-
-    // Drive geometry and encoder model (update if wheels/gearing change)
-    static final double COUNTS_PER_MOTOR_REV = 537.7;
-    static final double DRIVE_GEAR_REDUCTION = 1.0;
-    static final double WHEEL_DIAMETER_INCHES = 4.094;
-    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * Math.PI);
-
-    // Default speeds and proportional gains; HEADING_THRESHOLD in degrees
-    public static final double AXIAL_SPEED = 0.6;
-    public static final double LATERAL_SPEED = 0.4;
-    public static final double YAW_SPEED = 0.2;
-    static final double HEADING_THRESHOLD = 0.25;
-
-    static final double P_AXIAL_GAIN = 0.03;
-    static final double P_LATERAL_GAIN = 0.03;
-    static final double P_YAW_GAIN = 0.04;
+    // COLOR SENSOR
 
     public int[] prevColor = null;
     public int[] currentColor;
@@ -161,15 +128,26 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
         turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+
+        turretE = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+
+        turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
+        turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
+        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
+
+        turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
+
+
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
+
+
         colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
 
         xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
-        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
-        hoodAngle2 = myOpMode.hardwareMap.get(Servo.class, "hood_angle2");
+
 
         // --- IMU ORIENTATION ---
         // TODO: UPDATE ALONGSIDE ROADRUNNER
@@ -258,7 +236,7 @@ public class RobotHardware {
         lightBeepID = lightBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb, 1);
 
         darkBeep = new SoundPool(1, AudioManager.STREAM_MUSIC, 0); // PSM
-        darkBeepID = darkBeep.load(myOpMode.hardwareMap.appContext, R.raw.orbDeep, 1); // PSM
+        darkBeepID = darkBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb_deep, 1); // PSM
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
@@ -337,101 +315,6 @@ public class RobotHardware {
 
     }
 
-    public void resetDriveEncoder(){
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    }
-
-    public void driveToEncoderRobotCentric(double distance, double directionAngle, double power){
-        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
-        directionAngle = Math.toRadians(directionAngle);
-
-        double lateralTicks = directionAngle/Math.abs(directionAngle)*
-                distance*Math.cos((Math.abs(directionAngle)));
-
-        double axialTicks = directionAngle/Math.abs(directionAngle)*
-                distance*Math.sin((Math.abs(directionAngle)));
-
-
-        // Input rotation for field frame
-        double lateralRotation =  (Math.cos(directionAngle) -  Math.sin(directionAngle));
-        double axialRotation =  (Math.sin(directionAngle) +  Math.cos(directionAngle));
-
-        // WHY: Standard mecanum mixing (A + L + Y. etc.). Values may exceed |1|; we normalize below.
-        double frontLeftPower  = axialRotation + lateralRotation ;
-        double frontRightPower = axialRotation - lateralRotation ;
-        double backLeftPower   = axialRotation - lateralRotation ;
-        double backRightPower  = axialRotation + lateralRotation ;
-
-        // Normalize so that the highest magnitude is 1.0, preserving ratios
-        double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
-                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-
-        max *= Range.clip(power,0,1);
-        if (max > 1.0) {
-            frontLeftPower  /= max;
-            frontRightPower /= max;
-            backLeftPower   /= max;
-            backRightPower  /= max;
-        }
-
-
-
-        setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
-    }
-
-    public void driveEncoder(double speed, double leftFrontInches, double leftBackInches, double rightFrontInches, double rightBackInches){
-        // drives only while myOpMode is active
-        if(myOpMode.opModeIsActive()){
-
-
-            //determine new target position
-            int leftFrontTarget = frontLeftDrive.getCurrentPosition() + (int)(leftFrontInches * wheelsTicksPerInch);
-            int leftBackTarget = backLeftDrive.getCurrentPosition() + (int)(leftBackInches * wheelsTicksPerInch);
-            int rightFrontTarget = frontRightDrive.getCurrentPosition() + (int)(rightFrontInches * wheelsTicksPerInch);
-            int rightBackTarget = backRightDrive.getCurrentPosition() + (int)(rightBackInches * wheelsTicksPerInch);
-
-            frontLeftDrive.setTargetPosition(leftFrontTarget - 1);
-            backLeftDrive.setTargetPosition(leftBackTarget - 1 );
-            frontRightDrive.setTargetPosition(rightFrontTarget - 1);
-            backRightDrive.setTargetPosition(rightBackTarget - 1 );
-
-            //turn on RUN_TO_POSITION
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-            setDrivePower(Math.abs(speed), Math.abs(speed), Math.abs(speed), Math.abs(speed));
-
-            while ((myOpMode.opModeIsActive() &&
-                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
-                            frontRightDrive.isBusy() && backRightDrive.isBusy()))){
-
-                //display it for driver
-
-                myOpMode.telemetry.addData("Running to ", " %7d :%7d :%7d :%7d",
-                        leftFrontTarget, leftBackTarget, rightFrontTarget, rightBackTarget);
-                myOpMode.telemetry.addData("Currently at ", "%7d ;%7d :%7d :%7d",
-                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
-                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
-                myOpMode.telemetry.update();
-            }
-
-            setDrivePower(0, 0, 0, 0 );
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            myOpMode.sleep(200); //optional pause after each move
-        }
-    }
-
 
     public void setIntakeSpeed(int vel){
         intake.setVelocity(vel);
@@ -491,8 +374,6 @@ public class RobotHardware {
 
     public void setHoodAngle(double angle){
         hoodAngle.setPosition(angle);
-        hoodAngle2.setPosition(1-angle);
-
     }
 
 
@@ -595,142 +476,6 @@ public class RobotHardware {
         double groundDistance = yDistance/Math.cos(tx);
 
         return new double[]{ xDistance, yDistance, groundDistance};
-    }
-
-    public void driveStraight(double maxAxialSpeed, double distance, double heading, boolean scan) {
-
-        if (myOpMode.opModeIsActive()) {
-
-            // Convert inches to encoder counts for straight motion
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
-            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
-
-            // Same target on all wheels → straight move
-            frontLeftDrive.setTargetPosition(frontLeftTarget);
-            backLeftDrive.setTargetPosition(backLeftTarget);
-            frontRightDrive.setTargetPosition(frontRightTarget);
-            backRightDrive.setTargetPosition(backRightTarget);
-
-            // Use built-in position control to reach targets
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // RUN_TO_POSITION requires positive power magnitude
-            axialSpeed = Math.abs(maxAxialSpeed);
-            driveRobotCentric(axialSpeed, 0, 0);
-
-            while (myOpMode.opModeIsActive() &&
-                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
-                            frontRightDrive.isBusy() && backRightDrive.isBusy())) {
-
-                // Proportional yaw correction to stay on heading while driving
-                yawSpeed = getSteeringCorrection(heading, P_AXIAL_GAIN);
-
-                // Invert correction when backing up
-                if (distance < 0)
-                    yawSpeed *= -1.0;
-
-                if (scan){
-                    processObelisk();
-                }
-
-                driveRobotCentric(axialSpeed, 0, yawSpeed);
-
-                myOpMode.telemetry.addData("Motion", "Drive Straight");
-                myOpMode.telemetry.addData("Target Pos FL:BL:FR:BR", "%7d:%7d:%7d:%7d",
-                        frontLeftTarget,  backLeftTarget, frontRightTarget, backRightTarget);
-                myOpMode.telemetry.addData("Actual Pos FL:BL:FR:BR","%7d:%7d:%7d:%7d",
-                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
-                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
-                myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                        targetHeading, getHeading());
-                myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                        headingError, yawSpeed);
-                myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                        frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-                myOpMode.telemetry.update();
-            }
-
-            driveRobotCentric(0, 0, 0);
-
-            // Restore TeleOp run mode after completing the move
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-    }
-
-    // Turn in place to target heading using proportional control
-    public void turnToHeading(double maxYawSpeed, double heading) {
-
-        getSteeringCorrection(heading, P_YAW_GAIN);
-
-        while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
-
-            // Limit turn power to requested maximum
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
-
-            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-            driveRobotCentric(0, 0, yawSpeed);
-
-            myOpMode.telemetry.addData("Motion", "Turning");
-            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                    targetHeading, getHeading());
-            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                    headingError, yawSpeed);
-            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            myOpMode.telemetry.update();
-        }
-
-        // Stop turning and recenter outputs
-        driveRobotCentric(0, 0, 0);
-    }
-
-    // Maintain heading for a fixed time (sec) to let the robot settle
-    public void holdHeading(double maxYawSpeed, double heading, double holdTime) {
-
-        ElapsedTime holdTimer = new ElapsedTime();
-        holdTimer.reset();
-
-        while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
-
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
-
-            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-            driveRobotCentric(0, 0, yawSpeed);
-
-            myOpMode.telemetry.addData("Motion", "Hold Heading");
-            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                    targetHeading, getHeading());
-            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                    headingError, yawSpeed);
-            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            myOpMode.telemetry.update();
-        }
-
-        driveRobotCentric(0, 0, 0);
-    }
-
-    // Return clipped turn command from normalized heading error (-180, 180]
-    public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
-        targetHeading = desiredHeading;
-
-        headingError = -targetHeading + getHeading();
-
-        while (headingError > 180) headingError -= 360;
-        while (headingError <= -180) headingError += 360;
-
-        return Range.clip(headingError * proportionalGain, -1.0, 1.0);
     }
 
     public double getHeading() {
@@ -961,6 +706,10 @@ public class RobotHardware {
             magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
             mag = magBuilder.toString();
         }
+    }
+
+    public void myTurret(){
+
     }
 
 }
