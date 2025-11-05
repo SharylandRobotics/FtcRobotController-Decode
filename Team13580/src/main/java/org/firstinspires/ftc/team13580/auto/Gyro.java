@@ -71,8 +71,8 @@ public class Gyro extends LinearOpMode {
            // robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
             sleep(2000);
             robot.setOuttakePower(1.0);
-            robot.setKickerLeftPosition(.35);
-            robot.setKickerPosition(0);
+            robot.setKickerLeftPower(.35);
+            robot.setKickerPower(0);
             sleep(3000);
             robot.setOuttakePower(0);
             robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);

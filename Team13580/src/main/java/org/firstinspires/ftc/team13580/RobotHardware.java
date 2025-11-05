@@ -29,25 +29,18 @@
 
 package org.firstinspires.ftc.team13580;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
-import java.util.List;
 
 // Student Notes: Hardware wrapper ("robot API") for drive, IMU, and AprilTag vision.
 // Keep comments concise; use TODOs to guide improvements.
@@ -64,8 +57,8 @@ public class RobotHardware {
     private DcMotor intakeDrive;
     private DcMotor outtakeDrive;
 
-    private Servo kicker;
-    private Servo kickerLeft;
+    private CRServo kicker;
+    private CRServo kickerLeft;
 
 
 
@@ -154,8 +147,8 @@ public class RobotHardware {
         intakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "intake_drive");
         outtakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "outtake_drive");
 
-        kicker = myOpMode.hardwareMap.get(Servo.class, "kicker");
-        kickerLeft = myOpMode.hardwareMap.get(Servo.class, "kicker_left");
+        kicker = myOpMode.hardwareMap.get(CRServo.class, "kicker");
+        kickerLeft = myOpMode.hardwareMap.get(CRServo.class, "kicker_left");
 
                 // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
@@ -171,8 +164,8 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        intakeDrive.setDirection(DcMotor.Direction.REVERSE);
-        outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
+        intakeDrive.setDirection(DcMotor.Direction.FORWARD);
+        outtakeDrive.setDirection(DcMotor.Direction.REVERSE);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -195,8 +188,6 @@ public class RobotHardware {
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
         //initAprilTag();
-        kickerLeft.setPosition(.05);
-        kicker.setPosition(.35);
     }
 
     public void driveStraight(double maxAxialSpeed, double distance, double heading) {
@@ -531,9 +522,10 @@ public class RobotHardware {
         return true;
     }
 */
-    public void setKickerPosition(double pos){
-        kicker.setPosition(pos);
+    public void setKickerPower(double pos){
+        kicker.setPower(pos);
+        kicker.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
-    public void setKickerLeftPosition(double pos) {kickerLeft.setPosition(pos);}
+    public void setKickerLeftPower(double pos) {kickerLeft.setPower(pos);}
 }

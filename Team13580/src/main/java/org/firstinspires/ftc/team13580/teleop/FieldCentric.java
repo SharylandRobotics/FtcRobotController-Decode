@@ -43,8 +43,10 @@ public class FieldCentric extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        double kickerBackPos = 0.35;
-        double kickerForwardPos = 0;
+        double kickerBackPos = 0;
+        double kickerForwardPos = 1;
+        double kickerleftBackPos = 0;
+        double kickerleftFowardPos =1;
 
         double axial;
         double lateral;
@@ -110,27 +112,27 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (gamepad1.right_trigger == 1) {
-                intake = .8;
+                intake = .5;
             } else {
                 intake = 0;
             }
 
             if (gamepad2.y){
-                outtake = 0.5;
+                outtake = 0.7;
             } else {
-                outtake = gamepad1.left_trigger;
+                outtake =  gamepad1.left_trigger;
             }
 
             if (gamepad1.b){
-                robot.setKickerPosition(kickerForwardPos);
+                robot.setKickerPower(kickerForwardPos);
             } else {
-                robot.setKickerPosition(kickerBackPos);
+                robot.setKickerPower(kickerBackPos);
             }
 
             if (gamepad1.a){
-                robot.setKickerLeftPosition(kickerBackPos);
+                robot.setKickerLeftPower(kickerleftFowardPos);
             } else {
-                robot.setKickerLeftPosition(kickerForwardPos);
+                robot.setKickerLeftPower(kickerleftBackPos);
             }
 
             robot.setIntakePower(intake);
