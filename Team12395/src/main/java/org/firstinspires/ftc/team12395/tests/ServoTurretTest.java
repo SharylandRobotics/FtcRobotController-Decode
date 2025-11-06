@@ -45,7 +45,6 @@ import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Turret Test", group="TeleOp")
 @Config
-@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class ServoTurretTest extends LinearOpMode {
 
@@ -75,19 +74,30 @@ public class ServoTurretTest extends LinearOpMode {
             } else {
                 if (gamepad1.x){
                     robot.turretR.setPower(0.5);
-                    robot.turretL.setPower(0);
-                } else if (gamepad1.b) {
                     robot.turretL.setPower(0.5);
-                    robot.turretR.setPower(0);
+                } else if (gamepad1.b) {
+                    robot.turretL.setPower(-0.5);
+                    robot.turretR.setPower(-0.5);
                 } else {
                     robot.turretL.setPower(0);
                     robot.turretR.setPower(0);
                 }
+
+
+            }
+            if (gamepad1.a){
+                run = false;
+            } else if (gamepad1.dpad_up){
+                run = true;
+            } else {
+                run = false;
             }
 
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
+            telemetry.addData("Pos: ", robot.turretHandler.getCurrentPosition());
+            telemetry.addData("Power: ", robot.turretHandler.getServoPower());
             sleep(50); // ~20 Hz;
         }
     }

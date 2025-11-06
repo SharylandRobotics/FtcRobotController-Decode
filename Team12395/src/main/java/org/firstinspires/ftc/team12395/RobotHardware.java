@@ -33,20 +33,19 @@ import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.ftc.Encoder;
+import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
+import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-import java.util.Arrays;
 import java.util.List;
 @Config
 public class RobotHardware {
@@ -70,15 +69,15 @@ public class RobotHardware {
 
     public DcMotorEx turret, shooter, spindexer, intake;
     public CRServo turretR, turretL;
-    public DcMotorEx turretE;
+    public OverflowEncoder turretE;
 
     public servoDrivenEncoder turretHandler;
 
     public static int maxTurnR = 100 ;
     public static int maxTurnL = 100; // negative
 
-    private final double spoolToTurretRatio = 4; // 4 rotations to 1
-    private final double turretTicksPerRevolution = spoolToTurretRatio*((((1+(46./17))) * (1+(46./11))) * 28);
+    private final double driveToTurretRatio = 3.2; // 3.2 rotations to 1, 80/25 teeth
+    private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev
     private final double turretTicksPerDegree = turretTicksPerRevolution/360;
     private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
     private final int shooterMaxTPM = 2800;
@@ -129,13 +128,10 @@ public class RobotHardware {
 
         turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
 
-        turretE = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
-
+        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "turret")));
         turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
         turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
-
-
 
 
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
@@ -176,8 +172,9 @@ public class RobotHardware {
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.FORWARD);
 
-        turretR.setDirection(DcMotorSimple.Direction.FORWARD);
-        turretL.setDirection(DcMotorSimple.Direction.FORWARD);
+        turretR.setDirection(DcMotorSimple.Direction.REVERSE);
+        turretL.setDirection(DcMotorSimple.Direction.REVERSE);
+        turretE.setDirection(DcMotorSimple.Direction.REVERSE);
 
         turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
 
@@ -233,7 +230,7 @@ public class RobotHardware {
 
         xArm.setPosition(1);
 
-        colorSensor.setGain(2);
+        colorSensor.setGain(3);
 
         // SOUND
 
@@ -631,21 +628,17 @@ public class RobotHardware {
 
     public char scanColor(){
         NormalizedRGBA colors = colorSensor.getNormalizedColors();
-        if (!Arrays.equals(currentColor, prevColor)) {
-            float[] hsvValues = new float[3];
-            Color.colorToHSV(colors.toColor(), hsvValues);
+        float[] hsvValues = new float[3];
+        Color.colorToHSV(colors.toColor(), hsvValues);
 
-            prevColor = currentColor;
+        prevColor = currentColor;
 
-            if (hsvValues[0] > 250 || hsvValues[0] <= 40) {
-                return 'P';
-            } else if (hsvValues[0] > 90 && hsvValues[0] < 160) {
-                return 'G';
-            } else {
-                return '0';
-            }
+        if (hsvValues[0] > 250 || hsvValues[0] <= 40) {
+            return 'P';
+        } else if (hsvValues[0] > 90 && hsvValues[0] < 160) {
+            return 'G';
         } else {
-            return 'N';
+            return '0';
         }
     }
 

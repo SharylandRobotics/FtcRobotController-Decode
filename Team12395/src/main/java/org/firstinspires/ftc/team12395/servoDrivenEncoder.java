@@ -1,17 +1,21 @@
 package org.firstinspires.ftc.team12395;
 
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.Range;
 
+@Config
 public class servoDrivenEncoder {
 
-    DcMotorEx encoder;
+    OverflowEncoder encoder;
     CRServo servo1, servo2;
     int target;
     int currentPos;
 
-    public servoDrivenEncoder(DcMotorEx encoder, CRServo servo1, CRServo servo2){
+    public static double P = 0.001;
+
+    public servoDrivenEncoder(OverflowEncoder encoder, CRServo servo1, CRServo servo2){
         this.encoder = encoder;
         this.servo1 = servo1;
         this.servo2 = servo2;
@@ -22,7 +26,7 @@ public class servoDrivenEncoder {
 
     public void runToPosition(int targetTicks){
         target = targetTicks;
-        currentPos = encoder.getCurrentPosition();
+        currentPos = getCurrentPosition();
         if (!isAtTarget()) {
             activeTargetController();
         }
@@ -35,16 +39,26 @@ public class servoDrivenEncoder {
     private void activeTargetController(){
         int error = currentPos - target;
         if (error > 0){
-            setServoPowers(-Math.abs(Range.clip(error, -1, 1))); // ccw
+            setServoPowers(-Math.abs(error)); // ccw
 
         } else if (error < 0){
-            setServoPowers( Math.abs(Range.clip(error, -1, 1))); // cw
+            setServoPowers(Math.abs(error)); // cw
         }
     }
 
     private void setServoPowers(double p){
+        p *= P;
+        p = Range.clip(p, -1, 1);
         servo1.setPower(p);
         servo2.setPower(p);
+    }
+
+    public double getServoPower(){
+        return servo1.getPower();
+    }
+
+    public int getCurrentPosition(){
+        return encoder.getPositionAndVelocity().position;
     }
 
 }

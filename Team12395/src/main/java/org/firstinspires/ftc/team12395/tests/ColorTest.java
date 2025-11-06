@@ -45,7 +45,6 @@ import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Color Test", group="TeleOp")
 @Config
-@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class ColorTest extends LinearOpMode {
 
@@ -53,6 +52,8 @@ public class ColorTest extends LinearOpMode {
     RobotHardware robot = new RobotHardware(this);
 
     float[] hsvValues = new float[3];
+
+    public static float gain = 3;
 
     @Override
     public void runOpMode() {
@@ -62,6 +63,9 @@ public class ColorTest extends LinearOpMode {
         String chamberString = "_  ";
         NormalizedRGBA colors;
 
+        double cT = 0;
+        double prT = 0;
+
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -69,8 +73,11 @@ public class ColorTest extends LinearOpMode {
 
         waitForStart();
 
+        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
+
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
+            robot.colorSensor.setGain(gain);
             colors = robot.colorSensor.getNormalizedColors();
             Color.colorToHSV(colors.toColor(), hsvValues);
             if (gamepad2.a){
@@ -92,6 +99,7 @@ public class ColorTest extends LinearOpMode {
 
                 if (gamepad1.xWasPressed()){
                     scannedColor = robot.scanColor();
+                    robot.darkBeep.play(robot.darkBeepID, 5, 5, 1, 0, 1);
 
                     if (scannedColor != '0'){
                         StringBuilder magBuilder = new StringBuilder(mag);
@@ -118,8 +126,11 @@ public class ColorTest extends LinearOpMode {
             } else {
                 telemetry.addData("current solution: ", "no solution");
             }
+            cT = getRuntime();
+            telemetry.addData("Delay from previous update (s): ", cT - prT);
+            prT = cT;
             telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
-            telemetry.addData("Colors (HSV): ",  "R=%d%n G=%d%n B=%d%n ", colors.red, colors.green, colors.blue);
+            telemetry.addData("float Colors (HSV): ",  "R=%.5f G=%.5f B=%.5f ", colors.red, colors.green, colors.blue);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
