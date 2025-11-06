@@ -15,6 +15,9 @@ public class servoDrivenEncoder {
         this.encoder = encoder;
         this.servo1 = servo1;
         this.servo2 = servo2;
+
+        this.servo1.setDirection(servo1.getDirection());
+        this.servo2.setDirection(servo2.getDirection());
     }
 
     public void runToPosition(int targetTicks){

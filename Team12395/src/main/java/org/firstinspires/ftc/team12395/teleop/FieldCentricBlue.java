@@ -90,7 +90,7 @@ public class FieldCentricBlue extends LinearOpMode {
 
         waitForStart();
 
-        robot.lightBeep.play(robot.lightBeepID, 1, 1, 1, 0, 1);
+        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
 
 
         // --- TELEOP LOOP ---

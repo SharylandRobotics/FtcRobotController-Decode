@@ -135,7 +135,7 @@ public class RobotHardware {
         turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
 
-        turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
+
 
 
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
@@ -175,6 +175,11 @@ public class RobotHardware {
         shooter.setDirection(DcMotorEx.Direction.REVERSE);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.FORWARD);
+
+        turretR.setDirection(DcMotorSimple.Direction.FORWARD);
+        turretL.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
 
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.

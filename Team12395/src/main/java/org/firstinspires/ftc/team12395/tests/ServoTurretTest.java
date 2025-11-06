@@ -65,10 +65,24 @@ public class ServoTurretTest extends LinearOpMode {
 
         waitForStart();
 
+        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
+        robot.darkBeep.play(robot.darkBeepID, 5, 5, 1, 0, 1);
+
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             if (run) {
                 robot.turretHandler.runToPosition(target);
+            } else {
+                if (gamepad1.x){
+                    robot.turretR.setPower(0.5);
+                    robot.turretL.setPower(0);
+                } else if (gamepad1.b) {
+                    robot.turretL.setPower(0.5);
+                    robot.turretR.setPower(0);
+                } else {
+                    robot.turretL.setPower(0);
+                    robot.turretR.setPower(0);
+                }
             }
 
             telemetry.update();
