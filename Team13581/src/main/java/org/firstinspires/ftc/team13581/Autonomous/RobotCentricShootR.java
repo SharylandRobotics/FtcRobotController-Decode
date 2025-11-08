@@ -18,10 +18,17 @@ public class RobotCentricShootR extends LinearOpMode {
         final double YAW_SPEED         = 0.2;
         robot.init();
 
+        while(opModeInInit()) {
+            // Display heading and status continuously during init loop
+            telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            telemetry.update();
+        }
+
         waitForStart();
+        if (isStopRequested()) return;
 
-        while(opModeIsActive()) {
-
+        if (opModeIsActive()) {
             robot.autoRobotCentric(AXIAL_SPEED, -52.0, 0.0);
             robot.setBackPower(0.8);
             robot.setAimPos(0.45);
@@ -39,7 +46,15 @@ public class RobotCentricShootR extends LinearOpMode {
             robot.setBackPower(0);
             robot.setAimPos(0.2);
             sleep(2000);
-            break;
+            robot.turnToHeading(YAW_SPEED, -45.0);
+            robot.holdHeading(YAW_SPEED, -45.0, 0.5);
+
+            robot.autoRobotCentric(AXIAL_SPEED, 17.0, -45.0);
+            sleep(1000);
+
+            telemetry.addData("Path", "Complete");
+            telemetry.update();
+            sleep(1000);  // Pause to display last telemetry message.
         }
     }
 }

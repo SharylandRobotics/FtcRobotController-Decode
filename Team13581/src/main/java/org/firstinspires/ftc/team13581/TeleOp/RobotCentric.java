@@ -53,7 +53,7 @@ public class RobotCentric extends LinearOpMode {
         while (opModeIsActive()) {
 
             axial   =  -gamepad1.left_stick_y;
-            lateral =  -gamepad1.left_stick_x;
+            lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
             robot.teleOpRobotCentric(axial, lateral, yaw);
