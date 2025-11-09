@@ -70,7 +70,9 @@ public class ServoTurretTest extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             if (run) {
-                robot.turretHandler.runToPosition(target);
+                if (robot.turretHandler.runToPosition(target)){
+                    run = false;
+                }
             } else {
                 if (gamepad1.x){
                     robot.turretR.setPower(0.5);
@@ -89,15 +91,16 @@ public class ServoTurretTest extends LinearOpMode {
                 run = false;
             } else if (gamepad1.dpad_up){
                 run = true;
-            } else {
-                run = false;
             }
+            robot.turretHandler.setPGain();
+            robot.turretHandler.setDGain();
 
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             telemetry.addData("Pos: ", robot.turretHandler.getCurrentPosition());
             telemetry.addData("Power: ", robot.turretHandler.getServoPower());
+            telemetry.addData("Error: ", robot.turretHandler.getCurrentError());
             sleep(50); // ~20 Hz;
         }
     }
