@@ -62,21 +62,34 @@ public class Gyro extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
+            robot.setOuttakePower(0.7);
 
             // Drive 24" forward, then turn and hold headings as defined
-            robot.driveStraight(MAX_AUTO_AXIAL, 24.0, 0.0);
-            robot.turnToHeading(MAX_AUTO_YAW, -45.0);
-            robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
+            robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
+            robot.setOuttakePower(1.0);
+            //robot.turnToHeading(MAX_AUTO_YAW, -45.0);
+           // robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
+            sleep(2000);
+            robot.setOuttakePower(1.0);
+            robot.setKickerLeftPower(.35);
+            robot.setKickerPower(0);
+            sleep(3000);
+            robot.setOuttakePower(0);
+            robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
+          //  robot.turnToHeading(MAX_AUTO_YAW,45);
+           // robot.holdHeading(MAX_AuTO_YAW,);
 
-            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, -45.0);
-            robot.turnToHeading(MAX_AUTO_YAW, 45.0);
-            robot.holdHeading(MAX_AUTO_YAW, 45.0, 0.5);
 
-            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, 45.0);
-            robot.turnToHeading(MAX_AUTO_YAW, 0.0);
-            robot.holdHeading(MAX_AUTO_YAW, 0.0, 1.0);
 
-            robot.driveStraight(MAX_AUTO_AXIAL, -48.0, 0.0);
+            //robot.driveStraight(MAX_AUTO_AXIAL, 17.0, -45.0);
+            //robot.turnToHeading(MAX_AUTO_YAW, 45.0);
+            //robot.holdHeading(MAX_AUTO_YAW, 45.0, 0.5);
+
+            //robot.driveStraight(MAX_AUTO_AXIAL, 17.0, 45.0);
+            //robot.turnToHeading(MAX_AUTO_YAW, 0.0);f
+            //robot.holdHeading(MAX_AUTO_YAW, 0.0, 1.0);
+
+            //robot.driveStraight(MAX_AUTO_AXIAL, -48.0, 0.0);
 
             // Indicate completion and pause for display
             telemetry.addData("Path", "Complete");
