@@ -159,10 +159,10 @@ public class RobotHardware {
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         intakeDrive.setDirection(DcMotor.Direction.FORWARD);
         outtakeDrive.setDirection(DcMotor.Direction.REVERSE);

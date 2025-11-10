@@ -82,9 +82,9 @@ public class FieldCentric extends LinearOpMode {
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
 
-            axial = gamepad1.left_stick_y * scale;
-            lateral = -gamepad1.left_stick_x * scale;
-            yaw = -gamepad1.right_stick_x * scale;
+            axial = -gamepad1.left_stick_y * scale;
+            lateral = gamepad1.left_stick_x * scale;
+            yaw = gamepad1.right_stick_x * scale;
 
             // --- Vision helpers for concise telemetry ---
             //Integer goalId = robot.getGoalTagId();
