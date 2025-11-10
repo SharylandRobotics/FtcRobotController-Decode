@@ -78,7 +78,7 @@ public class RobotHardware {
 
     private final double driveToTurretRatio = 3.2; // 3.2 rotations to 1, 80/25 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev
-    private final double turretTicksPerDegree = turretTicksPerRevolution/360;
+    public final double turretTicksPerDegree = turretTicksPerRevolution/360;
     private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
     private final int shooterMaxTPM = 2800;
 

@@ -72,6 +72,7 @@ public class ServoTurretTest extends LinearOpMode {
             if (run) {
                 if (robot.turretHandler.runToPosition(target)){
                     run = false;
+                    telemetry.addData("DONE", "");
                 }
             } else {
                 if (gamepad1.x){
@@ -93,6 +94,7 @@ public class ServoTurretTest extends LinearOpMode {
                 run = true;
             }
             robot.turretHandler.setPGain();
+            robot.turretHandler.setIGain();
             robot.turretHandler.setDGain();
 
             telemetry.update();
@@ -100,7 +102,8 @@ public class ServoTurretTest extends LinearOpMode {
             // Pace loop-helps with readability and prevents spamming the DS
             telemetry.addData("Pos: ", robot.turretHandler.getCurrentPosition());
             telemetry.addData("Power: ", robot.turretHandler.getServoPower());
-            telemetry.addData("Error: ", robot.turretHandler.getCurrentError());
+            telemetry.addData("Error Deg: ", robot.turretHandler.getCurrentError()/robot.turretTicksPerDegree);
+            telemetry.addData("Output: ", robot.turretHandler.getOutput());
             sleep(50); // ~20 Hz;
         }
     }
