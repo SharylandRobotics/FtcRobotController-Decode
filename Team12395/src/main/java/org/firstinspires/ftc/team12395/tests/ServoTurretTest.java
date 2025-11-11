@@ -70,7 +70,8 @@ public class ServoTurretTest extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             if (run) {
-                if (robot.turretHandler.runToPosition(target)){
+                robot.setTurretHandlerAbsolute(target);
+                if (robot.turretHandler.runToTarget()){
                     run = false;
                     telemetry.addData("DONE", "");
                 }

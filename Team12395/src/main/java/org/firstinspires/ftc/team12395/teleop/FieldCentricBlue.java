@@ -227,15 +227,14 @@ public class FieldCentricBlue extends LinearOpMode {
 
             prevHeading = robot.getHeading();
 
-            robot.runTurretHandler();
-
             // Telemetry for drivers + debugging
             telemetry.addData("current Chamber: ", robot.chamber);
             telemetry.addData("current Mag: ", mag);
             telemetry.addData("current Pattern: ", pattern);
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            // telemetry.addData("Heading(rad)", robot.getHeadingRadians()); / add a getter in RobotHardware if desired
+            telemetry.addData("done running: ", robot.turretHandler.runToTarget());
+            telemetry.addData("target : ", robot.turretHandler.getSetPos());
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

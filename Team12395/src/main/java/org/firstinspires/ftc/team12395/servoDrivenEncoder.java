@@ -16,13 +16,10 @@ public class servoDrivenEncoder {
 
     OverflowEncoder encoder;
     CRServo servo1, servo2;
-    int targetPos;
     int currentPos;
-    int lastPos;
     double output = 0;
+    int targetPos;
 
-    double dt = 0;
-    double lastTimeStamp = 0;
 
     public static double P = 0.00015;
     public static double I = 0.000001;
@@ -40,8 +37,9 @@ public class servoDrivenEncoder {
         this.servo1.setDirection(servo1.getDirection());
         this.servo2.setDirection(servo2.getDirection());
 
-        controller.setTolerance(20);
+        controller.setTolerance(10);
         controller.setSetPoint(0);
+        targetPos = 0;
     }
 
     public boolean runToPosition(int targetTicks){
@@ -59,14 +57,15 @@ public class servoDrivenEncoder {
 
     public void setTargetPos(int target){
         controller.setSetPoint(target);
+        targetPos = target;
     }
 
     public boolean runToTarget(){
         currentPos = getCurrentPosition();
+        output = controller.calculate(currentPos, targetPos);
         if (!controller.atSetPoint()){
-            output = controller.calculate(currentPos);
             setServoPowers(output);
-            return  false;
+            return false;
         } else {
             stopServos();
             return true;
@@ -111,6 +110,18 @@ public class servoDrivenEncoder {
 
     public double getOutput(){
         return output;
+    }
+
+    public int getSetPos(){
+        return (int) controller.getSetPoint();
+    }
+
+    public boolean getAtPoint(){
+        return controller.atSetPoint();
+    }
+
+    public double[] getPID(){
+        return controller.getCoefficients();
     }
 
 }
