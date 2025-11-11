@@ -59,7 +59,7 @@ public class FieldCentricBlue extends LinearOpMode {
 
     public static int intakeVel = 0;
 
-
+    public static boolean xToggle = false;
 
 
 
@@ -80,7 +80,6 @@ public class FieldCentricBlue extends LinearOpMode {
 
         int autoShootClock = 0;
 
-        boolean xToggle = false;
         boolean autoSense = false;
 
 
@@ -105,10 +104,6 @@ public class FieldCentricBlue extends LinearOpMode {
             }
 
             robot.driveFieldCentric(axial, lateral, yaw);
-
-            slewRate = Math.abs(gamepad1.right_trigger - gamepad1.left_trigger)*0.085;
-            slewTarget = (gamepad1.left_trigger > 0 ? -maxTurnL : (gamepad1.right_trigger > 0 ? maxTurnR : robot.getCurrentTurretDegreePos() ));
-
 
 
             velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
@@ -216,23 +211,23 @@ public class FieldCentricBlue extends LinearOpMode {
                         farFudge *= errorDeg/Math.abs(errorDeg);
                     }
 
-                    robot.setTurretPositionRelative(errorDeg + (robot.getHeading() - prevHeading) + farFudge);
+                    robot.setTurretHandlerRelative(errorDeg + (robot.getHeading() - prevHeading) + farFudge);
                     lastTrackingClock = 0;
                 } else if (lastTrackingClock < 2000) {
 
 
-                    robot.setTurretPositionRelative((robot.getHeading() - prevHeading));
+                    robot.setTurretHandlerRelative((robot.getHeading() - prevHeading));
                 }else {
                     telemetry.addData("AprilTag Not Detected/Invalid ", "...");
-                    robot.setTurretPositionRelative(slewTarget, slewRate);
+                    robot.setTurretHandlerRelative(0);
                 }
             } else {
-                robot.setTurretPositionAbsolute(slewTarget, slewRate);
+                robot.setTurretHandlerAbsolute(0);
             }
 
             prevHeading = robot.getHeading();
 
-
+            robot.runTurretHandler();
 
             // Telemetry for drivers + debugging
             telemetry.addData("current Chamber: ", robot.chamber);

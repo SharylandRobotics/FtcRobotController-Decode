@@ -322,15 +322,6 @@ public class RobotHardware {
         intake.setVelocity(vel);
     }
 
-    public void setTurretPositionAbsolute(double deg){
-        deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
-
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(turretMaxTPS);
-    }
-
     public void setTurretPositionAbsolute(double deg, double tps){
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
         turret.setTargetPosition((int) (deg*turretTicksPerDegree));
@@ -359,6 +350,23 @@ public class RobotHardware {
         turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         turret.setVelocity(turretMaxTPS);
+    }
+
+    public void setTurretHandlerRelative(double deg){
+        deg += turretHandler.getCurrentPosition()/turretTicksPerDegree;
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
+
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
+    }
+
+    public void setTurretHandlerAbsolute(double deg){
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
+
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
+    }
+
+    public boolean runTurretHandler(){
+        return turretHandler.runToTarget();
     }
 
     public void setShooterVelocity(double tPs){
