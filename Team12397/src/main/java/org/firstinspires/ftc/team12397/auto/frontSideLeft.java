@@ -72,53 +72,44 @@ frontSideLeft extends LinearOpMode {
             Boolean phase3 = false;
 
             while(phase1){
+                //robot methods
                 robot.driveStraight(AXIAL_SPEED, -36, 0);
                 robot.turnToHeading(AXIAL_SPEED,90);
-
-                robot.driveStraight(AXIAL_SPEED, 20, 0);
-                robot.turnToHeading(AXIAL_SPEED,(-125));
-                robot.turretPower(1);
-                robot.holdHeading(robot.YAW_SPEED, 0, 3);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-
-                robot.holdHeading(robot.YAW_SPEED, 0, 2);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-                robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-                robot.setIntakeServo(1);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-                robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.setIntakeServo(1);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-
-                // Turn motors off
-                robot.turretPower(0);
-                robot.intakePower(0);
+                shootMotors();
 
 
 
 
 
 
-                //to due: calculate offset for auto  & config shoot motors & servo
-                // robot.autoDriveToGoalStep();
-                //robot.startIntakeMotor();
-                //robot.shootMotors();
-                phase1 = false;
-            }
-            while(aprilTagFound){
 
             }
+
 
 
         }
+    }
+    public void shootMotors(){
+        robot.turretPower(1);
+        robot.holdHeading(robot.YAW_SPEED, 0, 3);
+
+        robot.intakePower(-1);
+        robot.holdHeading(robot.YAW_SPEED, 0, 2);
+
+        robot.setIntakeServo(0);
+        robot.holdHeading(robot.YAW_SPEED, 0, 1);
+
+        robot.setIntakeServo(1);
+        robot.holdHeading(robot.YAW_SPEED, 0, 1);
+
+        robot.setIntakeServo(0);
+        robot.holdHeading(robot.YAW_SPEED, 0, 1);
+
+        robot.setIntakeServo(1);
+        robot.holdHeading(robot.YAW_SPEED, 0, 1);
+        // turn off motors
+        robot.turretPower(0);
+        robot.intakePower(0);
     }
 }
 
