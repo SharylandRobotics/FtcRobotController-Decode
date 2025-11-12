@@ -83,13 +83,10 @@ public class rrActions {
     }
 
     public class Turret{
-        private DcMotorEx turret;
+        private servoDrivenEncoder turretHandler;
 
         public Turret(){
-            turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
-
-            turret.setDirection(DcMotorEx.Direction.FORWARD);
-            turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            turretHandler = new servoDrivenEncoder(robot.turretE, robot.turretR, robot.turretL);
         }
 
         public class turnTurretRelative implements Action{
@@ -101,13 +98,33 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                robot.setTurretPositionRelative(deg);
-                return false;
+                robot.setTurretHandlerRelative(deg);
+
+                return !turretHandler.runToTarget(); // you are not done?
+            }
+        }
+
+        public class turnTurretAbsolute implements Action{
+            private double deg;
+
+            public turnTurretAbsolute(double deg){
+                this.deg = deg;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                robot.setTurretHandlerAbsolute(deg);
+
+                return !turretHandler.runToTarget(); // you are not done?
             }
         }
 
         public Action turnTurretBy(double deg){
             return new turnTurretRelative(deg);
+        }
+
+        public Action turnTurretTo(double deg){
+            return new turnTurretAbsolute(deg);
         }
     }
 
