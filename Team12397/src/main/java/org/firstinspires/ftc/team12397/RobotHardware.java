@@ -709,8 +709,9 @@ public class RobotHardware {
             return false;
         }
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
-        //new custom varable  goalrange- hypothenus, goalbearing- lateral deg
-        double rangeErrorLateral = goalRangeIn*Math.sin(Math.toRadians(goalBearingDeg));
+
+        //new custom varable lateral range - desired distance
+        double rangeErrorLateral = (goalRangeIn*Math.sin(Math.toRadians(goalBearingDeg)))-60;
 
         double headingError =  goalBearingDeg;
         double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
@@ -719,17 +720,7 @@ public class RobotHardware {
         //changed yaw error to range error lateral
         double lateral = Range.clip(rangeErrorLateral * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
         double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
-        //accounts for symetry and reverse
-        if(rangeErrorLateral > 0 && goalTagId ==24){
-            lateral = -lateral;
-        }
-        if(rangeErrorLateral >0 && goalTagId == 20){
-            lateral = -lateral;
-        }
-        // hypothenuse is 80.4 reverse if less than
-        if(goalRangeIn < DESIRED_DISTANCE){
-            axial = -axial;
-        }
+
         driveRobotCentric(axial, lateral, yaw);
         return true;
     }
@@ -746,6 +737,7 @@ public class RobotHardware {
         turretMotor.setPower(0);
         intakeMotor.setPower(0);
         */
+
 
     }
 
