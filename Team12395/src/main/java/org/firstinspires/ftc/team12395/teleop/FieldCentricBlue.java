@@ -51,7 +51,7 @@ public class FieldCentricBlue extends LinearOpMode {
 
     public static double indexerTarget = 0;
 
-    public static double preSetVelocity = 1100;
+    public static double preSetVelocity = 1440;
     public static double preSetAngleFar = 0.8;
     public static double preSetAngleClose = 0.4;
 
@@ -59,7 +59,7 @@ public class FieldCentricBlue extends LinearOpMode {
 
     public static int intakeVel = 0;
 
-    public static boolean xToggle = false;
+
 
 
 
@@ -80,6 +80,7 @@ public class FieldCentricBlue extends LinearOpMode {
 
         int autoShootClock = 0;
 
+        boolean xToggle = false;
         boolean autoSense = false;
 
 
@@ -90,6 +91,8 @@ public class FieldCentricBlue extends LinearOpMode {
         waitForStart();
 
         robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
+
+        robot.disableDriveEncoders();
 
 
         // --- TELEOP LOOP ---
@@ -113,7 +116,7 @@ public class FieldCentricBlue extends LinearOpMode {
             } else if (gamepad1.bWasPressed()){
                 velocity = 0;
             } else if (gamepad1.aWasPressed()){
-                velocity = 800;
+                velocity = 1120;
                 angle = preSetAngleClose;
             }
 
@@ -159,9 +162,6 @@ public class FieldCentricBlue extends LinearOpMode {
                 if (autoShootClock >= 0 && (robot.spindexerTarget % 120) == 0) {
                     robot.shootAutomaticSequence(autoShootClock);
                     autoShootClock++;
-                    if (autoShootClock > 11) {
-                        autoShootClock = 0;
-                    }
                 }
             } else {
                 autoShootClock = 0;
@@ -193,8 +193,8 @@ public class FieldCentricBlue extends LinearOpMode {
                 robot.setArmPos(armPos);
             }
 
-            if (autoShootClock < 0){
-                autoShootClock++;
+            if (autoShootClock > 11){
+                autoShootClock = 0;
             }
 
             if (gamepad2.xWasPressed()){
@@ -235,6 +235,7 @@ public class FieldCentricBlue extends LinearOpMode {
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             telemetry.addData("done running: ", robot.turretHandler.runToTarget());
             telemetry.addData("target : ", robot.turretHandler.getSetPos());
+            telemetry.addData("auto clock : ", autoShootClock);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

@@ -317,6 +317,13 @@ public class RobotHardware {
 
     }
 
+    public void disableDriveEncoders(){
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
 
     public void setIntakeSpeed(int vel){
         intake.setVelocity(vel);
@@ -561,7 +568,7 @@ public class RobotHardware {
         return Double.NaN;
     }
 
-    public void processObelisk(){
+    public boolean processObelisk(){
         if (processLLresult()){
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
             List<LLResultTypes.FiducialResult> fresultCC = fresult;
@@ -581,15 +588,19 @@ public class RobotHardware {
                 if (closestObelisk == 21){
                     pattern = "GPP";
                     myOpMode.telemetry.addData("Tag 21: ", "GPP");
+                    return true;
                 } else if (closestObelisk == 22) {
                     pattern = "PGP";
                     myOpMode.telemetry.addData("Tag 22: ", "PGP");
+                    return true;
                 } else if (closestObelisk == 23){
                     pattern = "PPG";
                     myOpMode.telemetry.addData("Tag 23: ", "PPG");
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     public int[] solvePattern(){
@@ -659,19 +670,15 @@ public class RobotHardware {
     }
 
     public void shootAutomaticSequence(int clock){
-        if (!spindexer.isBusy()) {
-            if (clock == 0) {// 500/50
-                setArmPos(0.7);
-                StringBuilder magBuilder = new StringBuilder(mag);
-                magBuilder.setCharAt(chamber, '0');
-                mag = magBuilder.toString();
-            } else if (clock == 2+ 3) {// 750/50
-                setArmPos(1);
-            } else if (clock == 2+3+ 3){
-                spindexerHandler(-120);
-            }
-
-
+        if (clock == 0) {// 500/50
+            setArmPos(0.7);
+            StringBuilder magBuilder = new StringBuilder(mag);
+            magBuilder.setCharAt(chamber, '0');
+            mag = magBuilder.toString();
+        } else if (clock == 2+ 3) {// 750/50
+            setArmPos(1);
+        } else if (clock == 2+3+ 3){
+            spindexerHandler(-120);
         }
     }
 

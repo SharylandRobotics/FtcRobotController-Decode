@@ -51,7 +51,7 @@ public class FieldCentricRed extends LinearOpMode {
 
     public static double indexerTarget = 0;
 
-    public static double preSetVelocity = 1100;
+    public static double preSetVelocity = 1100*1.4;
     public static double preSetAngleFar = 0.8;
     public static double preSetAngleClose = 0.4;
 
@@ -116,7 +116,7 @@ public class FieldCentricRed extends LinearOpMode {
             } else if (gamepad1.bWasPressed()){
                 velocity = 0;
             } else if (gamepad1.aWasPressed()){
-                velocity = 800;
+                velocity = 800*1.4;
                 angle = preSetAngleClose;
             }
 
@@ -219,13 +219,13 @@ public class FieldCentricRed extends LinearOpMode {
                 } else if (lastTrackingClock < 2000) {
 
 
-                    robot.setTurretPositionRelative((robot.getHeading() - prevHeading));
+                    robot.setTurretHandlerRelative((robot.getHeading() - prevHeading));
                 }else {
                     telemetry.addData("AprilTag Not Detected/Invalid ", "...");
-                    robot.setTurretPositionRelative(slewTarget, slewRate);
+                    robot.setTurretHandlerRelative(slewTarget);
                 }
             } else {
-                robot.setTurretPositionAbsolute(slewTarget, slewRate);
+                robot.setTurretHandlerAbsolute(slewTarget);
             }
 
             prevHeading = robot.getHeading();

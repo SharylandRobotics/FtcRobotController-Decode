@@ -46,6 +46,10 @@ public class rrActions {
         public Action spindexerTargetAdd(int deg){
             return new spindexerHandler(deg);
         }
+
+        public Action sortSpindexer(){
+            return new spindexerHandler(120*robot.solvePattern()[0]);
+        }
     }
 
     public class liftArm {
@@ -220,8 +224,7 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                robot.processObelisk();
-                return false;
+                return !robot.processObelisk();
             }
         }
 
