@@ -405,7 +405,7 @@ public class RobotHardware {
     }
 
     public double getCurrentTurretDegreePos(){
-        return turret.getCurrentPosition()/ turretTicksPerDegree;
+        return turretHandler.getCurrentPosition()/ turretTicksPerDegree;
     }
 
     /**
@@ -604,7 +604,8 @@ public class RobotHardware {
     }
 
     public int[] solvePattern(){
-        if (!mag.contains("0") && mag.contains("G") && !pattern.contains("0")){
+        if (!mag.contains("0") && mag.contains("G") &&
+                (mag.indexOf("G") != mag.lastIndexOf("G")) ){
             // if I have a full mag with Green and know the pattern
             int greenIndex = mag.indexOf("G");
             if (pattern.equals("GPP")){
@@ -713,16 +714,16 @@ public class RobotHardware {
         }
     }
 
-    public void setMagManual(String set){
+    public void setMagManualBulk(String set){
         StringBuilder magBuilder = new StringBuilder(mag);
         for (int i=0; i<3; i++) {
             magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
             mag = magBuilder.toString();
         }
     }
-
-    public void myTurret(){
-
+    public void setChamberManual(Character c){
+        StringBuilder magBuilder = new StringBuilder(mag);
+        magBuilder.setCharAt(chamber, c);
     }
 
 }

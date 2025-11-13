@@ -57,12 +57,27 @@ public class RRautoBlue extends LinearOpMode {
         Pose2d pushEndPose2 = new Pose2d(58,-50, -Math.PI /2);
         // return to volley pose
 
-        Action shoot = new SequentialAction(
-            liftArm.liftArmUp(),
+        Action shoot3 = new SequentialAction(
+
+                liftArm.liftArmUp(),
                 sleepAction(750),
                 liftArm.liftArmDown(),
                 sleepAction(750),
-                spindexer.spindexerTargetAdd(120)
+                spindexer.spindexerTargetAdd(120),
+
+                sleepAction(750),
+
+                liftArm.liftArmUp(),
+                sleepAction(750),
+                liftArm.liftArmDown(),
+                sleepAction(750),
+                spindexer.spindexerTargetAdd(120),
+
+                sleepAction(750),
+
+                liftArm.liftArmUp(),
+                sleepAction(750),
+                liftArm.liftArmDown()
         );
 
         Action driveToPLShoot = drive.actionBuilder(initialPose)
@@ -74,15 +89,15 @@ public class RRautoBlue extends LinearOpMode {
                 .build();
 
         Action driveToRow1 = drive.actionBuilder(latestPose)
-                .setTangent(Math.atan2(ballRow1.position.y - shootVolleyPL.position.y,
-                        ballRow1.position.x - shootVolleyPL.position.x))
+                .setTangent(Math.atan2(ballRow1.position.y - latestPose.position.y,
+                        ballRow1.position.x - latestPose.position.x))
                 .lineToY(ballRow1.position.y)
                 .build();
 
         Action driveToRow1End = drive.actionBuilder(latestPose)
-                .setTangent(Math.atan2(ballRow1End.position.y - ballRow1.position.y,
-                        ballRow1End.position.x - ballRow1.position.x))
-                .lineToY(ballRow1.position.y)
+                .setTangent(Math.atan2(ballRow1End.position.y - latestPose.position.y,
+                        ballRow1End.position.x - latestPose.position.x))
+                .lineToY(ballRow1.position.y, new TranslationalVelConstraint(10))
                 .build();
         // init done
 
@@ -98,13 +113,18 @@ public class RRautoBlue extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        /*new ParallelAction(
+                        new ParallelAction(
                                 shooter.setShooterVel((int) (800*1.4)),
                                 turret.turnTurretTo(90),
-                                new RaceAction(
+
+                                new SequentialAction(
+                                    new RaceAction(
                                         limelight.scanForObelisk(),
                                         sleepAction(2000)
+                                    ),
+                                    turret.turnTurretTo(0)
                                 ),
+
                                 new SequentialAction(
                                         sleepAction(2000),
                                         spindexer.sortSpindexer()
@@ -113,17 +133,31 @@ public class RRautoBlue extends LinearOpMode {
                                 driveToPLShoot
 
                         ),
+                        turret.turnTurretBy(robot.homeToAprilTagBlue()),
                         sleepAction(2000),
 
-                        shoot,
-                        sleepAction(750),
-                        shoot,
-                        sleepAction(750),
-                        shoot
+                        shoot3,
+                        sleepAction(2000),
+                        updatePose(),
+                        new ParallelAction(
+                                driveToRow1,
+                                spindexer.spindexerTargetAdd(60),
+                                new SequentialAction(
+                                        sleepAction(1000),
+                                        intake.setIntakeVel(1000)
+                                )
+                        ),
 
-                         */
+                        updatePose(),
+                        new ParallelAction(
+                                driveToRow1End,
+                                new SequentialAction(
+                                        sleepAction(500),
+                                        spindexer.spindexerTargetAdd(120)
+                                )
+                        )
 
-                        turret.turnTurretTo(90)
+
 
 
 

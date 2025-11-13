@@ -47,13 +47,10 @@ public class FieldCentricBlue extends LinearOpMode {
     public static double velocity = 0;
     public static double angle = 0.1;
 
-    public static double slewTarget = 0;
-
-    public static double indexerTarget = 0;
-
-    public static double preSetVelocity = 1440;
+    public static double preSetVelocityFar = 1440;
     public static double preSetAngleFar = 0.8;
     public static double preSetAngleClose = 0.4;
+    public static double preSetVelocityClose = 1120;
 
     public static double armPos = 1;
 
@@ -66,13 +63,13 @@ public class FieldCentricBlue extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Driver inputs (range roughly [-1, 1])
-        double axial    = 0; // forward/back (+ forward)
-        double lateral  = 0; // strafe left/right (+ right)
-        double yaw      = 0; // rotation (+ CCW/left turn)
+        double axial    ; // forward/back (+ forward)
+        double lateral  ; // strafe left/right (+ right)
+        double yaw      ; // rotation (+ CCW/left turn)
 
-        double spinAngle = 120;
+        double spinAngle;
 
-        double slewRate = 0;
+        double trueTurretHeading = 0;
 
         double prevHeading = 0;
         double armClock = 9;
@@ -102,22 +99,16 @@ public class FieldCentricBlue extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
-            if (gamepad1.right_bumper){
-                axial *= 0.6; lateral *= 0.6; yaw *= 0.6;
-            }
-
+            if (gamepad1.right_bumper){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
             robot.driveFieldCentric(axial, lateral, yaw);
-
 
             velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
             if (gamepad1.xWasPressed()){
-                velocity = preSetVelocity;
-                angle = preSetAngleFar;
+                velocity = preSetVelocityFar; angle = preSetAngleFar;
             } else if (gamepad1.bWasPressed()){
                 velocity = 0;
             } else if (gamepad1.aWasPressed()){
-                velocity = 1120;
-                angle = preSetAngleClose;
+                velocity = preSetVelocityClose; angle = preSetAngleClose;
             }
 
             angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
@@ -129,17 +120,14 @@ public class FieldCentricBlue extends LinearOpMode {
             if (gamepad1.yWasPressed()){
                 if (intakeVel == -1000 || intakeVel == 1000){
                     intakeVel = 0;
-                } else if (intakeVel == 0){
-                    intakeVel = -1000;
-                }
-                robot.setIntakeSpeed(intakeVel); // 2800 max?
+
+                } else if (intakeVel == 0){ intakeVel = -1000; }
+                robot.setIntakeSpeed(intakeVel);
             } else if (gamepad1.dpadDownWasPressed()){
                 if (intakeVel != 1000){
                     intakeVel = 1000;
-                } else  {
-                    intakeVel = 0;
-                }
 
+                } else  { intakeVel = 0; }
                 robot.setIntakeSpeed(intakeVel);
             }
 
@@ -157,15 +145,22 @@ public class FieldCentricBlue extends LinearOpMode {
             }
 
             // gamepad 2 --
-
-            if (gamepad2.dpad_up){
+            if ( (robot.spindexerTarget % 120) != 0 && mag.charAt(robot.chamber) == '0') {
+                if (gamepad2.dpad_left) {
+                    robot.setChamberManual('P');
+                } else if (gamepad2.dpad_right) {
+                    robot.setChamberManual('G');
+                }
+            } else if (gamepad2.dpad_down && robot.solvePattern() != null){
+                robot.spindexerHandler(120*robot.solvePattern()[0]);
+            } else if (gamepad2.dpad_up){
                 if (autoShootClock >= 0 && (robot.spindexerTarget % 120) == 0) {
                     robot.shootAutomaticSequence(autoShootClock);
                     autoShootClock++;
                 }
-            } else {
+            }
+            if(!gamepad2.dpad_up) {
                 autoShootClock = 0;
-
 
                 if (gamepad2.a) {
                     spinAngle = 60;
@@ -182,44 +177,36 @@ public class FieldCentricBlue extends LinearOpMode {
                 }
 
                 if (gamepad2.b) {
-                    armPos = 0.7;
-                    armClock = 0;
+                    armPos = 0.7; armClock = 0;
                 }
                 if (gamepad2.bWasReleased()) {
-                    armPos = 1;
-                    armClock = 0;
+                    armPos = 1; armClock = 0;
                 }
-
                 robot.setArmPos(armPos);
             }
 
-            if (autoShootClock > 11){
-                autoShootClock = 0;
-            }
+            if (autoShootClock > 11){ autoShootClock = 0;}
 
-            if (gamepad2.xWasPressed()){
-                xToggle = !xToggle;
-            }
+            if (gamepad2.xWasPressed()){ xToggle = !xToggle;}
 
             if (xToggle){
                 double errorDeg = robot.homeToAprilTagBlue();
 
                 if (!Double.isNaN(errorDeg) ) {
+                    double farFudge = 0;
+                    if (velocity == preSetVelocityFar){ farFudge = Math.copySign(4, errorDeg); }
 
-                    double farFudge = 4;
-                    if (velocity == preSetVelocity){
-                        farFudge *= errorDeg/Math.abs(errorDeg);
-                    }
+                    double lastTargetTurretPos = errorDeg - (robot.getHeading() - prevHeading) + farFudge;
+                    robot.setTurretHandlerRelative(lastTargetTurretPos);
+                    lastTargetTurretPos += robot.getCurrentTurretDegreePos();
 
-                    robot.setTurretHandlerRelative(errorDeg + (robot.getHeading() - prevHeading) + farFudge);
+                    trueTurretHeading = lastTargetTurretPos + robot.getHeading();
+
                     lastTrackingClock = 0;
                 } else if (lastTrackingClock < 2000) {
-
-
-                    robot.setTurretHandlerRelative((robot.getHeading() - prevHeading));
-                }else {
-                    telemetry.addData("AprilTag Not Detected/Invalid ", "...");
-                    robot.setTurretHandlerRelative(0);
+                    robot.setTurretHandlerAbsolute(trueTurretHeading - robot.getHeading());
+                } else {
+                    robot.setTurretHandlerAbsolute(0);
                 }
             } else {
                 robot.setTurretHandlerAbsolute(0);
@@ -233,9 +220,7 @@ public class FieldCentricBlue extends LinearOpMode {
             telemetry.addData("current Pattern: ", pattern);
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            telemetry.addData("done running: ", robot.turretHandler.runToTarget());
-            telemetry.addData("target : ", robot.turretHandler.getSetPos());
-            telemetry.addData("auto clock : ", autoShootClock);
+            telemetry.addData("turret running? ", robot.turretHandler.runToTarget());
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

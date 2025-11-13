@@ -90,7 +90,7 @@ public class rrActions {
         private servoDrivenEncoder turretHandler;
 
         public Turret(){
-            turretHandler = new servoDrivenEncoder(robot.turretE, robot.turretR, robot.turretL);
+            turretHandler = robot.turretHandler;
         }
 
         public class turnTurretRelative implements Action{
