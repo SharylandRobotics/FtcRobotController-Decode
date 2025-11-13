@@ -104,7 +104,9 @@ public class rrActions {
             public boolean run(@NonNull TelemetryPacket packet){
                 robot.setTurretHandlerRelative(deg);
 
-                return !turretHandler.runToTarget(); // you are not done?
+                boolean done = turretHandler.runToTarget();
+                packet.put("done? ", done);
+                return !done; // you are not done?
             }
         }
 
@@ -117,8 +119,9 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                robot.setTurretHandlerAbsolute(deg);
+                turretHandler.setTargetPos((int) (deg*robot.turretTicksPerDegree));
 
+                packet.put("done? ", turretHandler.runToTarget());
                 return !turretHandler.runToTarget(); // you are not done?
             }
         }

@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-@Autonomous(name =  "Auto Blue RR", group = "Robot")
+@Autonomous(name =  "Auto ", group = "Robot")
 public class AutoByEncoder extends LinearOpMode {
     RobotHardware robot = new RobotHardware(this);
     ElapsedTime runtime = new ElapsedTime();

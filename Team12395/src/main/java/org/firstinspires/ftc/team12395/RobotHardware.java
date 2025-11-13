@@ -714,8 +714,8 @@ public class RobotHardware {
     }
 
     public void setMagManual(String set){
+        StringBuilder magBuilder = new StringBuilder(mag);
         for (int i=0; i<3; i++) {
-            StringBuilder magBuilder = new StringBuilder(mag);
             magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
             mag = magBuilder.toString();
         }
