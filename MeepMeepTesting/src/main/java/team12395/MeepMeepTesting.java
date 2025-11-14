@@ -20,7 +20,7 @@ public class MeepMeepTesting {
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-48, -50, Math.toRadians(-125)))
+                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-48.5, -49.5, Math.toRadians(-125)))
                         .lineTo(new Vector2d(-25, -17.3))
                         //
                         .lineToLinearHeading(new Pose2d(-12, -29, Math.toRadians(-90)))
@@ -40,7 +40,7 @@ public class MeepMeepTesting {
 
 
         Image img = null;
-        try { img = ImageIO.read(new File("C:\\Users\\dante\\Downloads\\field-2025-official.png")); }
+        try { img = ImageIO.read(new File("C:\\Users\\shsrobotics\\Downloads\\field-2025-official.png")); }
         catch(IOException e) {}
 
         meepMeep.setBackground(img)

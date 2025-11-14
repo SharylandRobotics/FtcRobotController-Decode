@@ -243,7 +243,7 @@ public class RobotHardware {
         darkBeepID = darkBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb_deep, 1); // PSM
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
-        myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
     }
@@ -422,6 +422,22 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         spindexer.setVelocity(800);
+
+        if (targetAdd == -120 || targetAdd == 60){// cw & half ccw
+            chamber = (chamber + 1) % 3;
+        } else if (targetAdd == 120 || targetAdd == -60){// ccw & half cw
+            chamber = (chamber + 2) % 3;
+        }
+    }
+
+    public void spindexerHandler(int targetAdd,  int vel){
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd) * spindexerTicksPerDegree) );
+
+        spindexerTarget += targetAdd;
+
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        spindexer.setVelocity(vel);
 
         if (targetAdd == -120 || targetAdd == 60){// cw & half ccw
             chamber = (chamber + 1) % 3;

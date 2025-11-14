@@ -37,7 +37,7 @@ public class servoDrivenEncoder {
         this.servo1.setDirection(servo1.getDirection());
         this.servo2.setDirection(servo2.getDirection());
 
-        controller.setTolerance(10);
+        controller.setTolerance(15);
         controller.setSetPoint(0);
         targetPos = 0;
     }

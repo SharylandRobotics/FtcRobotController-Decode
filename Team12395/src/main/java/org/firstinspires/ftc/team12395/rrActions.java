@@ -45,12 +45,35 @@ public class rrActions {
             }
         }
 
+        public class spindexerHandlerVel implements Action{
+            private int deg;
+            private int vel;
+
+            public spindexerHandlerVel(int deg, int vel){
+                this.deg = deg;
+                this.vel = vel;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                robot.spindexerHandler(deg, vel);
+                return false;
+            }
+        }
+
         public Action spindexerTargetAdd(int deg){
             return new spindexerHandler(deg);
         }
 
+        public Action spindexerTargetAddVel(int deg, int vel){
+            return new spindexerHandlerVel(deg, vel);
+        }
+
         public Action sortSpindexer(){
-            return new spindexerHandler(120*robot.solvePattern()[0]);
+            int solve = robot.solvePattern()[0];
+            myOpMode.telemetry.addData("turn: ", solve);
+            myOpMode.telemetry.update();
+            return new spindexerHandler(120*solve);
         }
     }
 
