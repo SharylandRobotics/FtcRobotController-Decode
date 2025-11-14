@@ -52,16 +52,16 @@ public class RRautoBlue extends LinearOpMode {
         // shoot pose PL 30 in back from startPose
         Pose2d shootVolleyPL = new Pose2d(-25, -17.3, initialPose.heading.real);
 
-        Pose2d ballRow1 = new Pose2d(-12, -28.1, Math.toRadians(-90));
-        Pose2d ballRow1End = new Pose2d(-12,-43.1, Math.toRadians(-90));
+        Pose2d ballRow1 = new Pose2d(-12, -29, Math.toRadians(-90));
+        Pose2d ballRow1End = new Pose2d(-12,-44.2, Math.toRadians(-90));
 
         Pose2d shootVolleyPose = new Pose2d(-12,-23, Math.toRadians(-90));
 
-        Pose2d ballRow2 = new Pose2d(12, -28.1, Math.toRadians(-90));
-        Pose2d ballRow2End = new Pose2d(12, -43.1, Math.toRadians(-90));
+        Pose2d ballRow2 = new Pose2d(12, -29, Math.toRadians(-90));
+        Pose2d ballRow2End = new Pose2d(12, -44.2, Math.toRadians(-90));
 
-        Pose2d pushCurvePose2 = new Pose2d(58, -18, -Math.PI/2);
-        Pose2d pushEndPose2 = new Pose2d(58,-50, -Math.PI /2);
+        Pose2d ballRow3 = new Pose2d(34.5, -29, Math.toRadians(-90));
+
         // return to volley pose
 
         Action shoot3 = new SequentialAction(
@@ -105,7 +105,39 @@ public class RRautoBlue extends LinearOpMode {
                 .setTangent(Math.atan2(ballRow1End.position.y - latestPose.position.y,
                         ballRow1End.position.x - latestPose.position.x))
                 .lineToY(ballRow1.position.y, new TranslationalVelConstraint(10))
+                .afterDisp(3, spindexer.spindexerTargetAdd(120))
+                .afterDisp(8, spindexer.spindexerTargetAdd(120))
+                .afterDisp(13, spindexer.spindexerTargetAdd(120))
                 .build();
+
+        Action driveToVolleyPose = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(shootVolleyPose.position.y - latestPose.position.y,
+                        shootVolleyPose.position.x - latestPose.position.x))
+                .lineToY(shootVolleyPose.position.y)
+                .build();
+
+        Action driveToRow2 = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(ballRow2.position.y - latestPose.position.y,
+                        ballRow2.position.x - latestPose.position.x))
+                .lineToY(ballRow2.position.y)
+                .build();
+
+        Action driveToRow2End = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(ballRow2End.position.y - latestPose.position.y,
+                        ballRow2End.position.x - latestPose.position.x))
+                .lineToY(ballRow2.position.y, new TranslationalVelConstraint(10))
+                .afterDisp(3, spindexer.spindexerTargetAdd(120))
+                .afterDisp(8, spindexer.spindexerTargetAdd(120))
+                .afterDisp(13, spindexer.spindexerTargetAdd(120))
+                .build();
+
+        Action driveToRow3 = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(ballRow3.position.y - latestPose.position.y,
+                        ballRow3.position.x - latestPose.position.x))
+                .lineToY(ballRow3.position.y)
+                .build();
+
+
         // init done
 
         Actions.runBlocking(
@@ -137,49 +169,82 @@ public class RRautoBlue extends LinearOpMode {
                                 driveToPLShoot
 
                         ),
-                        showMarker("DONE DRIVING"),
                         limelight.scanForBlue(),
-                        showMarker("DONE SCANNING"),
                         turret.turnTurretByGoalErr(),
-                        showMarker("DONE AIMING"),
                         new SleepAction(2),
+                        shoot3, // shoot first 3
 
-
-                        shoot3,
                         new SleepAction(2),
                         updatePose(),
-                        new ParallelAction(
+
+                        new ParallelAction( // drive to first row & switch spindexer
                                 driveToRow1,
                                 spindexer.spindexerTargetAdd(60),
-                                new SequentialAction(
-                                        new SleepAction(1),
-                                        intake.setIntakeVel(1000)
-                                )
+                                intake.setIntakeVel(1000)
                         ),
 
                         updatePose(),
+
+                        driveToRow1End,
+                        intake.setIntakeVel(0), // finish intaking 1st row
+                        limelight.setMagBatch("GPP"),
+                        spindexer.spindexerTargetAdd(60)
+
+                        /*
+
+                        updatePose(),
+                        new SleepAction(1),
                         new ParallelAction(
-                                driveToRow1End,
-                                new SequentialAction(
-                                        new SleepAction(0.5),
-                                        spindexer.spindexerTargetAdd(120)
-                                )
+                            driveToVolleyPose,
+                            spindexer.sortSpindexer()
+                        ),
+
+                        limelight.scanForBlue(),
+                        turret.turnTurretByGoalErr(),
+
+                        new SleepAction(2),
+                        shoot3,
+
+                        updatePose(),
+                        new SleepAction(2),
+
+                        new ParallelAction( // drive to 2nd row & switch spindexer
+                                driveToRow2,
+                                spindexer.spindexerTargetAdd(60),
+                                intake.setIntakeVel(1000)
+                        ),
+
+                        updatePose(),
+
+                        driveToRow2End,
+                        intake.setIntakeVel(0), // finish intaking 2nd row
+                        limelight.setMagBatch("PGP"),
+                        spindexer.spindexerTargetAdd(60),
+
+                        updatePose(),
+                        new SleepAction(1),
+                        new ParallelAction(
+                            driveToVolleyPose,
+                            spindexer.sortSpindexer()
+                        ),
+
+                        limelight.scanForBlue(),
+                        turret.turnTurretByGoalErr(),
+
+                        new SleepAction(2),
+                        shoot3,
+
+                        updatePose(),
+                        new ParallelAction(
+                                driveToRow3,
+                                shooter.setShooterVel(0),
+                                turret.turnTurretTo(0),
+                                spindexer.spindexerTargetAdd(60),
+                                hood.setHoodAngle(1)
                         )
 
-
-
-
-
-
-
+                        */
                 )
         );
-
-    }
-    private Action sleepAction(long milliseconds) {
-        return (TelemetryPacket packet) -> {
-            sleep(milliseconds);
-            return false;
-        };
     }
 }

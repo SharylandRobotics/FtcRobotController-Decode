@@ -276,6 +276,25 @@ public class rrActions {
             }
         }
 
+        public class setMagBatch implements Action {
+
+            private String s;
+
+            public setMagBatch(String s){
+                this.s = s;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                robot.setMagManualBulk(s);
+                return false;
+            }
+        }
+
+        public Action setMagBatch(String string){
+            return new setMagBatch(string);
+        }
+
         public Action scanForObelisk(){
             return new processObelisk();
         }

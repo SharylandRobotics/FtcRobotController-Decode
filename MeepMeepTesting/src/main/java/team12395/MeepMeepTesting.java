@@ -21,18 +21,20 @@ public class MeepMeepTesting {
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-48, -50, Math.toRadians(-125)))
-                        .back(40)
+                        .lineTo(new Vector2d(-25, -17.3))
                         //
-                        .lineToLinearHeading(new Pose2d(-12, -28.1, Math.toRadians(-90)), new TranslationalVelocityConstraint(1), null)
+                        .lineToLinearHeading(new Pose2d(-12, -29, Math.toRadians(-90)))
                         // start pick up
-                        .lineTo(new Vector2d(-12, -43.1)) // end pick up
+                        .lineTo(new Vector2d(-12, -44.2), new TranslationalVelocityConstraint(10), null) // end pick up
                         .lineTo(new Vector2d(-12, -23))
                         // shoot 2nd volley
 
-                        .lineTo(new Vector2d(12, -28.1))
+                        .lineTo(new Vector2d(12, -29))
                         // start pick up
-                        .lineTo(new Vector2d(12, -43.1)) // end pick up
+                        .lineTo(new Vector2d(12, -44.2),  new TranslationalVelocityConstraint(10), null) // end pick up
                         .lineTo(new Vector2d(-12, -23))
+
+                        .lineTo(new Vector2d(34.5, -29))
                         // shoot 3rd volley
                         .build());
 
