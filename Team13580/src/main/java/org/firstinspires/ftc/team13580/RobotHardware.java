@@ -522,10 +522,11 @@ public class RobotHardware {
         return true;
     }
 */
-    public void setKickerPower(double pos){
-        kicker.setPower(pos);
-        kicker.setDirection(DcMotorSimple.Direction.FORWARD);
+    public void setKickerPower(double speed){
+        kicker.setPower(-speed);
     }
 
-    public void setKickerLeftPower(double pos) {kickerLeft.setPower(pos);}
+    public void setKickerLeftPower(double speed) {
+        kickerLeft.setPower(speed);
+    }
 }
