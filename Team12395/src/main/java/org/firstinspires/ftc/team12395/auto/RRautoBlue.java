@@ -28,6 +28,13 @@ public class RRautoBlue extends LinearOpMode {
         };
     }
 
+    private Action showMarker(String marker){
+        return (TelemetryPacket packet) -> {
+            packet.put(marker, "");
+            return false;
+        };
+    }
+
     @Override
     public void runOpMode() {
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
@@ -60,23 +67,23 @@ public class RRautoBlue extends LinearOpMode {
         Action shoot3 = new SequentialAction(
 
                 liftArm.liftArmUp(),
-                sleepAction(750),
+                new SleepAction(0.75),
                 liftArm.liftArmDown(),
-                sleepAction(750),
+                new SleepAction(0.75),
                 spindexer.spindexerTargetAdd(120),
 
-                sleepAction(750),
+                new SleepAction(0.75),
 
                 liftArm.liftArmUp(),
-                sleepAction(750),
+                new SleepAction(0.75),
                 liftArm.liftArmDown(),
-                sleepAction(750),
+                new SleepAction(0.75),
                 spindexer.spindexerTargetAdd(120),
 
-                sleepAction(750),
+                new SleepAction(0.75),
 
                 liftArm.liftArmUp(),
-                sleepAction(750),
+                new SleepAction(0.75),
                 liftArm.liftArmDown()
         );
 
@@ -115,35 +122,37 @@ public class RRautoBlue extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 shooter.setShooterVel((int) (800*1.4)),
-                                turret.turnTurretTo(90),
 
                                 new SequentialAction(
                                     new RaceAction(
                                         limelight.scanForObelisk(),
-                                        sleepAction(2000)
+                                        new SequentialAction(
+                                            turret.turnTurretTo(70),
+                                            new SleepAction(10)
+                                        )
                                     ),
+                                    spindexer.sortSpindexer(),
                                     turret.turnTurretTo(0)
                                 ),
-
-                                new SequentialAction(
-                                        sleepAction(2000),
-                                        spindexer.sortSpindexer()
-                                ),
-
                                 driveToPLShoot
 
                         ),
-                        turret.turnTurretBy(robot.homeToAprilTagBlue()),
-                        sleepAction(2000),
+                        showMarker("DONE DRIVING"),
+                        limelight.scanForBlue(),
+                        showMarker("DONE SCANNING"),
+                        turret.turnTurretByGoalErr(),
+                        showMarker("DONE AIMING"),
+                        new SleepAction(2),
+
 
                         shoot3,
-                        sleepAction(2000),
+                        new SleepAction(2),
                         updatePose(),
                         new ParallelAction(
                                 driveToRow1,
                                 spindexer.spindexerTargetAdd(60),
                                 new SequentialAction(
-                                        sleepAction(1000),
+                                        new SleepAction(1),
                                         intake.setIntakeVel(1000)
                                 )
                         ),
@@ -152,7 +161,7 @@ public class RRautoBlue extends LinearOpMode {
                         new ParallelAction(
                                 driveToRow1End,
                                 new SequentialAction(
-                                        sleepAction(500),
+                                        new SleepAction(0.5),
                                         spindexer.spindexerTargetAdd(120)
                                 )
                         )

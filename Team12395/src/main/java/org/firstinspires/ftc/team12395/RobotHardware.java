@@ -62,7 +62,7 @@ public class RobotHardware {
 
     public static String mag = "GPP";
     public static String pattern = "PPG";// a pattern is better than no pattern
-    public int chamber = 0;
+    public static int chamber = 0;
 
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
@@ -119,7 +119,6 @@ public class RobotHardware {
     public void init() {
         // --- HARDWARE MAP NAMES ---
         limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
-        limelight.pipelineSwitch(1);
 
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
@@ -232,6 +231,9 @@ public class RobotHardware {
 
         colorSensor.setGain(3);
 
+        limelight.start();
+        limelight.pipelineSwitch(1);
+
         // SOUND
 
         lightBeep = new SoundPool.Builder().build();
@@ -329,36 +331,6 @@ public class RobotHardware {
         intake.setVelocity(vel);
     }
 
-    public void setTurretPositionAbsolute(double deg, double tps){
-        deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
-
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
-    }
-
-    public void setTurretPositionRelative(double deg, double tps){
-        deg += getCurrentTurretDegreePos();
-        deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
-
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
-    }
-
-    public void setTurretPositionRelative(double deg){
-        deg += getCurrentTurretDegreePos();
-        deg = Range.clip(deg, -maxTurnL, maxTurnR);
-
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
-
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(turretMaxTPS);
-    }
-
     public void setTurretHandlerRelative(double deg){
         deg += turretHandler.getCurrentPosition()/turretTicksPerDegree;
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
@@ -396,12 +368,6 @@ public class RobotHardware {
 
     private int encoderToDegTurret(double deg){
         return (int) (deg* turretTicksPerDegree);
-    }
-
-    public double[] getTurretAzimuth(){
-        double tDeg = turret.getCurrentPosition()/ turretTicksPerDegree;
-        double deg = (tDeg) % 360;
-        return new double[]{ (tDeg-deg)/360, tDeg % 360};
     }
 
     public double getCurrentTurretDegreePos(){
@@ -469,14 +435,6 @@ public class RobotHardware {
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
-
-    public void turnSpindexerRight(double angle){
-
-        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (-angle*spindexerTicksPerDegree));
-
-        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    }
-
 
     public void setArmPos(double pos){
         xArm.setPosition(Range.clip(pos, 0, 1));
@@ -604,8 +562,7 @@ public class RobotHardware {
     }
 
     public int[] solvePattern(){
-        if (!mag.contains("0") && mag.contains("G") &&
-                (mag.indexOf("G") != mag.lastIndexOf("G")) ){
+        if (!mag.contains("0") && mag.contains("G") ){
             // if I have a full mag with Green and know the pattern
             int greenIndex = mag.indexOf("G");
             if (pattern.equals("GPP")){

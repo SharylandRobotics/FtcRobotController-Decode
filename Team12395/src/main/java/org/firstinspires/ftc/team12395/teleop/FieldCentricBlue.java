@@ -85,6 +85,8 @@ public class FieldCentricBlue extends LinearOpMode {
 
         robot.limelight.start();
 
+        mag = "000";
+
         waitForStart();
 
         robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
@@ -145,10 +147,13 @@ public class FieldCentricBlue extends LinearOpMode {
             }
 
             // gamepad 2 --
-            if ( (robot.spindexerTarget % 120) != 0 && mag.charAt(robot.chamber) == '0') {
-                if (gamepad2.dpad_left) {
+
+            if (gamepad2.dpad_left) {
+                if ( (robot.spindexerTarget % 120) != 0 && mag.charAt(chamber) == '0') {
                     robot.setChamberManual('P');
-                } else if (gamepad2.dpad_right) {
+                }
+            } else if (gamepad2.dpad_right) {
+                if ( (robot.spindexerTarget % 120) != 0 && mag.charAt(chamber) == '0') {
                     robot.setChamberManual('G');
                 }
             } else if (gamepad2.dpad_down && robot.solvePattern() != null){
@@ -160,7 +165,10 @@ public class FieldCentricBlue extends LinearOpMode {
                 }
             }
             if(!gamepad2.dpad_up) {
-                autoShootClock = 0;
+                if (autoShootClock != 0){
+                    autoShootClock = 0;
+                    armPos = 1; armClock = 0;
+                }
 
                 if (gamepad2.a) {
                     spinAngle = 60;
@@ -215,7 +223,7 @@ public class FieldCentricBlue extends LinearOpMode {
             prevHeading = robot.getHeading();
 
             // Telemetry for drivers + debugging
-            telemetry.addData("current Chamber: ", robot.chamber);
+            telemetry.addData("current Chamber: ", chamber);
             telemetry.addData("current Mag: ", mag);
             telemetry.addData("current Pattern: ", pattern);
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);

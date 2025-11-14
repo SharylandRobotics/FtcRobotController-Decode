@@ -12,6 +12,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class rrActions {
     RobotHardware robot;
     LinearOpMode myOpMode;
+
+    private double goalError = 0;
     public rrActions(RobotHardware robot, LinearOpMode myOpMode){
         this.robot = robot;
         this.myOpMode = myOpMode;
@@ -106,6 +108,7 @@ public class rrActions {
 
                 boolean done = turretHandler.runToTarget();
                 packet.put("done? ", done);
+                packet.put("target: ", deg);
                 return !done; // you are not done?
             }
         }
@@ -119,16 +122,23 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                turretHandler.setTargetPos((int) (deg*robot.turretTicksPerDegree));
+                robot.setTurretHandlerAbsolute(deg);
 
-                packet.put("done? ", turretHandler.runToTarget());
-                return !turretHandler.runToTarget(); // you are not done?
+                boolean done = turretHandler.runToTarget();
+                packet.put("done? ", done);
+                packet.put("target: ", deg);
+                return !done; // you are not done?
             }
         }
 
         public Action turnTurretBy(double deg){
             return new turnTurretRelative(deg);
         }
+
+        public Action turnTurretByGoalErr(){
+            return new turnTurretRelative(goalError);
+        }
+
 
         public Action turnTurretTo(double deg){
             return new turnTurretAbsolute(deg);
@@ -227,7 +237,8 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                return !robot.processObelisk();
+                boolean done = robot.processObelisk();
+                return !done;
             }
         }
 
@@ -237,8 +248,15 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                robot.homeToAprilTagBlue();
-                return false;
+                double e = robot.homeToAprilTagBlue();
+                if (Double.isNaN(e)){
+                    return true;
+                } else {
+                    packet.put("Err: ", e);
+                    goalError = e;
+                    return false;
+                }
+
             }
         }
 
@@ -248,8 +266,13 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                robot.homeToAprilTagRed();
-                return false;
+                double e = robot.homeToAprilTagRed();
+                if (Double.isNaN(e)){
+                    return true;
+                } else {
+                    goalError = e;
+                    return false;
+                }
             }
         }
 
