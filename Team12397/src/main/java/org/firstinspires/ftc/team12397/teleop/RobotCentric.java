@@ -86,10 +86,11 @@ public class RobotCentric extends LinearOpMode {
                 shooterOn = !shooterOn;
             }
             if(shooterOn){
-                robot.turretPower(1);
+                robot.turretPower(.85);
             }
             else{
                 robot.turretPower(0);
+
             }
             lastShooterState = currentShooterState;
 
@@ -103,13 +104,14 @@ public class RobotCentric extends LinearOpMode {
             }
             else{
                 robot.intakePower(0);
+
             }
             lastIntakeState = currentIntakeState;
 
 
             //hood servo
 
-            boolean currentServoState = (gamepad1.bWasPressed());
+            boolean currentServoState = (gamepad1.b);
             if(currentServoState && !lastServoState){
                 servoOn = !servoOn;
             }
@@ -140,6 +142,10 @@ public class RobotCentric extends LinearOpMode {
             }
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
+
+            if(gamepad1.right_bumper){
+                robot.turretPower(.7);
+            }
 
             // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
@@ -215,13 +221,14 @@ public class RobotCentric extends LinearOpMode {
 
 
 
-
             telemetry.update();
 
             sleep(50);
 
 
         }
+
     }
+
 }
 

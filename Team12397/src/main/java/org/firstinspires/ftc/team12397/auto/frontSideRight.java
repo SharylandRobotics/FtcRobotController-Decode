@@ -73,37 +73,31 @@ frontSideRight extends LinearOpMode {
 
             while(phase1){
 
-                robot.driveStraight(AXIAL_SPEED, -36, 0);
-                robot.turnToHeading(AXIAL_SPEED,-90);
-                robot.driveStraight(AXIAL_SPEED, 20, 0);
-                robot.turnToHeading(AXIAL_SPEED,(125));
-                robot.turretPower(1);
-                robot.holdHeading(robot.YAW_SPEED, 0, 3);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-
-                robot.holdHeading(robot.YAW_SPEED, 0, 2);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-                robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-                robot.setIntakeServo(1);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.turretPower(1);
-                robot.intakePower(-1);
-                robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.setIntakeServo(1);
-                robot.holdHeading(robot.YAW_SPEED, 0, 1);
-
-                // Turn motors off
+                robot.driveStraight(AXIAL_SPEED, -50, 0);
+                robot.straif(1,-5,0);
+                robot.turnToHeading(AXIAL_SPEED, -25);
+                //shoot motors
                 robot.turretPower(0);
                 robot.intakePower(0);
+                robot.turretPower(.85);
+                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+                robot.setIntakeServo(1);
+                robot.intakePower(-.3);
+                robot.holdHeading(robot.YAW_SPEED, 0, 2);
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+
+                robot.setIntakeServo(1);
 
 
-
+                // turn off motors
+                robot.turretPower(0);
+                robot.intakePower(0);
+                //move
+                robot.straif(1,25,0);
 
 
 
@@ -120,6 +114,7 @@ frontSideRight extends LinearOpMode {
 
         }
     }
+
 }
 
 

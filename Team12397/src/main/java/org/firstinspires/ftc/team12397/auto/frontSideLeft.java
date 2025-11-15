@@ -33,7 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team12397.RobotHardware;
 
-import static org.firstinspires.ftc.team12397.RobotHardware.*;
+import static org.firstinspires.ftc.team12397.RobotHardware.AXIAL_SPEED;
 
 @Autonomous(name = "frontSideLeft", group = "opMode")
 
@@ -73,11 +73,35 @@ frontSideLeft extends LinearOpMode {
 
             while(phase1){
                 //robot methods
-                robot.driveStraight(AXIAL_SPEED, -36, 0);
-                robot.turnToHeading(AXIAL_SPEED,90);
-                shootMotors();
+                //robot.driveStraight(AXIAL_SPEED, -36, 0);
+               // robot.turnToHeading(AXIAL_SPEED,90);
+                robot.driveStraight(AXIAL_SPEED, -50, 0);
+                robot.straif(1,5,0);
+                robot.turnToHeading(AXIAL_SPEED, 25);
+                //shoot motors
+                robot.turretPower(0);
+                robot.intakePower(0);
+                robot.turretPower(.85);
+                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+                robot.setIntakeServo(1);
+                robot.intakePower(-.3);
+                robot.holdHeading(robot.YAW_SPEED, 0, 2);
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+
+                robot.setIntakeServo(1);
 
 
+                // turn off motors
+                robot.turretPower(0);
+                robot.intakePower(0);
+                //move
+                robot.straif(1,-25,0);
+
+                phase1 = false;
 
 
 
@@ -89,27 +113,33 @@ frontSideLeft extends LinearOpMode {
 
         }
     }
-    public void shootMotors(){
-        robot.turretPower(1);
+    public void shootMotorsAuto(){
+        robot.driveStraight(AXIAL_SPEED, -55, 0);
+        robot.straif(1,5,0);
+        robot.turnToHeading(AXIAL_SPEED, 30);
+        //shoot motors
+        robot.turretPower(0);
+        robot.intakePower(0);
+
+        robot.turretPower(.85);
         robot.holdHeading(robot.YAW_SPEED, 0, 3);
 
-        robot.intakePower(-1);
+        robot.setIntakeServo(0);
+        robot.holdHeading(robot.YAW_SPEED, 0, 3);
+        robot.setIntakeServo(1);
+        robot.intakePower(-.3);
         robot.holdHeading(robot.YAW_SPEED, 0, 2);
-
         robot.setIntakeServo(0);
-        robot.holdHeading(robot.YAW_SPEED, 0, 1);
+        robot.holdHeading(robot.YAW_SPEED, 0, 3);
 
         robot.setIntakeServo(1);
-        robot.holdHeading(robot.YAW_SPEED, 0, 1);
 
-        robot.setIntakeServo(0);
-        robot.holdHeading(robot.YAW_SPEED, 0, 1);
 
-        robot.setIntakeServo(1);
-        robot.holdHeading(robot.YAW_SPEED, 0, 1);
         // turn off motors
         robot.turretPower(0);
         robot.intakePower(0);
+        //move
+        robot.straif(1,-25,0);
     }
 }
 

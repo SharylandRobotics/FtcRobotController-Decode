@@ -50,8 +50,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import java.util.List;
 
 import static java.lang.Thread.sleep;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.*;
 //lamoin code
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -124,7 +123,7 @@ public class RobotHardware {
     // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
     private double tagYawDeg = Double.NaN;
 
-    private static final double DESIRED_DISTANCE = 24.0; // camera-to-tag inches
+    private static final double DESIRED_DISTANCE = 80.4; // camera-to-tag inches
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
     private static final double LATERAL_GAIN = 0.015; // tagYawError -> lateral (strafe) speed
     private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
@@ -708,17 +707,17 @@ public class RobotHardware {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
         }
+       double latRangeError = goalBearingDeg-60;
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
 
-        //new custom varable lateral range - desired distance
-        double rangeErrorLateral = (goalRangeIn*Math.sin(Math.toRadians(goalBearingDeg)))-60;
+
 
         double headingError =  goalBearingDeg;
         double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
 
         double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
         //changed yaw error to range error lateral
-        double lateral = Range.clip(rangeErrorLateral * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double lateral = Range.clip(latRangeError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
         double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
 
         driveRobotCentric(axial, lateral, yaw);
