@@ -33,9 +33,6 @@ import android.graphics.Color;
 import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
@@ -173,7 +170,7 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
         frontIntakeMotor.setDirection(DcMotor.Direction.REVERSE);
-        outtakeMotor.setDirection(DcMotor.Direction.REVERSE);
+        outtakeMotor.setDirection(DcMotor.Direction.FORWARD);
         hAim.setDirection(DcMotor.Direction.FORWARD);
 
 
@@ -400,7 +397,7 @@ public class RobotHardware {
         headingError = -targetHeading + getHeading();
 
         while (headingError > 180) headingError -= 360;
-        while (headingError <= 180) headingError += 360;
+        while (headingError <= -180) headingError += 360;
 
         return Range.clip(headingError * proportionalGain, -1.0, 1.0);
     }

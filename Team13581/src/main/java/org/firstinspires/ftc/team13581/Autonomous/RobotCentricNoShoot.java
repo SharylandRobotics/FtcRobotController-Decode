@@ -33,11 +33,9 @@ public class RobotCentricNoShoot extends LinearOpMode {
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
             // Drive 24" forward, then turn and hold headings as defined
-            robot.autoRobotCentric(AXIAL_SPEED, 48.0, 0.0);
-
-            //robot.autoRobotCentric(AXIAL_SPEED, 24.0, 0.0);
-            //robot.turnToHeading(YAW_SPEED, 0);
-            //robot.holdHeading(YAW_SPEED, 0, 0.5);
+            robot.autoRobotCentric(AXIAL_SPEED, -48.0, 0.0);
+            robot.turnToHeading(YAW_SPEED, 45);
+            robot.holdHeading(YAW_SPEED, 45, 0.5);
 
             // Indicate completion and pause for display
             telemetry.addData("Path", "Complete");

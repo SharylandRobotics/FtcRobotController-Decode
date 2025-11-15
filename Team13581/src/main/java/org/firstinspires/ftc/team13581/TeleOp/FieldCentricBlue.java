@@ -33,9 +33,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13581.RobotHardware;
 
-@TeleOp(name="Field Centric Red Team", group="TeleOp")
+@TeleOp(name="Field Centric Blue Team", group="TeleOp")
 
-public class FieldCentricB extends LinearOpMode {
+public class FieldCentricBlue extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -52,8 +52,8 @@ public class FieldCentricB extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            lateral   =  -gamepad1.left_stick_y;
-            axial =  -gamepad1.left_stick_x;
+            lateral   =  gamepad1.left_stick_y;
+            axial =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
             robot.teleOpFieldCentric(axial, lateral, yaw);
@@ -75,8 +75,8 @@ public class FieldCentricB extends LinearOpMode {
                 robot.setFrontPower(-1);
             }
 
-            if (gamepad2.y && robot.getBackPower() < 0.75) {
-                robot.setBackPower(robot.getBackPower() + 0.05);
+            if (gamepad2.y) {
+                robot.setBackPower(0.8);
             }
             if (gamepad2.x && robot.getBackPower() > 0.5) {
                 robot.setBackPower(robot.getBackPower() - 0.05);
@@ -125,10 +125,8 @@ public class FieldCentricB extends LinearOpMode {
             }
 
             if (gamepad2.left_bumper) {
-                robot.setTurretPos(-50); //turret set positions
-            }
-            if (gamepad2.right_bumper) {
-                robot.setTurretPos(50);
+                //robot.setTurretPos(-50); //turret set positions
+                robot.setBackPower(.65);
             }
         }
     }
