@@ -30,9 +30,6 @@
 package org.firstinspires.ftc.team12395;
 
 import android.graphics.Color;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.SoundPool;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
@@ -66,7 +63,7 @@ public class RobotHardware {
     // Drivetrain motors for a mecanum chassis
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
 
-    public DcMotorEx turret, shooter, spindexer, intake;
+    public DcMotorEx shooter2, shooter, spindexer, intake;
     public CRServo turretR, turretL;
     public OverflowEncoder turretE;
 
@@ -124,7 +121,7 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+        shooter2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
 
         turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "turret")));
         turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
@@ -165,7 +162,7 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        turret.setDirection(DcMotorEx.Direction.FORWARD);
+        shooter2.setDirection(DcMotorEx.Direction.FORWARD);
         shooter.setDirection(DcMotorEx.Direction.REVERSE);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.FORWARD);
@@ -183,7 +180,7 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -195,7 +192,7 @@ public class RobotHardware {
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -206,10 +203,6 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        turret.setTargetPosition(0);
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         spindexer.setTargetPosition(0);
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -219,6 +212,7 @@ public class RobotHardware {
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter.setVelocityPIDFCoefficients(100, 3, 3, 0);
+
 
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -242,20 +236,7 @@ public class RobotHardware {
 
     }
 
-    long lastBeepTime = 0;
 
-    public void playBeep(String name) {
-        long now = System.currentTimeMillis();
-        if (now - lastBeepTime < 300) return;  // prevent overlap spam
-        lastBeepTime = now;
-
-        int id = myOpMode.hardwareMap.appContext.getResources()
-                .getIdentifier(name, "raw", myOpMode.hardwareMap.appContext.getPackageName());
-
-        MediaPlayer mp = MediaPlayer.create(myOpMode.hardwareMap.appContext, id);
-        mp.setOnCompletionListener(MediaPlayer::release);
-        mp.start();
-    }
 
 
     /**
@@ -360,6 +341,7 @@ public class RobotHardware {
 
     public void setShooterVelocity(double tPs){
         shooter.setVelocity(Range.clip(tPs, 0, shooterMaxTPM));
+        shooter2.setPower(shooter.getPower());
     }
 
     /**
@@ -572,14 +554,18 @@ public class RobotHardware {
                 if (closestObelisk == 21){
                     pattern = "GPP";
                     myOpMode.telemetry.addData("Tag 21: ", "GPP");
+                    myOpMode.telemetry.update();
                     return true;
                 } else if (closestObelisk == 22) {
                     pattern = "PGP";
                     myOpMode.telemetry.addData("Tag 22: ", "PGP");
+                    myOpMode.telemetry.update();
+
                     return true;
                 } else if (closestObelisk == 23){
                     pattern = "PPG";
                     myOpMode.telemetry.addData("Tag 23: ", "PPG");
+                    myOpMode.telemetry.update();
                     return true;
                 }
             }

@@ -91,7 +91,7 @@ public class servoDrivenEncoder {
         servo2.setPower(p);
     }
 
-    private void stopServos(){
+    public void stopServos(){
         servo1.setPower(0);
         servo2.setPower(0);
     }

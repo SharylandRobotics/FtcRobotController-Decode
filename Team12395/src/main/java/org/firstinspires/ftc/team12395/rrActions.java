@@ -25,11 +25,6 @@ public class rrActions {
         private DcMotorEx spindexer;
 
         public Spindexer(){
-            spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
-
-            spindexer.setDirection(DcMotorEx.Direction.FORWARD);
-
-            spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
 
         public class spindexerHandler implements Action{
@@ -94,7 +89,6 @@ public class rrActions {
 
         // class constructor & hardware mapper
         public liftArm(){
-            xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
         }
 
         // actual action class/ do-er
@@ -165,6 +159,20 @@ public class rrActions {
             }
         }
 
+        public class setPower0 implements Action{
+            private double deg;
+
+            public setPower0(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                robot.turretHandler.stopServos();
+                return false; // you are not done?
+            }
+        }
+
         public Action turnTurretBy(double deg){
             return new turnTurretRelative(deg);
         }
@@ -177,15 +185,15 @@ public class rrActions {
         public Action turnTurretTo(double deg){
             return new turnTurretAbsolute(deg);
         }
+
+        public Action stopServo(){
+            return new setPower0();
+        }
     }
 
     public class Shooter{
-        private DcMotorEx shooter;
 
         public Shooter(){
-            shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
-            shooter.setDirection(DcMotorEx.Direction.REVERSE);
-            shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
 
         public class setShooterVelocity implements Action{
@@ -211,7 +219,6 @@ public class rrActions {
         private Servo hoodAngle;
 
         public Hood(){
-            hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
         }
 
         public class setHoodAngle implements Action{
@@ -234,11 +241,7 @@ public class rrActions {
     }
 
     public class Intake{
-        private DcMotorEx intake;
         public Intake(){
-            intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
-            intake.setDirection(DcMotorEx.Direction.FORWARD);
-            intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
 
         public class setIntakeVelocity implements Action{
@@ -260,9 +263,7 @@ public class rrActions {
     }
 
     public class LimeLight{
-        private Limelight3A limelight;
         public LimeLight(){
-            limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
         }
 
         public class processObelisk implements Action{
@@ -320,7 +321,7 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                mag = s;
+                robot.setMagManualBulk(s);
                 return false;
             }
         }

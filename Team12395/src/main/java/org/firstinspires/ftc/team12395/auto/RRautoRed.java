@@ -13,12 +13,12 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import java.lang.Math;
 
-@Autonomous(name="RR Auto Blue", group="Alliance")
-public class RRautoBlue extends LinearOpMode {
+@Autonomous(name="RR Auto Red", group="Alliance")
+public class RRautoRed extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
     rrActions actionLib = new rrActions(robot, this);
-    Pose2d initialPose = new Pose2d(-48.5, -49.5, Math.toRadians(-125));
+    Pose2d initialPose = new Pose2d(-48.5, 49.5, Math.toRadians(125));
     MecanumDrive drive;
     Pose2d latestPose = initialPose;
 
@@ -81,17 +81,17 @@ public class RRautoBlue extends LinearOpMode {
 
 
         // shoot pose PL 30 in back from startPose
-        Pose2d shootVolleyPL = new Pose2d(-25, -17.3, initialPose.heading.real);
+        Pose2d shootVolleyPL = new Pose2d(-25, 17.3, initialPose.heading.real);
 
-        Pose2d ballRow1 = new Pose2d(-6.5, -29, Math.toRadians(-90));
-        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,-44.2, Math.toRadians(-90));
+        Pose2d ballRow1 = new Pose2d(-6.5, 29, Math.toRadians(90));
+        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,44.2, Math.toRadians(90));
 
-        Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,-23, Math.toRadians(-90));
+        Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,23, Math.toRadians(90));
 
-        Pose2d ballRow2 = new Pose2d(23, -30, Math.toRadians(-90));
-        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, -44.2, Math.toRadians(-90));
+        Pose2d ballRow2 = new Pose2d(23, 30, Math.toRadians(90));
+        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, 44.2, Math.toRadians(90));
 
-        Pose2d ballRow3 = new Pose2d(35.5, -29, Math.toRadians(-90));
+        Pose2d ballRow3 = new Pose2d(35.5, 29, Math.toRadians(90));
 
         // return to volley pose
 
@@ -124,30 +124,28 @@ public class RRautoBlue extends LinearOpMode {
                         new ParallelAction(
                                 shooter.setShooterVel((int) (800*1.4)),
                                 new SequentialAction(
-                                    new ParallelAction(
-                                            new RaceAction(
-                                                    turret.turnTurretTo(70),
-                                                    new SleepAction(2)
-                                            ),
-                                            new SequentialAction(
-                                                 new SleepAction(0.6),
-                                                 limelight.scanForObelisk()
-                                            )
-                                    ),
-                                    new RaceAction(
-                                           turret.turnTurretTo(5),
-                                           new SleepAction(1.6)
+                                        new ParallelAction(
+                                                new RaceAction(
+                                                        turret.turnTurretTo(-70),
+                                                        new SleepAction(2)
+                                                ),
+                                                new SequentialAction(
+                                                        new SleepAction(0.6),
+                                                        limelight.scanForObelisk()
+                                                )
+                                        ),
+                                        new RaceAction(
+                                                turret.turnTurretTo(-5),
+                                                new SleepAction(1.6)
 
-                                    ),
-                                    turret.stopServo()
+                                        ),
+                                        turret.stopServo()
                                 ),
                                 driveToPLShoot
                         )
 
                 )
         );
-
-        RobotHardware.mag = "GPP";
 
         int pattern = robot.solvePattern()[0];
 
@@ -189,13 +187,13 @@ public class RRautoBlue extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                            driveToRow1End,
-                            new SequentialAction(
-                                    new SleepAction(0.7),
-                                    spindexer.spindexerTargetAddVel(120, 1000),
-                                    new SleepAction(0.38),
-                                    spindexer.spindexerTargetAddVel(120, 1000)
-                            )
+                                driveToRow1End,
+                                new SequentialAction(
+                                        new SleepAction(0.7),
+                                        spindexer.spindexerTargetAddVel(120, 1000),
+                                        new SleepAction(0.38),
+                                        spindexer.spindexerTargetAddVel(120, 1000)
+                                )
                         ),
 
                         intake.setIntakeVel(0), // finish intaking 1st row
@@ -222,12 +220,12 @@ public class RRautoBlue extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                            driveToVolleyPose,
-                            spindexer.sortSpindexer(),
-                            new RaceAction(
-                                    turret.turnTurretTo(45),
-                                    new SleepAction(1.5)
-                            )
+                                driveToVolleyPose,
+                                spindexer.sortSpindexer(),
+                                new RaceAction(
+                                        turret.turnTurretTo(-45),
+                                        new SleepAction(1.5)
+                                )
                         ),
                         turret.stopServo(),
                         shoot3(),
@@ -298,11 +296,11 @@ public class RRautoBlue extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                            driveToVolleyPose2,
-                            new SequentialAction(
-                                   spindexer.sortSpindexer(),
-                                   spindexer.spindexerTargetAdd(-120)
-                            )
+                                driveToVolleyPose2,
+                                new SequentialAction(
+                                        spindexer.sortSpindexer(),
+                                        spindexer.spindexerTargetAdd(-120)
+                                )
                         ),
 
                         new SleepAction(0.6),

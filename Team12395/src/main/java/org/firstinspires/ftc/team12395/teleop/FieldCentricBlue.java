@@ -197,9 +197,9 @@ public class FieldCentricBlue extends LinearOpMode {
             if (gamepad2.xWasPressed()){
                 xToggle = !xToggle;
                 if (xToggle){
-                    robot.playBeep("orb");
+                    //robot.playBeep("orb");
                 } else {
-                    robot.playBeep("orb_deep");
+                    //robot.playBeep("orb_deep");
                 }
             }
 
