@@ -29,39 +29,16 @@ public class RRautoBlue extends LinearOpMode {
             return false;
         };
     }
+    rrActions.Hood hood = actionLib.new Hood();
+    rrActions.Intake intake = actionLib.new Intake();
+    rrActions.liftArm liftArm = actionLib.new liftArm();
+    rrActions.LimeLight limelight = actionLib.new LimeLight();
+    rrActions.Shooter shooter = actionLib.new Shooter();
+    rrActions.Spindexer spindexer = actionLib.new Spindexer();
+    rrActions.Turret turret = actionLib.new Turret();
 
-    @Override
-    public void runOpMode() {
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        drive = new MecanumDrive(hardwareMap, initialPose);
-
-        robot.init();
-
-        rrActions.Hood hood = actionLib.new Hood();
-        rrActions.Intake intake = actionLib.new Intake();
-        rrActions.liftArm liftArm = actionLib.new liftArm();
-        rrActions.LimeLight limelight = actionLib.new LimeLight();
-        rrActions.Shooter shooter = actionLib.new Shooter();
-        rrActions.Spindexer spindexer = actionLib.new Spindexer();
-        rrActions.Turret turret = actionLib.new Turret();
-
-        // shoot pose PL 30 in back from startPose
-        Pose2d shootVolleyPL = new Pose2d(-25, -17.3, initialPose.heading.real);
-
-        Pose2d ballRow1 = new Pose2d(-6.5, -29, Math.toRadians(-90));
-        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,-44.2, Math.toRadians(-90));
-
-        Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,-23, Math.toRadians(-90));
-
-        Pose2d ballRow2 = new Pose2d(22.5, -30, Math.toRadians(-90));
-        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, -44.2, Math.toRadians(-90));
-
-        Pose2d ballRow3 = new Pose2d(35.5, -29, Math.toRadians(-90));
-
-        // return to volley pose
-
-        Action shoot3 = new SequentialAction(
-
+    public Action shoot3() {
+        return new SequentialAction(
                 liftArm.liftArmUp(),
                 new SleepAction(0.75),
                 liftArm.liftArmDown(),
@@ -82,6 +59,34 @@ public class RRautoBlue extends LinearOpMode {
                 new SleepAction(0.75),
                 liftArm.liftArmDown()
         );
+    }
+
+
+    @Override
+    public void runOpMode() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        drive = new MecanumDrive(hardwareMap, initialPose);
+
+        robot.init();
+
+
+
+        // shoot pose PL 30 in back from startPose
+        Pose2d shootVolleyPL = new Pose2d(-25, -17.3, initialPose.heading.real);
+
+        Pose2d ballRow1 = new Pose2d(-6.5, -29, Math.toRadians(-90));
+        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,-44.2, Math.toRadians(-90));
+
+        Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,-23, Math.toRadians(-90));
+
+        Pose2d ballRow2 = new Pose2d(22.5, -30, Math.toRadians(-90));
+        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, -44.2, Math.toRadians(-90));
+
+        Pose2d ballRow3 = new Pose2d(35.5, -29, Math.toRadians(-90));
+
+        // return to volley pose
+
+
 
         Action driveToPLShoot = drive.actionBuilder(initialPose)
                 .setTangent(Math.atan2(shootVolleyPL.position.y - initialPose.position.y,
@@ -107,27 +112,29 @@ public class RRautoBlue extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        limelight.setMagBatch("GPP"),
                         new ParallelAction(
                                 shooter.setShooterVel((int) (800*1.4)),
-                                new RaceAction(
-                                        turret.turnTurretTo(70),
-                                        new SleepAction(2)
+                                new SequentialAction(
+                                    new ParallelAction(
+                                            new RaceAction(
+                                                    turret.turnTurretTo(70),
+                                                    new SleepAction(2)
+                                            ),
+                                            new SequentialAction(
+                                                 new SleepAction(0.5),
+                                                 limelight.scanForObelisk()
+                                            )
+                                    ),
+                                    spindexer.sortSpindexer(),
+                                    new RaceAction(
+                                           turret.turnTurretTo(5),
+                                           new SleepAction(1.5)
+                                    )
                                 ),
                                 driveToPLShoot
                         ),
-                        new SequentialAction(
-                                new SleepAction(0.5),
-                                limelight.scanForObelisk(),
-                                new RaceAction(
-                                        turret.turnTurretTo(5),
-                                        new SleepAction(1.5)
-                                )
-                        ),
-                        spindexer.sortSpindexer(),
                         new SleepAction(1),
-                        shoot3, // shoot first 3
-                        new SleepAction(1),
+                        shoot3(), // shoot first 3
                         updatePose()
                 )
         );
@@ -186,40 +193,17 @@ public class RRautoBlue extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        new SleepAction(1),
                         new ParallelAction(
                             driveToVolleyPose,
                             spindexer.sortSpindexer(),
                             new RaceAction(
                                     turret.turnTurretTo(45),
-                                    new SleepAction(2)
+                                    new SleepAction(1.5)
                             )
                         ),
 
-
                         new SleepAction(1),
-
-                        liftArm.liftArmUp(),
-                        new SleepAction(0.75),
-                        liftArm.liftArmDown(),
-                        new SleepAction(0.75),
-                        spindexer.spindexerTargetAdd(-120),
-
-                        new SleepAction(0.75),
-
-                        liftArm.liftArmUp(),
-                        new SleepAction(0.75),
-                        liftArm.liftArmDown(),
-                        new SleepAction(0.75),
-                        spindexer.spindexerTargetAdd(-120),
-
-                        new SleepAction(0.75),
-
-                        liftArm.liftArmUp(),
-                        new SleepAction(0.75),
-                        liftArm.liftArmDown(),
-
-                        new SleepAction(1),
+                        shoot3(),
 
                         updatePose()
                 )
@@ -272,29 +256,23 @@ public class RRautoBlue extends LinearOpMode {
                 )
         );
 
-        /*
+
         Action driveToVolleyPose2 = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(shootVolleyPose.position.y - latestPose.position.y,
                         shootVolleyPose.position.x - latestPose.position.x))
                 .lineToY(shootVolleyPose.position.y)
                 .build();
 
-         */
-        /*
 
         Actions.runBlocking(
                 new SequentialAction(
-                        new SleepAction(1),
                         new ParallelAction(
-                            driveToVolleyPose,
+                            driveToVolleyPose2,
                             spindexer.sortSpindexer()
                         ),
 
-                        limelight.scanForBlue(),
-                        turret.turnTurretByGoalErr(),
-
-                        new SleepAction(2),
-                        shoot3,
+                        new SleepAction(1),
+                        shoot3(),
 
                         updatePose()
                 )
@@ -319,7 +297,5 @@ public class RRautoBlue extends LinearOpMode {
                         )
                 )
         );
-
-         */
     }
 }

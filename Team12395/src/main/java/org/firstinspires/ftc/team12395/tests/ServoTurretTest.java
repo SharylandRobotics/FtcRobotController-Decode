@@ -64,9 +64,6 @@ public class ServoTurretTest extends LinearOpMode {
 
         waitForStart();
 
-        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
-        robot.darkBeep.play(robot.darkBeepID, 5, 5, 1, 0, 1);
-
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             if (run) {

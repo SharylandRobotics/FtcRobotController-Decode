@@ -31,6 +31,7 @@ package org.firstinspires.ftc.team12395;
 
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.SoundPool;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
@@ -53,8 +54,6 @@ public class RobotHardware {
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
 
-    public SoundPool lightBeep, darkBeep;
-    public int lightBeepID, darkBeepID;
     public Limelight3A limelight;
     public LLResult result;
 
@@ -234,19 +233,30 @@ public class RobotHardware {
         limelight.start();
         limelight.pipelineSwitch(1);
 
-        // SOUND
-
-        lightBeep = new SoundPool.Builder().build();
-        lightBeepID = lightBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb, 1);
-
-        darkBeep = new SoundPool(1, AudioManager.STREAM_MUSIC, 0); // PSM
-        darkBeepID = darkBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb_deep, 1); // PSM
+        pattern = "PPG";
+        mag = "GPP";
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
     }
+
+    long lastBeepTime = 0;
+
+    public void playBeep(String name) {
+        long now = System.currentTimeMillis();
+        if (now - lastBeepTime < 300) return;  // prevent overlap spam
+        lastBeepTime = now;
+
+        int id = myOpMode.hardwareMap.appContext.getResources()
+                .getIdentifier(name, "raw", myOpMode.hardwareMap.appContext.getPackageName());
+
+        MediaPlayer mp = MediaPlayer.create(myOpMode.hardwareMap.appContext, id);
+        mp.setOnCompletionListener(MediaPlayer::release);
+        mp.start();
+    }
+
 
     /**
      * Robot-Centric drive (driver-relative): no IMU rotation applied.

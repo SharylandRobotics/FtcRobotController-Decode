@@ -73,7 +73,6 @@ public class ColorTest extends LinearOpMode {
 
         waitForStart();
 
-        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -99,7 +98,6 @@ public class ColorTest extends LinearOpMode {
 
                 if (gamepad1.xWasPressed()){
                     scannedColor = robot.scanColor();
-                    robot.darkBeep.play(robot.darkBeepID, 5, 5, 1, 0, 1);
 
                     if (scannedColor != '0'){
                         StringBuilder magBuilder = new StringBuilder(mag);

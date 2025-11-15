@@ -89,7 +89,6 @@ public class FieldCentricBlue extends LinearOpMode {
 
         waitForStart();
 
-        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
 
         robot.disableDriveEncoders();
 
@@ -195,7 +194,14 @@ public class FieldCentricBlue extends LinearOpMode {
 
             if (autoShootClock > 11){ autoShootClock = 0;}
 
-            if (gamepad2.xWasPressed()){ xToggle = !xToggle;}
+            if (gamepad2.xWasPressed()){
+                xToggle = !xToggle;
+                if (xToggle){
+                    robot.playBeep("orb");
+                } else {
+                    robot.playBeep("orb_deep");
+                }
+            }
 
             if (xToggle){
                 double errorDeg = robot.homeToAprilTagBlue();

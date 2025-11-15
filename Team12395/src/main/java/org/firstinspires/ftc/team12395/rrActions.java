@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 public class rrActions {
     RobotHardware robot;
@@ -45,6 +46,19 @@ public class rrActions {
             }
         }
 
+        public class sortedSpindexer implements Action{
+
+            public sortedSpindexer(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                robot.spindexerHandler(120*robot.solvePattern()[0]);
+                return false;
+            }
+        }
+
         public class spindexerHandlerVel implements Action{
             private int deg;
             private int vel;
@@ -70,10 +84,7 @@ public class rrActions {
         }
 
         public Action sortSpindexer(){
-            int solve = robot.solvePattern()[0];
-            myOpMode.telemetry.addData("turn: ", solve);
-            myOpMode.telemetry.update();
-            return new spindexerHandler(120*solve);
+            return new sortedSpindexer();
         }
     }
 
@@ -309,7 +320,7 @@ public class rrActions {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                robot.setMagManualBulk(s);
+                mag = s;
                 return false;
             }
         }

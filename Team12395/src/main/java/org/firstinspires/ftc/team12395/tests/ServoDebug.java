@@ -65,8 +65,6 @@ public class ServoDebug extends LinearOpMode {
 
         waitForStart();
 
-        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 1, 1);
-
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 

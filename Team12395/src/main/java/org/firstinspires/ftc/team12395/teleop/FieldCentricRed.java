@@ -87,8 +87,6 @@ public class FieldCentricRed extends LinearOpMode {
 
         waitForStart();
 
-        robot.lightBeep.play(robot.lightBeepID, 5, 5, 1, 0, 1);
-
         robot.disableDriveEncoders();
 
 
