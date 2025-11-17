@@ -113,6 +113,8 @@ public class FieldCentric extends LinearOpMode {
 
             if (gamepad1.right_trigger == 1) {
                 intake = .5;
+            } else if (gamepad1.dpad_down) {
+                intake = -0.5;
             } else {
                 intake = 0;
             }

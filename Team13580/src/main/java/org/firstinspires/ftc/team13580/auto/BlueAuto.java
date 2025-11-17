@@ -33,12 +33,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-import static org.firstinspires.ftc.team13580.RobotHardware.*;
+import static org.firstinspires.ftc.team13580.RobotHardware.MAX_AUTO_AXIAL;
+import static org.firstinspires.ftc.team13580.RobotHardware.MAX_AUTO_YAW;
 
-@Autonomous(name = "Gyro", group = "opMode")
+@Autonomous(name = "Blue", group = "auto")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class Gyro extends LinearOpMode {
+public class BlueAuto extends LinearOpMode {
 
     // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
@@ -68,11 +69,14 @@ public class Gyro extends LinearOpMode {
             robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
             //robot.turnToHeading(MAX_AUTO_YAW, -45.0);
            // robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
-            sleep(2000);
+            sleep(3000);
             robot.setKickerLeftPower(1.0);
             robot.setKickerPower(1.0);
-            sleep(3000);
+            sleep(4000);
             robot.setOuttakePower(0);
+            robot.turnToHeading(MAX_AUTO_YAW, 40);
+            sleep(3000);
+            robot.driveStraight(MAX_AUTO_AXIAL, 22.0, 40.0);
             //robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
           //  robot.turnToHeading(MAX_AUTO_YAW,45);
            // robot.holdHeading(MAX_AuTO_YAW,);
