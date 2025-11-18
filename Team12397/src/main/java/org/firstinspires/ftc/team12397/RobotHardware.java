@@ -707,11 +707,21 @@ public class RobotHardware {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
         }
-       double latRangeError = goalBearingDeg-60;
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+        /*
+        double latRangeError;
+        if(goalBearingDeg>0) {
+            latRangeError = goalBearingDeg - 60;
+        }
+        else if(goalBearingDeg < 0){
+            latRangeError = 60- goalBearingDeg;
+        }
+        else{
+            latRangeError = 0;
+        }
 
-
-
+         */
+        double latRangeError = goalBearingDeg-60;
         double headingError =  goalBearingDeg;
         double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
 

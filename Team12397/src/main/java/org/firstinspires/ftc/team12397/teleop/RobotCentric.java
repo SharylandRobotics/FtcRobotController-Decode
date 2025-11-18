@@ -143,9 +143,7 @@ public class RobotCentric extends LinearOpMode {
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
 
-            if(gamepad1.right_bumper){
-                robot.turretPower(.7);
-            }
+
 
             // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
