@@ -69,11 +69,11 @@ public class FieldCentricBlue extends LinearOpMode {
 
         double spinAngle;
 
-        double trueTurretHeading = 0;
-
         double prevHeading = 0;
         double armClock = 9;
         int lastTrackingClock = 10;
+        double lastTargetTurretPos = 0;
+        double lastTargetHeading = 0;
 
         int autoShootClock = 0;
 
@@ -197,9 +197,9 @@ public class FieldCentricBlue extends LinearOpMode {
             if (gamepad2.xWasPressed()){
                 xToggle = !xToggle;
                 if (xToggle){
-                    //robot.playBeep("orb");
+                    robot.playBeep("orb");
                 } else {
-                    //robot.playBeep("orb_deep");
+                    robot.playBeep("orb_deep");
                 }
             }
 
@@ -210,15 +210,14 @@ public class FieldCentricBlue extends LinearOpMode {
                     double farFudge = 0;
                     if (velocity == preSetVelocityFar){ farFudge = Math.copySign(4, errorDeg); }
 
-                    double lastTargetTurretPos = errorDeg - (robot.getHeading() - prevHeading) + farFudge;
+                    lastTargetTurretPos = errorDeg - 1.5*(robot.getHeading() - prevHeading) + farFudge;
                     robot.setTurretHandlerRelative(lastTargetTurretPos);
                     lastTargetTurretPos += robot.getCurrentTurretDegreePos();
-
-                    trueTurretHeading = lastTargetTurretPos + robot.getHeading();
+                    lastTargetHeading = robot.getHeading();
 
                     lastTrackingClock = 0;
                 } else if (lastTrackingClock < 2000) {
-                    robot.setTurretHandlerAbsolute(trueTurretHeading - robot.getHeading());
+                    robot.setTurretHandlerAbsolute(lastTargetTurretPos + (robot.getHeading() - lastTargetHeading));
                 } else {
                     robot.setTurretHandlerAbsolute(0);
                 }

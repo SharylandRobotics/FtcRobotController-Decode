@@ -21,9 +21,9 @@ public class servoDrivenEncoder {
     int targetPos;
 
 
-    public static double P = 0.00015;
-    public static double I = 0.000001;
-    public static double D = 0.0000042;
+    public static double P = 0.00017;
+    public static double I = 0.0000015;
+    public static double D = 0.000005;
 
     PIDController controller = new PIDController(P, I, D);
 

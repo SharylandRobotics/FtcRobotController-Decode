@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.team12395;
 
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
@@ -212,6 +213,7 @@ public class RobotHardware {
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter.setVelocityPIDFCoefficients(100, 3, 3, 0);
+        shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -236,7 +238,20 @@ public class RobotHardware {
 
     }
 
+    long lastBeepTime = 0;
 
+    public void playBeep(String name) {
+        long now = System.currentTimeMillis();
+        if (now - lastBeepTime < 300) return;  // prevent overlap spam
+        lastBeepTime = now;
+
+        int id = myOpMode.hardwareMap.appContext.getResources()
+                .getIdentifier(name, "raw", myOpMode.hardwareMap.appContext.getPackageName());
+
+        MediaPlayer mp = MediaPlayer.create(myOpMode.hardwareMap.appContext, id);
+        mp.setOnCompletionListener(MediaPlayer::release);
+        mp.start();
+    }
 
 
     /**
