@@ -62,7 +62,7 @@ public class RedAuto extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
-            robot.setOuttakePower(0.6);
+            robot.setOuttakePower(0.65);
 
             // Drive 24" forward, then turn and hold headings as defined
             robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
@@ -71,11 +71,18 @@ public class RedAuto extends LinearOpMode {
             sleep(3000);
             robot.setKickerLeftPower(1.0);
             robot.setKickerPower(1.0);
+            robot.setIntakePower(.5);
             sleep(4000);
             robot.setOuttakePower(0);
+            robot.driveStraight(MAX_AUTO_AXIAL, -35, 0);
+            //robot.driveStraight(MAX_AUTO_AXIAL, -10.0, 0.0);
             robot.turnToHeading(MAX_AUTO_YAW, -40);
+            //robot.driveStraight(MAX_AUTO_AXIAL, 10.0, -40.0);
+            robot.driveStraight(MAX_AUTO_AXIAL, 35, -40);
+            robot.setIntakePower(0);
+            //robot.turnToHeading(MAX_AUTO_YAW, -40);
             sleep(3000);
-            robot.driveStraight(MAX_AUTO_AXIAL, 22.0, -40);
+            //robot.driveStraight(MAX_AUTO_AXIAL, 22.0, -40);
             //robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
           //  robot.turnToHeading(MAX_AUTO_YAW,45);
            // robot.holdHeading(MAX_AuTO_YAW,);
