@@ -29,11 +29,13 @@
 
 package org.firstinspires.ftc.team12395;
 
+import android.content.Context;
 import android.graphics.Color;
-import android.media.MediaPlayer;
+import android.media.AudioManager;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -45,7 +47,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
 @Config
 public class RobotHardware {
 
@@ -105,8 +111,12 @@ public class RobotHardware {
     public int[] prevColor = null;
     public int[] currentColor;
 
+    boolean orbPreload;
+    boolean orbDeepPreload;
+    private Context appContext;
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
+        //appContext = opmode.hardwareMap.appContext;
     }
 
     /**
@@ -114,6 +124,7 @@ public class RobotHardware {
      * Call once from your OPMode before driving.
      */
     public void init() {
+        appContext = myOpMode.hardwareMap.appContext;
         // --- HARDWARE MAP NAMES ---
         limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
 
@@ -232,25 +243,31 @@ public class RobotHardware {
         pattern = "PPG";
         mag = "GPP";
 
+        orbPreload = SoundPlayer.getInstance().preload(appContext, R.raw.orb);
+        orbDeepPreload = SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep);
+        SoundPlayer.getInstance().setMasterVolume(1.0f);
+        AudioManager am = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
+        int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
+
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
+        myOpMode.telemetry.addData("Sound Preloaded: ", orbPreload);
+        myOpMode.telemetry.addData("Sound2 Preloaded: ", orbDeepPreload);
         //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
     }
 
-    long lastBeepTime = 0;
 
-    public void playBeep(String name) {
-        long now = System.currentTimeMillis();
-        if (now - lastBeepTime < 300) return;  // prevent overlap spam
-        lastBeepTime = now;
+    public void playBeep(String file) {
+        if (Objects.equals(file, "orb")) {
+            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb);
+            SoundPlayer.getInstance().preload(appContext, R.raw.orb);
+        } else if (Objects.equals(file, "orbDeep")){
+            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb_deep);
+            SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep);
+        }
 
-        int id = myOpMode.hardwareMap.appContext.getResources()
-                .getIdentifier(name, "raw", myOpMode.hardwareMap.appContext.getPackageName());
-
-        MediaPlayer mp = MediaPlayer.create(myOpMode.hardwareMap.appContext, id);
-        mp.setOnCompletionListener(MediaPlayer::release);
-        mp.start();
     }
 
 
@@ -437,6 +454,14 @@ public class RobotHardware {
         }
     }
 
+    public void maintainSpindexerHandler(){
+        spindexer.setTargetPosition( (int) ( (spindexerTarget) * spindexerTicksPerDegree) );
+
+        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        spindexer.setVelocity(800);
+    }
+
     public void spindexerHandler(int targetAdd,  int vel){
         spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd) * spindexerTicksPerDegree) );
 
@@ -492,7 +517,7 @@ public class RobotHardware {
         if (check){
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
 
             myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
             myOpMode.telemetry.addData("Tags: ", fresult.size());
@@ -523,7 +548,7 @@ public class RobotHardware {
         if (check){
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
 
             myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
             myOpMode.telemetry.addData("Tags: ", fresult.size());
@@ -552,7 +577,7 @@ public class RobotHardware {
     public boolean processObelisk(){
         if (processLLresult()){
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
 
             myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
             myOpMode.telemetry.addData("Tags: ", fresult.size());

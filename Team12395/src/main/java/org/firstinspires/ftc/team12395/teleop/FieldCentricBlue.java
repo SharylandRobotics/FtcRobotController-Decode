@@ -92,6 +92,7 @@ public class FieldCentricBlue extends LinearOpMode {
 
         robot.disableDriveEncoders();
 
+        int id = hardwareMap.appContext.getResources().getIdentifier("orb", "raw", hardwareMap.appContext.getPackageName());
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -119,14 +120,14 @@ public class FieldCentricBlue extends LinearOpMode {
             robot.setHoodAngle(angle);
 
             if (gamepad1.yWasPressed()){
-                if (intakeVel == -1000 || intakeVel == 1000){
+                if (intakeVel == -1400 || intakeVel == 1400){
                     intakeVel = 0;
 
-                } else if (intakeVel == 0){ intakeVel = -1000; }
+                } else if (intakeVel == 0){ intakeVel = -1400; }
                 robot.setIntakeSpeed(intakeVel);
             } else if (gamepad1.dpadDownWasPressed()){
-                if (intakeVel != 1000){
-                    intakeVel = 1000;
+                if (intakeVel != 1400){
+                    intakeVel = 1400;
 
                 } else  { intakeVel = 0; }
                 robot.setIntakeSpeed(intakeVel);
@@ -199,7 +200,7 @@ public class FieldCentricBlue extends LinearOpMode {
                 if (xToggle){
                     robot.playBeep("orb");
                 } else {
-                    robot.playBeep("orb_deep");
+                    robot.playBeep("orbDeep");
                 }
             }
 
@@ -225,6 +226,8 @@ public class FieldCentricBlue extends LinearOpMode {
                 robot.setTurretHandlerAbsolute(0);
             }
 
+            robot.maintainSpindexerHandler();
+
             prevHeading = robot.getHeading();
 
             // Telemetry for drivers + debugging
@@ -234,6 +237,7 @@ public class FieldCentricBlue extends LinearOpMode {
             telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             telemetry.addData("turret running? ", robot.turretHandler.runToTarget());
+            telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
