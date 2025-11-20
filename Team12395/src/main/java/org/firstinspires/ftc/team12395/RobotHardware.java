@@ -243,16 +243,15 @@ public class RobotHardware {
         pattern = "PPG";
         mag = "GPP";
 
-        orbPreload = SoundPlayer.getInstance().preload(appContext, R.raw.orb);
-        orbDeepPreload = SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep);
         SoundPlayer.getInstance().setMasterVolume(1.0f);
         AudioManager am = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
         int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
-        myOpMode.telemetry.addData("Sound Preloaded: ", orbPreload);
-        myOpMode.telemetry.addData("Sound2 Preloaded: ", orbDeepPreload);
+        myOpMode.telemetry.addData("Sound Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb));
+        myOpMode.telemetry.addData("Sound2 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep));
+        myOpMode.telemetry.addData("Sound3 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break));
         //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
@@ -266,6 +265,9 @@ public class RobotHardware {
         } else if (Objects.equals(file, "orbDeep")){
             SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb_deep);
             SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep);
+        } else if (Objects.equals(file, "break")){
+            SoundPlayer.getInstance().startPlaying(appContext, R.raw.anvil_break);
+            SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break);
         }
 
     }

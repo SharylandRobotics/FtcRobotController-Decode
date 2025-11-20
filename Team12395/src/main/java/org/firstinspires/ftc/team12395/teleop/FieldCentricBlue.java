@@ -162,6 +162,8 @@ public class FieldCentricBlue extends LinearOpMode {
                 if (autoShootClock >= 0 && (robot.spindexerTarget % 120) == 0) {
                     robot.shootAutomaticSequence(autoShootClock);
                     autoShootClock++;
+                } else if (gamepad2.dpadUpWasPressed()){
+                    robot.playBeep("break");
                 }
             }
             if(!gamepad2.dpad_up) {
