@@ -390,6 +390,55 @@ public class RobotHardware {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
     }
+
+    public void driveEncoder(double speed, double leftFrontInches, double leftBackInches, double rightFrontInches, double rightBackInches){
+        // drives only while myOpMode is active
+        if(myOpMode.opModeIsActive()){
+
+
+            //determine new target position
+            int leftFrontTarget = frontLeftDrive.getCurrentPosition() + (int)(leftFrontInches * COUNTS_PER_INCH);
+            int leftBackTarget = backLeftDrive.getCurrentPosition() + (int)(leftBackInches * COUNTS_PER_INCH);
+            int rightFrontTarget = frontRightDrive.getCurrentPosition() + (int)(rightFrontInches * COUNTS_PER_INCH);
+            int rightBackTarget = backRightDrive.getCurrentPosition() + (int)(rightBackInches * COUNTS_PER_INCH);
+
+            frontLeftDrive.setTargetPosition(leftFrontTarget - 1);
+            backLeftDrive.setTargetPosition(leftBackTarget - 1 );
+            frontRightDrive.setTargetPosition(rightFrontTarget - 1);
+            backRightDrive.setTargetPosition(rightBackTarget - 1 );
+
+            //turn on RUN_TO_POSITION
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            setDrivePower(Math.abs(speed), Math.abs(speed), Math.abs(speed), Math.abs(speed));
+
+            while ((myOpMode.opModeIsActive() &&
+                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
+                            frontRightDrive.isBusy() && backRightDrive.isBusy()))){
+
+                //display it for driver
+
+                myOpMode.telemetry.addData("Running to ", " %7d :%7d :%7d :%7d",
+                        leftFrontTarget, leftBackTarget, rightFrontTarget, rightBackTarget);
+                myOpMode.telemetry.addData("Currently at ", "%7d ;%7d :%7d :%7d",
+                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
+                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
+                myOpMode.telemetry.update();
+            }
+
+            setDrivePower(0, 0, 0, 0 );
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            myOpMode.sleep(200); //optional pause after each move
+        }
+    }
 /*
     private void initAprilTag() {
         // Student Note: Build AprilTag processor with camera pose + intrinsics; start Dashboard stream.

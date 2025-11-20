@@ -62,24 +62,32 @@ public class RedAuto extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
-            robot.setOuttakePower(0.65);
+            robot.setOuttakePower(0.73);
 
             // Drive 24" forward, then turn and hold headings as defined
-            robot.driveStraight(MAX_AUTO_AXIAL, -24.0, 0.0);
+            robot.driveStraight(MAX_AUTO_AXIAL, -29.0, 0.0);
             //robot.turnToHeading(MAX_AUTO_YAW, -45.0);
            // robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
-            sleep(3000);
+            sleep(2500);
             robot.setKickerLeftPower(1.0);
             robot.setKickerPower(1.0);
-            robot.setIntakePower(.5);
+            robot.setIntakePower(.6);
             sleep(4000);
+            robot.turnToHeading(MAX_AUTO_YAW, -42);
+            robot.driveEncoder(0.5, 23,  -23, -23, 23);
             robot.setOuttakePower(0);
-            robot.driveStraight(MAX_AUTO_AXIAL, -35, 0);
+            robot.setKickerPower(0);
+            robot.setKickerLeftPower(0);
+            robot.driveStraight(MAX_AUTO_AXIAL, 7, -42);
+            robot.driveEncoder(0.5, -3,  3, 3, -3);
+            robot.driveStraight(MAX_AUTO_AXIAL, 13, -42);
+             //robot.driveStraight(MAX_AUTO_AXIAL, -35, 0);
             //robot.driveStraight(MAX_AUTO_AXIAL, -10.0, 0.0);
-            robot.turnToHeading(MAX_AUTO_YAW, -40);
+             //robot.turnToHeading(MAX_AUTO_YAW, -40);
             //robot.driveStraight(MAX_AUTO_AXIAL, 10.0, -40.0);
-            robot.driveStraight(MAX_AUTO_AXIAL, 35, -40);
-            robot.setIntakePower(0);
+             //robot.driveStraight(MAX_AUTO_AXIAL, 40, -40);
+            sleep(1000);
+             //robot.setIntakePower(0);
             //robot.turnToHeading(MAX_AUTO_YAW, -40);
             sleep(3000);
             //robot.driveStraight(MAX_AUTO_AXIAL, 22.0, -40);
