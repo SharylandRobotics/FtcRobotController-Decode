@@ -34,6 +34,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -63,6 +64,9 @@ public class RobotHardware {
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
 
+    private DcMotorEx leftShooter;
+    private DcMotorEx rightShooter;
+
     // Student Note: IMU provides yaw (heading) for field‑centric drive and turns.
     // TODO(students): If heading seems rotated, check hub orientation in init().
     private IMU imu = null;
@@ -71,8 +75,6 @@ public class RobotHardware {
 
     private double targetHeading;
 
-    private double axialSpeed;
-    private double lateralSpeed;
     private double yawSpeed;
     private double frontLeftSpeed;
     private double backLeftSpeed;
@@ -111,7 +113,8 @@ public class RobotHardware {
     public static final double MAX_AUTO_AXIAL = 0.90;
     public static final double MAX_AUTO_LATERAL = 0.90;
     public static final double MAX_AUTO_YAW = 0.70;
-    static final double HEADING_THRESHOLD = 1.0;
+    public static final double HEADING_THRESHOLD = 1.0;
+    public static final double TOLERANCE_TICKS = 10.0;
 
     // Student Note: Calibrated intrinsics for 1280×800. Must match camera resolution.
     // TODO(students): Recalibrate or update values if resolution or lens changes.
@@ -144,6 +147,9 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
+        leftShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "left_shooter");
+        rightShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "right_shooter");
+
         // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -158,35 +164,54 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
+        leftShooter.setDirection(DcMotor.Direction.REVERSE);
+        rightShooter.setDirection(DcMotor.Direction.FORWARD);
+
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftShooter.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        rightShooter.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        leftShooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        rightShooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
         initAprilTag();
     }
 
-    public void driveStraight(double maxAxialSpeed, double distance, double heading) {
+    public void driveStraight(double maxSpeed, double distance, double travelHeading, double robotHeading) {
 
         if (myOpMode.opModeIsActive()) {
 
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
-            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
+            double angleRadians = Math.toRadians(travelHeading);
+
+            double axialDistance = distance * Math.cos(angleRadians);
+            double lateralDistance = distance * Math.sin(angleRadians);
+
+            int axialMoveCounts = (int)(axialDistance * COUNTS_PER_INCH);
+            int lateralMoveCounts = (int)(lateralDistance * COUNTS_PER_INCH);
+
+            frontLeftTarget = frontLeftDrive.getCurrentPosition() + axialMoveCounts + lateralMoveCounts;
+            backLeftTarget = backLeftDrive.getCurrentPosition() + axialMoveCounts - lateralMoveCounts;
+            frontRightTarget = frontRightDrive.getCurrentPosition() + axialMoveCounts - lateralMoveCounts;
+            backRightTarget = backRightDrive.getCurrentPosition() + axialMoveCounts + lateralMoveCounts;
 
             frontLeftDrive.setTargetPosition(frontLeftTarget);
             backLeftDrive.setTargetPosition(backLeftTarget);
@@ -198,8 +223,15 @@ public class RobotHardware {
             frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            axialSpeed = Math.abs(maxAxialSpeed);
-            driveRobotCentric(axialSpeed, 0, 0);
+            double totalDistance = Math.hypot(axialDistance, lateralDistance);
+            double axialFraction = 0;
+            double lateralFraction = 0;
+            if (totalDistance > 0.001) {
+                axialFraction = axialDistance / totalDistance;
+                lateralFraction = lateralDistance / totalDistance;
+            }
+
+            driveFieldCentric(axialFraction * maxSpeed, lateralFraction * maxSpeed, 0);
 
             // Student Note: Encoder straight drive with P‑turn correction to hold heading.
             // TODO(students): Tune P_AXIAL_GAIN if it wiggles or under‑corrects.
@@ -207,12 +239,25 @@ public class RobotHardware {
                     (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
                     frontRightDrive.isBusy() && backRightDrive.isBusy())) {
 
-                yawSpeed = getSteeringCorrection(heading, AXIAL_GAIN);
+                double leftFrontError = Math.abs(frontLeftTarget - frontLeftDrive.getCurrentPosition());
+                double leftBackError = Math.abs(backLeftTarget - backLeftDrive.getCurrentPosition());
+                double rightFrontError = Math.abs(frontRightTarget - frontRightDrive.getCurrentPosition());
+                double rightBackError = Math.abs(backRightTarget - backRightDrive.getCurrentPosition());
 
+                // Find the max distance among the four wheels
+                double maxError =
+                        Math.max(Math.max(leftFrontError, leftBackError),
+                                Math.max(rightFrontError, rightBackError));
+
+                yawSpeed = getSteeringCorrection(robotHeading, AXIAL_GAIN);
+
+                if (maxError <= TOLERANCE_TICKS) {
+                    break;
+                }
                 if (distance < 0)
                     yawSpeed *= -1.0;
 
-                driveRobotCentric(axialSpeed, 0, yawSpeed);
+                driveFieldCentric(axialFraction * maxSpeed, lateralFraction * maxSpeed, yawSpeed);
 
                 myOpMode.telemetry.addData("Motion", "Drive Straight");
                 myOpMode.telemetry.addData("Target Pos FL:BL:FR:BR", "%7d:%7d:%7d:%7d",
@@ -230,7 +275,7 @@ public class RobotHardware {
                 myOpMode.telemetry.update();
             }
 
-            driveRobotCentric(0, 0, 0);
+            driveFieldCentric(0, 0, 0);
 
             frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -251,7 +296,7 @@ public class RobotHardware {
 
             yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
 
-            driveRobotCentric(0, 0, yawSpeed);
+            driveFieldCentric(0, 0, yawSpeed);
 
             myOpMode.telemetry.addData("Motion", "Turning");
             myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
@@ -264,7 +309,7 @@ public class RobotHardware {
             myOpMode.telemetry.update();
         }
 
-        driveRobotCentric(0, 0, 0);
+        driveFieldCentric(0, 0, 0);
     }
 
     public void holdHeading(double maxYawSpeed, double heading, double holdTime) {
@@ -279,7 +324,7 @@ public class RobotHardware {
 
             yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
 
-            driveRobotCentric(0, 0, yawSpeed);
+            driveFieldCentric(0, 0, yawSpeed);
 
             myOpMode.telemetry.addData("Motion", "Hold Heading");
             myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
@@ -292,7 +337,7 @@ public class RobotHardware {
             myOpMode.telemetry.update();
         }
 
-        driveRobotCentric(0, 0, 0);
+        driveFieldCentric(0, 0, 0);
     }
 
     public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
@@ -361,6 +406,12 @@ public class RobotHardware {
         frontRightDrive.setPower(frontRightWheel);
         backLeftDrive.setPower(backLeftWheel);
         backRightDrive.setPower(backRightWheel);
+    }
+
+    public void setShooterPower(double power) {
+        double max = power * 2520;
+        leftShooter.setVelocity(max);
+        rightShooter.setVelocity(max);
     }
 
     // Student Note: Convenience — current yaw (degrees) from the IMU.
