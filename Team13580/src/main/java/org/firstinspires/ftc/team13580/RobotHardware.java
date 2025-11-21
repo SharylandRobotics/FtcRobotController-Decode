@@ -31,10 +31,7 @@ package org.firstinspires.ftc.team13580;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -55,7 +52,7 @@ public class RobotHardware {
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
     private DcMotor intakeDrive;
-    private DcMotor outtakeDrive;
+    private DcMotorEx outtakeDrive;
 
     private CRServo kicker;
     private CRServo kickerLeft;
@@ -145,7 +142,7 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
         intakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "intake_drive");
-        outtakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "outtake_drive");
+        outtakeDrive = myOpMode.hardwareMap.get(DcMotorEx.class, "outtake_drive");
 
         kicker = myOpMode.hardwareMap.get(CRServo.class, "kicker");
         kickerLeft = myOpMode.hardwareMap.get(CRServo.class, "kicker_left");
@@ -171,6 +168,7 @@ public class RobotHardware {
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        outtakeDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -180,6 +178,7 @@ public class RobotHardware {
         intakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         outtakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
+        outtakeDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -383,6 +382,10 @@ public class RobotHardware {
     public void setOuttakePower(double outtakeWheel) {
         outtakeSpeed = outtakeWheel;
         outtakeDrive.setPower(outtakeWheel);
+    }
+
+    public void setOuttakeVelocity(int ticks){
+        outtakeDrive.setVelocity(ticks);
     }
 
     // Student Note: Convenience — current yaw (degrees) from the IMU.
