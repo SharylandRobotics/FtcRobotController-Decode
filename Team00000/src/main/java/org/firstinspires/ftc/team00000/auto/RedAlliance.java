@@ -64,7 +64,7 @@ public class RedAlliance extends LinearOpMode {
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
             // Drive 24" forward, then turn and hold headings as defined
-            robot.driveStraight(MAX_AUTO_AXIAL, 48.0, 0.0, 0.0);
+            robot.driveOmni(MAX_AUTO_AXIAL, 48.0, 0.0, 0.0);
             robot.turnToHeading(MAX_AUTO_YAW, -90.0);
             robot.holdHeading(MAX_AUTO_YAW, -90.0, 0.5);
 

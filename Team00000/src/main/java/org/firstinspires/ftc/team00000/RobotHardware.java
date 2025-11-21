@@ -35,7 +35,6 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -196,7 +195,7 @@ public class RobotHardware {
         initAprilTag();
     }
 
-    public void driveStraight(double maxSpeed, double distance, double travelHeading, double robotHeading) {
+    public void driveOmni(double maxSpeed, double distance, double travelHeading, double robotHeading) {
 
         if (myOpMode.opModeIsActive()) {
 
