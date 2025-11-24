@@ -123,9 +123,9 @@ public class RobotHardware {
     // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
     private double tagYawDeg = Double.NaN;
 
-    private static final double DESIRED_DISTANCE = 80.4; // camera-to-tag inches
+    private static final double DESIRED_DISTANCE = 70.4; // camera-to-tag inches
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
-    private static final double LATERAL_GAIN = 0.015; // tagYawError -> lateral (strafe) speed
+    private static final double LATERAL_GAIN = 0.02; // tagYawError -> lateral (strafe) speed
     private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
     public static final double MAX_AUTO_AXIAL = 0.50;
     public static final double MAX_AUTO_LATERAL = 0.50;
@@ -708,26 +708,14 @@ public class RobotHardware {
             return false;
         }
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
-        /*
-        double latRangeError;
-        if(goalBearingDeg>0) {
-            latRangeError = goalBearingDeg - 60;
-        }
-        else if(goalBearingDeg < 0){
-            latRangeError = 60- goalBearingDeg;
-        }
-        else{
-            latRangeError = 0;
-        }
 
-         */
-        double latRangeError = goalBearingDeg-60;
+
         double headingError =  goalBearingDeg;
         double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
 
         double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
         //changed yaw error to range error lateral
-        double lateral = Range.clip(latRangeError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
         double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
 
         driveRobotCentric(axial, lateral, yaw);
@@ -736,172 +724,6 @@ public class RobotHardware {
 
 
 
-
-    //old code
-/*
-    private AprilTagDetection targetTag = null;
-    private double x;
-    private double y;
-    private double z;
-    public void findAndStoreTargetTag(int targetId) {
-
-        targetTag = null; // Reset the target tag each cycle
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.id == targetId) {
-                targetTag = detection; // Store the matching detection
-                break; // Exit the loop once the tag is found
-            }
-        }
-    }
-
-
-
-    public void searchForTag(int targetId) {
-        double spinPower = 0.2;
-        targetTag = null;
-
-        while (myOpMode.opModeIsActive() && targetTag == null) {
-            findAndStoreTargetTag(targetId);
-
-            if (targetTag == null) {
-                frontLeftDrive.setPower(spinPower);
-                frontRightDrive.setPower(-spinPower);
-
-                telemetry.addLine("Searching for tag...");
-                telemetry.update();
-                myOpMode.sleep(50);
-            } else {
-                stopMotors(); // stop spinning immediately
-                break; // exit loop when tag is found
-            }
-        }
-
-        stopMotors(); // extra safety stop
-
-        if (targetTag != null) {
-            x = targetTag.ftcPose.x;
-            y = targetTag.ftcPose.y;
-            z = targetTag.ftcPose.z;
-
-            telemetry.addData("Found Tag ID", targetTag.id);
-            telemetry.addData("X (m)", x);
-            telemetry.addData("Y (m)", y);
-            telemetry.addData("Z (m)", z);
-            telemetry.update();
-        }
-    }
-    public void stopMotors() {
-        frontLeftDrive.setPower(0);
-        frontRightDrive.setPower(0);
-
-
-            turretMotor.setPower(0);
-            intakeMotor.setPower(0);
-
-    }
-
-
-
-    public void moveToTag() {
-        // SAFETY CHECK
-
-        if (targetTag == null) {
-            telemetry.addLine("No tag detected. Cannot move.");
-            telemetry.update();
-            return;
-        }
-
-
-
-        // POSE DATA FROM TAG (robot position relative to tag)
-        double xInches = targetTag.ftcPose.x * 39.37;  // forward/backward
-        double yInches = targetTag.ftcPose.y * 39.37;  // left/right
-        double yaw = targetTag.ftcPose.yaw;            // angular offset (radians)
-        double heading = getHeading();                 // robot’s IMU heading
-
-
-        // DESIRED OFFSETS — customize these
-
-
-        // How far away (in inches) from the tag center you want to end up
-        // Positive forward offset = stop farther from the tag
-        // Positive left offset = stop to the left of the tag
-        final double DESIRED_FORWARD_OFFSET = 5.0;
-        final double DESIRED_LEFT_OFFSET = 5.0;
-
-
-        // COMPUTE ERROR TO OFFSET TARGET
-
-        double forwardError = xInches - DESIRED_FORWARD_OFFSET;
-        double lateralError = yInches - DESIRED_LEFT_OFFSET;
-
-
-        telemetry.addData("Tag ID", targetTag.id);
-        telemetry.addData("Current X (in)", xInches);
-        telemetry.addData("Current Y (in)", yInches);
-        telemetry.addData("Forward Error (in)", forwardError);
-        telemetry.addData("Lateral Error (in)", lateralError);
-        telemetry.update();
-
-
-
-        // STEP 1: TURN TO FACE TAG
-
-        // Adjust the 0.3 to change rotation speed
-        double turnCorrection = heading - yaw;
-        turnToHeading(0.3, turnCorrection);
-
-
-        // STEP 2: MOVE FORWARD/BACKWARD TO OFFSET
-
-        if (Math.abs(forwardError) > 1.0) { // 1-inch tolerance
-            // Adjust 24.0 for proportional strength and -0.4 for max speed
-            double forwardPower = Range.clip(-forwardError / 24.0, -0.4, 0.4);
-            driveRobotCentric(forwardPower, 0, 0);
-            myOpMode.sleep(400);  // Adjust timing for your drivetrain speed
-            driveRobotCentric(0, 0, 0);
-        }
-
-
-        // STEP 3: STRAFE LEFT/RIGHT TO OFFSET
-
-
-        if (Math.abs(lateralError) > 1.0) { // 1-inch tolerance
-            // Adjust 20.0 for proportional strength and -0.4 for max speed
-            double lateralPower = Range.clip(-lateralError / 20.0, -0.4, 0.4);
-            driveRobotCentric(0, lateralPower, 0);
-            myOpMode.sleep(400);
-            driveRobotCentric(0, 0, 0);
-        }
-
-
-        // STEP 4: STOP EVERYTHING
-
-        stopMotors();
-
-
-        telemetry.addLine("Move-to-tag with offset complete.");
-        telemetry.update();
-    }
-
-
-    public void shootMotors(double durationSeconds) {
-        // Turn both turret and intake on full speed
-        turretMotor.setPower(1);
-        intakeMotor.setPower(-1);
-
-        myOpMode.sleep((long)(durationSeconds * 1000)); // Wait for specified time
-
-        // Turn motors off
-        turretMotor.setPower(0);
-        intakeMotor.setPower(0);
-    }
-
-
-
-*/
 
 
 

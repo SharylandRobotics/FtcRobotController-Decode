@@ -73,9 +73,9 @@ frontSideRight extends LinearOpMode {
 
             while(phase1){
 
-                robot.driveStraight(AXIAL_SPEED, -50, 0);
+                robot.driveStraight(1, -50, 0);
                 robot.straif(1,-5,0);
-                robot.turnToHeading(AXIAL_SPEED, -25);
+                robot.turnToHeading(1, -25);
                 //shoot motors
                 robot.turretPower(0);
                 robot.intakePower(0);
@@ -92,19 +92,20 @@ frontSideRight extends LinearOpMode {
 
                 robot.setIntakeServo(1);
 
-
                 // turn off motors
                 robot.turretPower(0);
                 robot.intakePower(0);
-                //move
-                robot.straif(1,25,0);
+                //phase 2
+
+               robot.turnToHeading(1,-45);
+               robot.holdHeading(robot.YAW_SPEED, 0, 1);
+               robot.driveStraight(1, 60, 0);
 
 
 
-                //to due: calculate offset for auto  & config shoot motors & servo
-                // robot.autoDriveToGoalStep();
-                //robot.startIntakeMotor();
-                //robot.shootMotors();
+
+
+
                 phase1 = false;
             }
             while(aprilTagFound){
