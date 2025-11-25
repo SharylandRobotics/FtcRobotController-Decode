@@ -35,11 +35,11 @@ import org.firstinspires.ftc.team12397.RobotHardware;
 
 import static org.firstinspires.ftc.team12397.RobotHardware.AXIAL_SPEED;
 
-@Autonomous(name = "frontSideLeft", group = "opMode")
+@Autonomous(name = "TopBlue", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
 public class
-frontSideLeft extends LinearOpMode {
+TopBlue extends LinearOpMode {
 
 
     // Instantiate RobotHardware and link this OpMode
@@ -72,34 +72,59 @@ frontSideLeft extends LinearOpMode {
             Boolean phase3 = false;
 
             while(phase1){
-                //robot methods
-                //robot.driveStraight(AXIAL_SPEED, -36, 0);
-               // robot.turnToHeading(AXIAL_SPEED,90);
-                robot.driveStraight(AXIAL_SPEED, -50, 0);
-                robot.straif(1,5,0);
-                robot.turnToHeading(AXIAL_SPEED, 25);
-                //shoot motors
-                robot.turretPower(0);
-                robot.intakePower(0);
-                robot.turretPower(.85);
-                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+                robot.turretPower(.70);
+                robot.driveStraight(1, -50, 0);
+                robot.holdHeading(robot.YAW_SPEED, 0, 2);
+                robot.turnToHeading(1,-5);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
 
                 robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+                robot.holdHeading(robot.YAW_SPEED, -5, 2);
                 robot.setIntakeServo(1);
                 robot.intakePower(-.3);
-                robot.holdHeading(robot.YAW_SPEED, 0, 2);
+                robot.holdHeading(robot.YAW_SPEED, -5, 2);
                 robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, 0, 3);
+                robot.holdHeading(robot.YAW_SPEED, -5, 2);
 
                 robot.setIntakeServo(1);
-
 
                 // turn off motors
                 robot.turretPower(0);
                 robot.intakePower(0);
-                //move
-                robot.straif(1,-25,0);
+                //phase 2
+
+                robot.turnToHeading(1,40);
+                robot.holdHeading(robot.YAW_SPEED, 40, 1);
+                robot.straif(1,-6,40);
+                robot.intakePower(-.5);
+                robot.driveStraight(1, 20, 40);
+                robot.driveStraight(.5,13,40);
+
+                robot.holdHeading(robot.YAW_SPEED, 40, 2);
+
+                robot.intakePower(0);
+                robot.turretPower(.80);
+                robot.driveStraight(1,-31,40);
+                robot.holdHeading(robot.YAW_SPEED, 40, 2);
+
+                robot.turnToHeading(1,-5);
+                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+
+                robot.setIntakeServo(1);
+                robot.intakePower(-.3);
+                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+
+
+                // turn off motors
+                robot.setIntakeServo(1);
+                robot.turretPower(0);
+                robot.intakePower(0);
 
                 phase1 = false;
 

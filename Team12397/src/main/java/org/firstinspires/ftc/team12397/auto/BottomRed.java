@@ -35,10 +35,10 @@ import org.firstinspires.ftc.team12397.RobotHardware;
 
 import static org.firstinspires.ftc.team12397.RobotHardware.*;
 
-@Autonomous(name = "backSideLeft", group = "opMode")
+@Autonomous(name = "BottomRed", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class backSideLeft extends LinearOpMode {
+public class BottomRed extends LinearOpMode {
 
 
     // Instantiate RobotHardware and link this OpMode
@@ -70,15 +70,16 @@ public class backSideLeft extends LinearOpMode {
             Boolean phase2 = false;
             Boolean phase3 = false;
 
-            while(phase1){
+              while(phase1){
 
-               robot.straif(.5,36,0);
+                  robot.driveStraight(AXIAL_SPEED, 36, 0);
 
-                //to due: calculate offset for auto  & config shoot motors & servo
-                // robot.autoDriveToGoalStep();
-                //robot.startIntakeMotor();
-                //robot.shootMotors();
-                phase1 = false;
+
+                  //to due: calculate offset for auto  & config shoot motors & servo
+                 // robot.autoDriveToGoalStep();
+                  //robot.startIntakeMotor();
+                  //robot.shootMotors();
+                  phase1 = false;
             }
             while(aprilTagFound){
 
