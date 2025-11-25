@@ -17,7 +17,6 @@ public class Red_Meep_meep_13580 {
                 .build();
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-50, 50, Math.toRadians(126)))
-                .waitSeconds(3)
                 .lineToY(24)
 
                 .waitSeconds(2)
@@ -42,14 +41,11 @@ public class Red_Meep_meep_13580 {
                 .splineToConstantHeading(new Vector2d(38, 34),Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(30, 56),Math.toRadians(90))
 
-                .splineToLinearHeading(new Pose2d(-30,24, Math.toRadians(126)), Math.toRadians(90))
+.setTangent(Math.toRadians(-180))
+                .splineToLinearHeading(new Pose2d(-30,24, Math.toRadians(126)), Math.toRadians(180))
                 .waitSeconds(1)
 
                 .splineToLinearHeading(new Pose2d(-30,50, Math.toRadians(90)), Math.toRadians(90))
-
-
-
-
 
                 .build());
 
