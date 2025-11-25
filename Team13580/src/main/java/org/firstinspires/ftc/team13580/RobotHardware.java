@@ -29,14 +29,21 @@
 
 package org.firstinspires.ftc.team13580;
 
+import android.util.Size;
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 // Student Notes: Hardware wrapper ("robot API") for drive, IMU, and AprilTag vision.
@@ -84,13 +91,9 @@ public class RobotHardware {
     // Student Note: Camera pose (robot frame). +X forward, +Y left, +Z up (in).
     // Pitch +15° = camera looks UP 15°. Update if you remount the camera.
     // TODO(students): Measure real offsets when you rely on precise vision assists.
-   // private final Position cameraPosition = new Position(DistanceUnit.INCH,
-         //   0, 0, 0, 0);
-   // private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-           // 0, 15, 0, 0);
-
+   private final Position cameraPosition = new Position(DistanceUnit.INCH, 0, 0, 0, 0);
+   private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 0, 15, 0, 0);
     private AprilTagProcessor aprilTag = null;
-
     private Integer obeliskTagId = null;
     private String obeliskMotif = null;
 
@@ -441,6 +444,33 @@ public class RobotHardware {
 
             myOpMode.sleep(200); //optional pause after each move
         }
+    }
+
+    private void initAprilTag() {
+        // Student Note: Build AprilTag processor with camera pose + intrinsics; start Dashboard stream.
+        // TODO(students): If Dashboard video looks flipped, add a display‑only flip in a processor.
+        AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder()
+                .setDrawAxes(false)
+                .setDrawCubeProjection(false)
+                .setDrawTagOutline(true)
+                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+                .setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
+                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+                .setCameraPose(cameraPosition, cameraOrientation)
+                .setLensIntrinsics(LENS_FX, LENS_FY, LENS_CX, LENS_CY);
+
+        aprilTag = tagBuilder.build();
+
+        VisionPortal visionPortal = new VisionPortal.Builder()
+                .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCameraResolution(new Size(1280, 800))
+                .enableLiveView(true)
+                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+                .addProcessor(aprilTag)
+                .build();
+
+        FtcDashboard.getInstance().startCameraStream(visionPortal, 0);
+        visionPortal.setProcessorEnabled(aprilTag, true);
     }
 /*
     private void initAprilTag() {
