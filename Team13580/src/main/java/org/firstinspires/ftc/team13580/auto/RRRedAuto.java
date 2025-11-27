@@ -250,7 +250,7 @@ public class RRRedAuto extends LinearOpMode {
                         spinUp2(.5),
                         new SleepAction(2),
                         new ParallelAction(
-                                path7_lastshot,
+                                path8_park,
                                 rightkick(0),
                                 leftkick(0),
                                 spinUp2(0),
