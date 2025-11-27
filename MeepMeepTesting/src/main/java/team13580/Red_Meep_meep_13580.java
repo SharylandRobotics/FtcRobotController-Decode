@@ -41,16 +41,19 @@ public class Red_Meep_meep_13580 {
                         .lineToYLinearHeading(24, Math.toRadians(126))
                 .waitSeconds(2)
 
+                //path6_intakelast
                 //.turn(Math.toRadians(-36))
                 .setTangent(Math.atan2(-30+24, -38-30))
                 .lineToYLinearHeading(30, Math.toRadians(90))
                 //.splineToConstantHeading(new Vector2d(38, 34),Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(30, 56),Math.toRadians(90))
 
-                .setTangent(Math.toRadians(-180))
+                //path7_lastshot
                 .setTangent(Math.atan2(24-56, -30-30))
                 .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .waitSeconds(1)
+
+                //path8_park
                 .setTangent(Math.atan2(24-50, 0))
                 .lineToYLinearHeading(54, Math.toRadians(90))
                 //.splineToLinearHeading(new Pose2d(-30,50, Math.toRadians(90)), Math.toRadians(90))

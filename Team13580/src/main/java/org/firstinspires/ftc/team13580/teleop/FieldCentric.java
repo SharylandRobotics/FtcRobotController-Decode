@@ -112,26 +112,28 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (gamepad1.right_trigger == 1) {
-                intake = .5;
+                intake = .6;
             } else if (gamepad1.dpad_down) {
-                intake = -0.5;
+                intake = -1;
+            } else if (gamepad1.right_bumper) {
+                intake = .3;
             } else {
                 intake = 0;
             }
 
-            if (gamepad2.y){
+            if (gamepad2.y) {
                 outtake = 0.7;
             } else {
-                outtake =  gamepad1.left_trigger;
+                outtake = gamepad1.left_trigger;
             }
 
-            if (gamepad1.b){
+            if (gamepad1.b) {
                 robot.setKickerPower(kickerForwardPos);
             } else {
                 robot.setKickerPower(kickerBackPos);
             }
 
-            if (gamepad1.a){
+            if (gamepad1.a) {
                 robot.setKickerLeftPower(kickerleftFowardPos);
             } else {
                 robot.setKickerLeftPower(kickerleftBackPos);

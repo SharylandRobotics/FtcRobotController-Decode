@@ -167,6 +167,30 @@ public class RRRedAuto extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(10, 52),Math.toRadians(90))
                         .build();
 
+        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(10,52, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-52, -30-10))
+                .lineToYLinearHeading(24, Math.toRadians(126))
+                        .build();
+
+        Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
+                .setTangent(Math.atan2(-30+24, -38-30))
+                .lineToYLinearHeading(30, Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(30, 56),Math.toRadians(90))
+                        .build();
+
+        Action path7_lastshot = drive.actionBuilder(new Pose2d(30,56, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-56, -30-30))
+                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                        .build();
+
+        Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
+                .setTangent(Math.atan2(24-50, 0))
+                .lineToYLinearHeading(54, Math.toRadians(90))
+                        .build();
+
+
+
+
 
 
         waitForStart();
@@ -189,16 +213,56 @@ public class RRRedAuto extends LinearOpMode {
                         spinUp2(.5),
                         new ParallelAction(
                                 path3,
-                                shoot(1100)
+                                shoot(1100),
+                                spinUp2(.4)
                         ),
-                        spinUp2(0),
+                        spinUp2(.5),
                         rightkick(1),
                         leftkick(1),
                         new SleepAction(2),
+                        rightkick(0),
+                        leftkick(0),
                         new ParallelAction(
                                 path4_intakemiddle,
                                 spinUp2(.5)
+                        ),
+                        new ParallelAction(
+                                path5_shoot3rd,
+                                spinUp2(.3),
+                                shoot(1100)
+                        ),
+                        rightkick(1),
+                        leftkick(1),
+                        new SleepAction(2),
+                        rightkick(0),
+                        leftkick(0),
+                        new ParallelAction(
+                                path6_intakelast,
+                                spinUp2(.5)
+                        ),
+                        spinUp2(.3),
+                        new ParallelAction(
+                                path7_lastshot,
+                                shoot(1100)
+                        ),
+                        rightkick(1),
+                        leftkick(1),
+                        spinUp2(.5),
+                        new SleepAction(2),
+                        new ParallelAction(
+                                path7_lastshot,
+                                rightkick(0),
+                                leftkick(0),
+                                spinUp2(0),
+                                shoot(0)
                         )
+
+
+
+
+
+
+
                 )
         );
     }
