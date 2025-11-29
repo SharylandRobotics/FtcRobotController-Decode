@@ -1,17 +1,11 @@
 package team12395;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.*;
+import com.noahbres.meepmeep.MeepMeep;
+import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
+import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.constraints.TranslationalVelocityConstraint;
-import org.rowlandhall.meepmeep.MeepMeep;
-import org.rowlandhall.meepmeep.roadrunner.DefaultBotBuilder;
-import org.rowlandhall.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
+import java.lang.Math;
 
 public class MeepMeepTesting {
     public static void main(String[] args) {
@@ -20,7 +14,10 @@ public class MeepMeepTesting {
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-48.5, -49.5, Math.toRadians(-125)))
+                .build();
+
+                myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-48.5, -49.5, Math.toRadians(-125)))
+                        /*
                         .lineTo(new Vector2d(-25, -17.3))
                         //
                         .lineToLinearHeading(new Pose2d(-12, -29, Math.toRadians(-90)))
@@ -36,14 +33,12 @@ public class MeepMeepTesting {
 
                         .lineTo(new Vector2d(34.5, -29))
                         // shoot 3rd volley
+
+                         */
                         .build());
 
 
-        Image img = null;
-        try { img = ImageIO.read(new File("C:\\Users\\shsrobotics\\Downloads\\field-2025-official.png")); }
-        catch(IOException e) {}
-
-        meepMeep.setBackground(img)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_OFFICIAL)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(myBot)
