@@ -7,7 +7,7 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 import java.lang.Math;
 
-public class Red_Meep_meep_13580 {
+public class NONMotid_red {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
@@ -23,20 +23,22 @@ public class Red_Meep_meep_13580 {
                 //path2
                 .waitSeconds(2)
                 //.setTangent(Math.toRadians(90))
-                .setTangent(Math.atan2(54-24, -24+30))
-                .lineToYLinearHeading(54, Math.toRadians(0))
-                .setTangent(0)
-                .lineToXLinearHeading(-22, Math.toRadians(-6))
+                        .setTangent(0)
+                .splineToLinearHeading(new Pose2d(0, 56, Math.toRadians(90)),Math.toRadians(90))
+                //.setTangent(Math.atan2(56-24, 0+30))
+                //.lineToYLinearHeading(56, Math.toRadians(90))
+               // .setTangent(0)
+                //.lineToXLinearHeading(-22, Math.toRadians(-6))
 
                 //path3
 
-                .setTangent(Math.atan2(36-54, -8+22))
-                .lineToYLinearHeading(36, Math.toRadians(-90))
+                //.setTangent(Math.atan2(36-54, -8+22))
+                //.lineToYLinearHeading(36, Math.toRadians(-90))
                 //.splineTo(new Vector2d(-4, 36),Math.toRadians(-90))
 
-                .splineToConstantHeading(new Vector2d(-2, 53),Math.toRadians(90))
+               // .splineToConstantHeading(new Vector2d(-2, 53),Math.toRadians(90))
 
-                .setTangent(Math.atan2(24-53, -30+2))
+                .setTangent(Math.atan2(24-56, -30+0))
                 .lineToYLinearHeading(24, Math.toRadians(126))
                 //.splineTo(new Vector2d(-30, 24), Math.toRadians(126))
                 .waitSeconds(2)
