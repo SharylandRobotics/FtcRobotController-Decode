@@ -53,15 +53,8 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
-    public static float gain = 3;
-
     @Override
     public void runOpMode() {
-        char scannedColor;
-        int[] solution = null;
-        int spinAngle;
-        String chamberString = "_  ";
-        NormalizedRGBA colors;
 
         double cT = 0;
         double prT = 0;
@@ -76,59 +69,30 @@ public class ColorTest extends LinearOpMode {
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            robot.colorSensor.setGain(gain);
-            colors = robot.colorSensor.getNormalizedColors();
-            Color.colorToHSV(colors.toColor(), hsvValues);
-            if (gamepad2.a){
-                spinAngle = 60;
-            } else {
-                spinAngle = 120;
-            }
+            int[] rgbValues = {robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue()};
+            Color.RGBToHSV(rgbValues[0], rgbValues[1], rgbValues[2], hsvValues);
             if (!robot.spindexer.isBusy()) {
                 if (gamepad2.leftBumperWasPressed()) { // ccw
-                    robot.spindexerHandler( spinAngle);
+                    robot.spindexerHandler( 120);
                 } else if (gamepad2.rightBumperWasPressed()) { // cw
-                    robot.spindexerHandler( -spinAngle);
+                    robot.spindexerHandler( -360);
                 }
 
-                chamberString = "UUU";
-                StringBuilder chamberBuilder = new StringBuilder(chamberString);
-                chamberBuilder.setCharAt(robot.chamber, 'V');
-                chamberString = chamberBuilder.toString();
-
-                if (gamepad1.xWasPressed()){
-                    scannedColor = robot.scanColor();
-
-                    if (scannedColor != '0'){
-                        StringBuilder magBuilder = new StringBuilder(mag);
-                        magBuilder.setCharAt(robot.chamber, scannedColor);
-                        mag = magBuilder.toString();
-
-                        //
-
+                if (gamepad2.x){
+                    String color = "UNKNOWN";
+                    if (hsvValues[0] > 250 || hsvValues[0] <= 40){
+                        color = "PURPLE";
+                    } else if (hsvValues[0] > 90 && hsvValues[0] < 160){
+                        color = "GREEN";
                     }
+                    telemetry.addData("Color is: ", color);
                 }
-
-                if (gamepad1.yWasPressed()){
-                    solution = robot.solvePattern();
-                }
-            }
-
-
-            telemetry.addData("current Chamber: ", robot.chamber);
-            telemetry.addData("chamber pic: ", chamberString);
-            telemetry.addData("current Mag: ", mag);
-            telemetry.addData("current Pattern: ", pattern);
-            if (solution != null) {
-                telemetry.addData("current solution: ", solution[0] + "120 deg, then " + solution[1] + " 120 deg");
-            } else {
-                telemetry.addData("current solution: ", "no solution");
             }
             cT = getRuntime();
             telemetry.addData("Delay from previous update (s): ", cT - prT);
             prT = cT;
             telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
-            telemetry.addData("float Colors (HSV): ",  "R=%.5f G=%.5f B=%.5f ", colors.red, colors.green, colors.blue);
+            telemetry.addData("float Colors (RGB): ",  "R=%03d G=%03d B=%03d ", rgbValues[0], rgbValues[1], rgbValues[2]);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

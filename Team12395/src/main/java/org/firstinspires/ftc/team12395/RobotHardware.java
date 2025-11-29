@@ -61,7 +61,7 @@ public class RobotHardware {
     public Limelight3A limelight;
     public LLResult result;
 
-    public NormalizedColorSensor colorSensor;
+    public ColorSensor colorSensor;
 
     public static String mag = "GPP";
     public static String pattern = "PPG";// a pattern is better than no pattern
@@ -147,7 +147,7 @@ public class RobotHardware {
 
 
 
-        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
+        colorSensor = myOpMode.hardwareMap.get(ColorSensor.class, "color_sensor");
 
         xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
 
@@ -223,7 +223,7 @@ public class RobotHardware {
         spindexer.setPower(0.3);
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooter.setVelocityPIDFCoefficients(100, 3, 3, 0);
+        shooter.setVelocityPIDFCoefficients(100, 5, 1, 5);
         shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
@@ -234,8 +234,6 @@ public class RobotHardware {
         hoodAngle.setPosition(1);
 
         xArm.setPosition(1);
-
-        colorSensor.setGain(3);
 
         limelight.start();
         limelight.pipelineSwitch(1);
@@ -657,22 +655,6 @@ public class RobotHardware {
         return null;
     }
 
-    public char scanColor(){
-        NormalizedRGBA colors = colorSensor.getNormalizedColors();
-        float[] hsvValues = new float[3];
-        Color.colorToHSV(colors.toColor(), hsvValues);
-
-        prevColor = currentColor;
-
-        if (hsvValues[0] > 250 || hsvValues[0] <= 40) {
-            return 'P';
-        } else if (hsvValues[0] > 90 && hsvValues[0] < 160) {
-            return 'G';
-        } else {
-            return '0';
-        }
-    }
-
     public int[] solveAltPattern(String setPattern){
         String reconstruct = String.valueOf(mag.charAt(chamber) + mag.charAt((chamber + 1) % 3) + mag.charAt((chamber + 2) % 3));
         if  (reconstruct.equals(setPattern)) {
@@ -691,37 +673,6 @@ public class RobotHardware {
             setArmPos(1);
         } else if (clock == 2+3+ 3){
             spindexerHandler(-120);
-        }
-    }
-
-    public boolean senseAutomaticSequence(){
-        char scannedColor = scanColor();
-        if (scannedColor != '0' && scannedColor != 'N'){
-            myOpMode.telemetry.addData("Found color ", "");
-            // runs when ball is already secured in socket
-            StringBuilder magBuilder = new StringBuilder(mag);
-            magBuilder.setCharAt(chamber, scannedColor);
-            mag = magBuilder.toString();
-
-            int [] solution = solvePattern();
-            if (solution == null ){
-                if (mag.charAt( (chamber + 1) % mag.length())  == '0'){
-                    spindexerHandler(-120);//cw
-                    myOpMode.telemetry.addData("turning right", "...");
-                } else {
-                    spindexerHandler(120);//ccw
-                    myOpMode.telemetry.addData("turning left", "...");
-                }
-                return false;
-            } else {
-                // turn to solution
-                spindexerHandler(solution[0]* 120);
-                myOpMode.telemetry.addData("solving", "...");
-                return true;
-            }
-
-        } else {
-            return false;
         }
     }
 

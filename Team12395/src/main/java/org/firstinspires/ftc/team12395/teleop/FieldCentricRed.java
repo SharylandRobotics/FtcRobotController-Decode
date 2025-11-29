@@ -135,12 +135,14 @@ public class FieldCentricRed extends LinearOpMode {
                 autoSense = false;
             }
 
-            if (autoSense && !robot.spindexer.isBusy()){
+            /*if (autoSense && !robot.spindexer.isBusy()){
                 boolean done = robot.senseAutomaticSequence();
                 if (done){
                     autoSense = false;
                 }
             }
+
+             */
 
             // gamepad 2 --
             if ( (robot.spindexerTarget % 120) != 0 && mag.charAt(robot.chamber) == '0') {

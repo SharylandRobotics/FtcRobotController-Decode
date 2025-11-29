@@ -52,12 +52,7 @@ public class FieldCentricAlt extends LinearOpMode {
     public static double preSetAngleClose = 0.4;
     public static double preSetVelocityClose = 1120;
 
-    public static double armPos = 1;
-
     public static int intakeVel = 0;
-
-
-
 
 
     @Override
@@ -89,10 +84,7 @@ public class FieldCentricAlt extends LinearOpMode {
 
         waitForStart();
 
-
         robot.disableDriveEncoders();
-
-        int id = hardwareMap.appContext.getResources().getIdentifier("orb", "raw", hardwareMap.appContext.getPackageName());
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -104,7 +96,6 @@ public class FieldCentricAlt extends LinearOpMode {
             if (gamepad1.right_bumper){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            velocity += (gamepad1.dpad_up ? 10 : 0) - (gamepad1.dpad_down ? 10 : 0);
             if (gamepad1.xWasPressed()){
                 velocity = preSetVelocityFar; angle = preSetAngleFar;
             } else if (gamepad1.bWasPressed()){
@@ -112,9 +103,6 @@ public class FieldCentricAlt extends LinearOpMode {
             } else if (gamepad1.aWasPressed()){
                 velocity = preSetVelocityClose; angle = preSetAngleClose;
             }
-
-            angle += (gamepad1.dpad_left ? 0.045 : 0) - (gamepad1.dpad_right ? 0.045 : 0);
-            angle = Range.clip(angle, 0, 1); // 0.19
 
             robot.setShooterVelocity(velocity);
             robot.setHoodAngle(angle);
@@ -133,69 +121,19 @@ public class FieldCentricAlt extends LinearOpMode {
                 robot.setIntakeSpeed(intakeVel);
             }
 
-            if (gamepad1.dpadLeftWasPressed() ){
-                autoSense = true;
-            } else if (gamepad1.dpadRightWasPressed()){
-                autoSense = false;
-            }
-
-            if (autoSense && !robot.spindexer.isBusy()){
-                boolean done = robot.senseAutomaticSequence();
-                if (done){
-                    autoSense = false;
-                }
-            }
-
             // gamepad 2 --
-
-            if (gamepad2.dpad_left) {
-                if ( (robot.spindexerTarget % 120) != 0 && mag.charAt(chamber) == '0') {
-                    robot.setChamberManual('P');
-                }
-            } else if (gamepad2.dpad_right) {
-                if ( (robot.spindexerTarget % 120) != 0 && mag.charAt(chamber) == '0') {
-                    robot.setChamberManual('G');
-                }
-            } else if (gamepad2.dpad_down && robot.solvePattern() != null){
-                robot.spindexerHandler(120*robot.solvePattern()[0]);
-            } else if (gamepad2.dpad_up){
-                if (autoShootClock >= 0 && (robot.spindexerTarget % 120) == 0) {
-                    robot.shootAutomaticSequence(autoShootClock);
-                    autoShootClock++;
-                } else if (gamepad2.dpadUpWasPressed()){
-                    robot.playBeep("break");
+            if (gamepad2.a) {
+                spinAngle = 60;
+            } else {
+                spinAngle = 120;
+            }
+            if (!robot.spindexer.isBusy()) {
+                if (gamepad2.leftBumperWasPressed()) { // ccw
+                    robot.spindexerHandler((int) spinAngle);
+                } else if (gamepad2.rightBumperWasPressed()) { // cw
+                    robot.spindexerHandler( -360);
                 }
             }
-            if(!gamepad2.dpad_up) {
-                if (autoShootClock != 0){
-                    autoShootClock = 0;
-                    armPos = 1; armClock = 0;
-                }
-
-                if (gamepad2.a) {
-                    spinAngle = 60;
-                } else {
-                    spinAngle = 120;
-                }
-
-                if (!robot.spindexer.isBusy() && armClock > 8) {
-                    if (gamepad2.leftBumperWasPressed()) { // ccw
-                        robot.spindexerHandler((int) spinAngle);
-                    } else if (gamepad2.rightBumperWasPressed()) { // cw
-                        robot.spindexerHandler((int) -360);
-                    }
-                }
-
-                if (gamepad2.b) {
-                    armPos = 0.7; armClock = 0;
-                }
-                if (gamepad2.bWasReleased()) {
-                    armPos = 1; armClock = 0;
-                }
-                robot.setArmPos(armPos);
-            }
-
-            if (autoShootClock > 11){ autoShootClock = 0;}
 
             if (gamepad2.xWasPressed()){
                 xToggle = !xToggle;
@@ -244,9 +182,6 @@ public class FieldCentricAlt extends LinearOpMode {
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
-            if (armClock <= 8){
-                armClock++;
-            }
 
             if (lastTrackingClock <= 2000){
                 lastTrackingClock++;
