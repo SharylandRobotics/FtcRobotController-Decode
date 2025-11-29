@@ -45,6 +45,7 @@ import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Servo Test", group="TeleOp")
 @Config
+@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class ServoDebug extends LinearOpMode {
 

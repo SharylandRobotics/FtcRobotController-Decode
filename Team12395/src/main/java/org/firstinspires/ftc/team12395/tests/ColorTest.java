@@ -53,6 +53,8 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
+    public static float gain = 1;
+
     @Override
     public void runOpMode() {
 
@@ -69,8 +71,8 @@ public class ColorTest extends LinearOpMode {
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            int[] rgbValues = {robot.colorSensor.red(), robot.colorSensor.green(), robot.colorSensor.blue()};
-            Color.RGBToHSV(rgbValues[0], rgbValues[1], rgbValues[2], hsvValues);
+            NormalizedRGBA color = robot.colorSensor.getNormalizedColors();
+            Color.colorToHSV(color.toColor(), hsvValues);
             if (!robot.spindexer.isBusy()) {
                 if (gamepad2.leftBumperWasPressed()) { // ccw
                     robot.spindexerHandler( 120);
@@ -79,20 +81,23 @@ public class ColorTest extends LinearOpMode {
                 }
 
                 if (gamepad2.x){
-                    String color = "UNKNOWN";
+                    String colorS = "UNKNOWN";
                     if (hsvValues[0] > 250 || hsvValues[0] <= 40){
-                        color = "PURPLE";
+                        colorS = "PURPLE";
                     } else if (hsvValues[0] > 90 && hsvValues[0] < 160){
-                        color = "GREEN";
+                        colorS = "GREEN";
                     }
-                    telemetry.addData("Color is: ", color);
+                    telemetry.addData("Color is: ", colorS);
                 }
             }
+
+            robot.colorSensor.setGain(gain);
+
             cT = getRuntime();
             telemetry.addData("Delay from previous update (s): ", cT - prT);
             prT = cT;
             telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
-            telemetry.addData("float Colors (RGB): ",  "R=%03d G=%03d B=%03d ", rgbValues[0], rgbValues[1], rgbValues[2]);
+            telemetry.addData("float Colors (RGB): ",  "R=%.3f G=%.3f B=%.3f ", color.red, color.green, color.blue);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

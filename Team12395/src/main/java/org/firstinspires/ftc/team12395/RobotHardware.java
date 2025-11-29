@@ -30,7 +30,6 @@
 package org.firstinspires.ftc.team12395;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.media.AudioManager;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
@@ -47,7 +46,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -61,9 +59,9 @@ public class RobotHardware {
     public Limelight3A limelight;
     public LLResult result;
 
-    public ColorSensor colorSensor;
+    public NormalizedColorSensor colorSensor;
 
-    public static String mag = "GPP";
+    public static String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
     public static String pattern = "PPG";// a pattern is better than no pattern
     public static int chamber = 0;
 
@@ -147,7 +145,7 @@ public class RobotHardware {
 
 
 
-        colorSensor = myOpMode.hardwareMap.get(ColorSensor.class, "color_sensor");
+        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
 
         xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
 
@@ -367,10 +365,6 @@ public class RobotHardware {
         turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
     }
 
-    public boolean runTurretHandler(){
-        return turretHandler.runToTarget();
-    }
-
     public void setShooterVelocity(double tPs){
         shooter.setVelocity(Range.clip(tPs, 0, shooterMaxTPM));
         shooter2.setPower(shooter.getPower());
@@ -381,17 +375,9 @@ public class RobotHardware {
      * @return rpm in rps, not tps
      * max rpm is 100. (6000 mRPM / 60 sec = 100 mRPS * 28 TPR = 2800 mTPS)
      */
-    public double getShooterVelocity(){
-        return shooter.getVelocity()/28;
-    }
 
     public void setHoodAngle(double angle){
         hoodAngle.setPosition(angle);
-    }
-
-
-    private int encoderToDegTurret(double deg){
-        return (int) (deg* turretTicksPerDegree);
     }
 
     public double getCurrentTurretDegreePos(){
@@ -446,11 +432,15 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         spindexer.setVelocity(800);
+        //  -intake-
+        //    (0)
+        // (1)   (2)
+        int turns = targetAdd / 120;
 
-        if (targetAdd == -120 || targetAdd == 60){// cw & half ccw
-            chamber = (chamber + 1) % 3;
-        } else if (targetAdd == 120 || targetAdd == -60){// ccw & half cw
-            chamber = (chamber + 2) % 3;
+        if (turns < 0){// cw
+            chamber = (chamber + Math.abs(turns)) % 3;
+        } else if (turns > 0){// ccw
+            chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
     }
 
@@ -470,11 +460,15 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         spindexer.setVelocity(vel);
+        //  -intake-
+        //    (0)
+        // (1)   (2)
+        int turns = targetAdd / 120;
 
-        if (targetAdd == -120 || targetAdd == 60){// cw & half ccw
-            chamber = (chamber + 1) % 3;
-        } else if (targetAdd == 120 || targetAdd == -60){// ccw & half cw
-            chamber = (chamber + 2) % 3;
+        if (turns < 0){// cw
+            chamber = (chamber + Math.abs(turns)) % 3;
+        } else if (turns > 0){// ccw
+            chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
     }
 
@@ -619,35 +613,35 @@ public class RobotHardware {
             int greenIndex = mag.indexOf("G");
             if (pattern.equals("GPP")){
                 if (greenIndex == chamber){// if green is selected
-                    return new int[] {0, 2};// don't move, turn right twice
+                    return new int[] {0, -2};// don't move, turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my right isn't green, turn left, then turn right twice
-                    return new int[] {1, 2};
+                    // if the color to my ccw isn't green, turn left, then turn right twice
+                    return new int[] {1, -2};
                 } else {
-                    // the color to my right is green, turn right, then turn right twice
-                    return new int[] {-1, 2};
+                    // the color to my ccw is green, turn right (2x left), then turn right twice
+                    return new int[] {2, -2};
                 }
 
             } else if (pattern.equals("PGP")){
                 if (greenIndex == chamber){ // if green is selected
-                    return new int[] {1, 2}; //  turn left, then turn right twice
+                    return new int[] {1, -2}; //  turn left, then turn right twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my right isn't green, turn right, then turn right twice
-                    return new int[] {-1, 2};
+                    // if the color to my ccw isn't green, turn right (2x left), then turn right twice
+                    return new int[] {2, -2};
                 } else {
-                    // the color to my right is green, don't move, turn right twice
-                    return new int[] {0, 2};
+                    // the color to my ccw is green, don't move, turn right twice
+                    return new int[] {0, -2};
                 }
 
             } else if (pattern.equals("PPG")){
                 if (greenIndex == chamber){ // if green is selected
-                    return new int[] {-1, 2}; //  turn right, then turn right twice
+                    return new int[] {2, 2}; //  turn cw (2x ccw), then turn cw twice
                 } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my right isn't green, don't move, turn right twice
-                    return new int[] {0, 2};
+                    // if the color to my ccw isn't green, don't move, turn cw twice
+                    return new int[] {0, -2};
                 } else {
-                    // the color to my right is green, turn left, then turn right twice
-                    return new int[] {1, 2};
+                    // the color to my ccw is green, turn ccw, then turn cw twice
+                    return new int[] {1, -2};
                 }
             }
         }
@@ -663,20 +657,11 @@ public class RobotHardware {
         return null;
     }
 
-    public void shootAutomaticSequence(int clock){
-        if (clock == 0) {// 500/50
-            setArmPos(0.7);
-            StringBuilder magBuilder = new StringBuilder(mag);
-            magBuilder.setCharAt(chamber, '0');
-            mag = magBuilder.toString();
-        } else if (clock == 2+ 3) {// 750/50
-            setArmPos(1);
-        } else if (clock == 2+3+ 3){
-            spindexerHandler(-120);
-        }
-    }
-
     public void setMagManualBulk(String set){
+        //      (chamber on 0)         012
+        // set things in a cw manner ( XYZ )
+        //    0(X)
+        // 1(Z)   2(Y)
         StringBuilder magBuilder = new StringBuilder(mag);
         for (int i=0; i<3; i++) {
             magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
@@ -686,6 +671,10 @@ public class RobotHardware {
     public void setChamberManual(Character c){
         StringBuilder magBuilder = new StringBuilder(mag);
         magBuilder.setCharAt(chamber, c);
+    }
+
+    public String getMagPicture(){
+        return "   ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt(chamber+1)+")    ("+mag.charAt(chamber+2)+")  ";
     }
 
 }

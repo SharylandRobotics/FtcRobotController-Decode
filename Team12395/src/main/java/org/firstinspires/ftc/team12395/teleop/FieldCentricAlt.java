@@ -62,19 +62,13 @@ public class FieldCentricAlt extends LinearOpMode {
         double lateral  ; // strafe left/right (+ right)
         double yaw      ; // rotation (+ CCW/left turn)
 
-        double spinAngle;
-
         double prevHeading = 0;
-        double armClock = 9;
         int lastTrackingClock = 10;
         double lastTargetTurretPos = 0;
         double lastTargetHeading = 0;
 
-        int autoShootClock = 0;
-
         boolean xToggle = false;
         boolean autoSense = false;
-
 
         robot.init();
 
@@ -122,14 +116,9 @@ public class FieldCentricAlt extends LinearOpMode {
             }
 
             // gamepad 2 --
-            if (gamepad2.a) {
-                spinAngle = 60;
-            } else {
-                spinAngle = 120;
-            }
             if (!robot.spindexer.isBusy()) {
                 if (gamepad2.leftBumperWasPressed()) { // ccw
-                    robot.spindexerHandler((int) spinAngle);
+                    robot.spindexerHandler(120);
                 } else if (gamepad2.rightBumperWasPressed()) { // cw
                     robot.spindexerHandler( -360);
                 }
