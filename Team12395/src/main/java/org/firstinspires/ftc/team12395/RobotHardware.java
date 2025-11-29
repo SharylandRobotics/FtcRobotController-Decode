@@ -31,7 +31,10 @@ package org.firstinspires.ftc.team12395;
 
 import android.content.Context;
 import android.media.AudioManager;
+import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.ftccommon.SoundPlayer;
@@ -91,7 +94,7 @@ public class RobotHardware {
     public int spindexerTarget = 0;
 
     // Servos
-    private Servo xArm, hoodAngle;
+    private Servo hoodAngle;
 
     // physics
 
@@ -146,9 +149,6 @@ public class RobotHardware {
 
 
         colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
-
-        xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
-
 
         // --- IMU ORIENTATION ---
         // TODO: UPDATE ALONGSIDE ROADRUNNER
@@ -230,8 +230,6 @@ public class RobotHardware {
         // SERVO POSITIONS
 
         hoodAngle.setPosition(1);
-
-        xArm.setPosition(1);
 
         limelight.start();
         limelight.pipelineSwitch(1);
@@ -478,10 +476,6 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
-    public void setArmPos(double pos){
-        xArm.setPosition(Range.clip(pos, 0, 1));
-    }
-
     private double[] getValuesToTarget(){
         double tx = limelight.getLatestResult().getTx();
         double ty = limelight.getLatestResult().getTy();
@@ -611,38 +605,39 @@ public class RobotHardware {
         if (!mag.contains("0") && mag.contains("G") ){
             // if I have a full mag with Green and know the pattern
             int greenIndex = mag.indexOf("G");
-            if (pattern.equals("GPP")){
-                if (greenIndex == chamber){// if green is selected
-                    return new int[] {0, -2};// don't move, turn right twice
-                } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my ccw isn't green, turn left, then turn right twice
-                    return new int[] {1, -2};
-                } else {
-                    // the color to my ccw is green, turn right (2x left), then turn right twice
-                    return new int[] {2, -2};
-                }
+            switch (pattern) {
+                case "GPP":
+                    if (greenIndex == chamber) {// if green is selected
+                        return new int[]{0, -2};// don't move, turn right twice
+                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                        // if the color to my ccw isn't green, turn left, then turn right twice
+                        return new int[]{1, -2};
+                    } else {
+                        // the color to my ccw is green, turn right (2x left), then turn right twice
+                        return new int[]{2, -2};
+                    }
 
-            } else if (pattern.equals("PGP")){
-                if (greenIndex == chamber){ // if green is selected
-                    return new int[] {1, -2}; //  turn left, then turn right twice
-                } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my ccw isn't green, turn right (2x left), then turn right twice
-                    return new int[] {2, -2};
-                } else {
-                    // the color to my ccw is green, don't move, turn right twice
-                    return new int[] {0, -2};
-                }
+                case "PGP":
+                    if (greenIndex == chamber) { // if green is selected
+                        return new int[]{1, -2}; //  turn left, then turn right twice
+                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                        // if the color to my ccw isn't green, turn right (2x left), then turn right twice
+                        return new int[]{2, -2};
+                    } else {
+                        // the color to my ccw is green, don't move, turn right twice
+                        return new int[]{0, -2};
+                    }
 
-            } else if (pattern.equals("PPG")){
-                if (greenIndex == chamber){ // if green is selected
-                    return new int[] {2, 2}; //  turn cw (2x ccw), then turn cw twice
-                } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my ccw isn't green, don't move, turn cw twice
-                    return new int[] {0, -2};
-                } else {
-                    // the color to my ccw is green, turn ccw, then turn cw twice
-                    return new int[] {1, -2};
-                }
+                case "PPG":
+                    if (greenIndex == chamber) { // if green is selected
+                        return new int[]{2, 2}; //  turn cw (2x ccw), then turn cw twice
+                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                        // if the color to my ccw isn't green, don't move, turn cw twice
+                        return new int[]{0, -2};
+                    } else {
+                        // the color to my ccw is green, turn ccw, then turn cw twice
+                        return new int[]{1, -2};
+                    }
             }
         }
         myOpMode.telemetry.addData(":", mag, pattern, chamber);
@@ -675,6 +670,142 @@ public class RobotHardware {
 
     public String getMagPicture(){
         return "   ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt(chamber+1)+")    ("+mag.charAt(chamber+2)+")  ";
+    }
+
+    public class RoadRunnerActions {
+        public class setShooterVelocity implements Action {
+            private int vel;
+
+            public setShooterVelocity(int vel){
+                this.vel = vel;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setShooterVelocity(vel);
+                return false;
+            }
+        }
+
+        public class turnTurretRelative implements Action{
+            private double deg;
+
+            public turnTurretRelative(double deg){
+                this.deg = deg;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setTurretHandlerRelative(deg);
+
+                boolean done = turretHandler.runToTarget();
+                packet.put("done? ", done);
+                packet.put("target: ", deg);
+                return !done; // you are not done?
+            }
+        }
+
+        public class turnTurretAbsolute implements Action{
+            private double deg;
+
+            public turnTurretAbsolute(double deg){
+                this.deg = deg;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setTurretHandlerAbsolute(deg);
+
+                boolean done = turretHandler.runToTarget();
+                packet.put("done? ", done);
+                packet.put("target: ", deg);
+                return !done; // you are not done?
+            }
+        }
+
+        public class setPower0 implements Action{
+            private double deg;
+
+            public setPower0(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                turretHandler.stopServos();
+                return false; // you are not done?
+            }
+        }
+
+        public class spindexerHandler implements Action{
+            private int deg;
+
+            public spindexerHandler(int deg){
+                this.deg = deg;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(deg);
+                return false;
+            }
+        }
+
+        public class sortedSpindexer implements Action{
+
+            public sortedSpindexer(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(120*solvePattern()[0]);
+                return false;
+            }
+        }
+
+        public class spindexerHandlerVel implements Action{
+            private int deg;
+            private int vel;
+
+            public spindexerHandlerVel(int deg, int vel){
+                this.deg = deg;
+                this.vel = vel;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(deg, vel);
+                return false;
+            }
+        }
+
+        public class setHoodAngle implements Action{
+            private double pos;
+
+            public setHoodAngle(double pos){
+                this.pos = pos;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setHoodAngle(pos);
+                return false;
+            }
+        }
+
+        public class setIntakeVelocity implements Action{
+            private int vel;
+            public setIntakeVelocity(int vel){
+                this.vel = vel;
+            }
+
+            @Override
+            public boolean run(TelemetryPacket packet){
+                setIntakeSpeed(vel);
+                return false;
+            }
+        }
     }
 
 }
