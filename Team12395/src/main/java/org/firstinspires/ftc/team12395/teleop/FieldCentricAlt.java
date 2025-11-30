@@ -29,6 +29,9 @@
 
 package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
+import android.app.Activity;
+import android.graphics.Color;
+import android.view.View;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -54,6 +57,8 @@ public class FieldCentricAlt extends LinearOpMode {
 
     public static int intakeVel = 0;
 
+    View relativeLayout;
+
 
     @Override
     public void runOpMode() {
@@ -67,8 +72,10 @@ public class FieldCentricAlt extends LinearOpMode {
         double lastTargetTurretPos = 0;
         double lastTargetHeading = 0;
 
-        boolean xToggle = false;
-        boolean autoSense = false;
+        boolean turretToggle = false;
+        boolean runTurnClock = false;
+
+        int turnClock = 0;
 
         robot.init();
 
@@ -76,9 +83,12 @@ public class FieldCentricAlt extends LinearOpMode {
 
         mag = "000";
 
-        waitForStart();
-
         robot.disableDriveEncoders();
+
+        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
+        relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
+
+        waitForStart();
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -87,7 +97,7 @@ public class FieldCentricAlt extends LinearOpMode {
             lateral =  gamepad1.left_stick_x;
             yaw     =  gamepad1.right_stick_x;
 
-            if (gamepad1.right_bumper){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
+            if (gamepad1.right_trigger > 0.05){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
             robot.driveFieldCentric(axial, lateral, yaw);
 
             if (gamepad1.xWasPressed()){
@@ -115,25 +125,68 @@ public class FieldCentricAlt extends LinearOpMode {
                 robot.setIntakeSpeed(intakeVel);
             }
 
-            // gamepad 2 --
+            robot.scanColor();
+            int layoutColor;
+            if (scannedColor.equals(colorTypes.PURPLE)){
+                layoutColor = Color.MAGENTA;
+            } else if (scannedColor.equals(colorTypes.GREEN)){
+                layoutColor = Color.GREEN;
+            } else if (scannedColor.equals(colorTypes.UNKNOWN)){
+                layoutColor = Color.DKGRAY;
+            } else {
+                layoutColor = Color.LTGRAY;
+            }
+
+            relativeLayout.post(new Runnable() {
+                public void run(){
+                    relativeLayout.setBackgroundColor(layoutColor);
+                }
+            });
+
+
+            // gamepad 2 (g1 cuz solo)--
             if (!robot.spindexer.isBusy()) {
-                if (gamepad2.leftBumperWasPressed()) { // ccw
+                if (gamepad1.leftBumperWasPressed()) { // ccw
                     robot.spindexerHandler(120);
-                } else if (gamepad2.rightBumperWasPressed()) { // cw
-                    robot.spindexerHandler( -360);
+                } else if (gamepad1.rightBumperWasPressed()) { // cw
+                    robot.spindexerHandler( -480);
+                    robot.setMagManualBulk("000");
+                } else if (!runTurnClock && mag.contains("0")) {
+
+                    if (scannedColor.equals(colorTypes.PURPLE)){
+                        if (mag.charAt(chamber) == '0') {
+                            robot.setChamberManual('P');
+                            runTurnClock = true;
+                        }
+                    } else if (scannedColor.equals(colorTypes.GREEN)){
+                        if (mag.charAt(chamber) == '0') {
+                            robot.setChamberManual('G');
+                            runTurnClock = true;
+                        }
+                    }
                 }
             }
 
-            if (gamepad2.xWasPressed()){
-                xToggle = !xToggle;
-                if (xToggle){
+            if (runTurnClock && turnClock < 5){
+                turnClock++;
+            }
+
+            if (turnClock == 4){
+                robot.spindexerHandler(120);
+                turnClock = 0;
+                runTurnClock = false;
+            }
+
+            if (gamepad1.dpadRightWasPressed()){
+                turretToggle = !turretToggle;
+                if (turretToggle){
                     robot.playBeep("orb");
                 } else {
                     robot.playBeep("orbDeep");
                 }
             }
 
-            if (xToggle){
+            if (turretToggle){
                 double errorDeg = robot.homeToAprilTagBlue();
 
                 if (!Double.isNaN(errorDeg) ) {
@@ -160,12 +213,9 @@ public class FieldCentricAlt extends LinearOpMode {
             prevHeading = robot.getHeading();
 
             // Telemetry for drivers + debugging
-            telemetry.addData("current Chamber: ", chamber);
-            telemetry.addData("current Mag: ", mag);
+            telemetry.addData(robot.getMagPicture(), "");
             telemetry.addData("current Pattern: ", pattern);
-            telemetry.addData("Inputs", "angle=%.2f   velocity=%.2f", angle, velocity);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            telemetry.addData("turret running? ", robot.turretHandler.runToTarget());
             telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
             telemetry.update();
 
@@ -176,6 +226,11 @@ public class FieldCentricAlt extends LinearOpMode {
                 lastTrackingClock++;
             }
         }
+
+        relativeLayout.post(new Runnable(){
+            public void run(){relativeLayout.setBackgroundColor(Color.RED);}
+        });
+
     }
 }
 

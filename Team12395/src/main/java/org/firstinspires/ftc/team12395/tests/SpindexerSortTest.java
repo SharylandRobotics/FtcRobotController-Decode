@@ -46,11 +46,11 @@ public class SpindexerSortTest extends LinearOpMode {
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
     public static boolean trigger = false;
+    public static boolean solve = false;
 
     @Override
     public void runOpMode() {
         int[] solution;
-        boolean setup = false;
 
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -63,20 +63,20 @@ public class SpindexerSortTest extends LinearOpMode {
         while (opModeIsActive()) {
             solution = robot.solvePattern();
 
-            if (solution != null && !setup){
-                robot.setSpindexerRelativeAngle(120 * solution[0]);
-                setup = true;
+            if (solution != null && solve){
+                robot.spindexerHandler(120 * solution[0]);
+                solve = false;
             }
 
             if (!robot.spindexer.isBusy()) {
 
-                if (setup && trigger) {
-                    robot.setSpindexerRelativeAngle(-480);
+                if (!solve && trigger) {
+                    robot.spindexerHandler(-480);
                     trigger = false;
                 }
             }
 
-            telemetry.addData("setup?: ", setup);
+            telemetry.addData("solve?: ", solve);
             telemetry.addData("performing shooting action?: ", trigger);
             telemetry.addData("busy?: ", robot.spindexer.isBusy());
             telemetry.addData("current Pattern: ", pattern);

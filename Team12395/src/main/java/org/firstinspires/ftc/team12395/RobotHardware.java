@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.team12395;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.media.AudioManager;
 import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
@@ -63,6 +64,7 @@ public class RobotHardware {
     public LLResult result;
 
     public NormalizedColorSensor colorSensor;
+    public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
     public static String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
     public static String pattern = "PPG";// a pattern is better than no pattern
@@ -226,6 +228,8 @@ public class RobotHardware {
 
 
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        colorSensor.setGain(100);
 
         // SERVO POSITIONS
 
@@ -666,10 +670,33 @@ public class RobotHardware {
     public void setChamberManual(Character c){
         StringBuilder magBuilder = new StringBuilder(mag);
         magBuilder.setCharAt(chamber, c);
+        mag = magBuilder.toString();
+    }
+
+    public enum colorTypes {
+        UNKNOWN,
+        NONE,
+        PURPLE,
+        GREEN
+    }
+
+    public void scanColor(){
+        NormalizedRGBA color = colorSensor.getNormalizedColors();
+        float[] hsvValues = new float[3];
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        scannedColor = colorTypes.UNKNOWN;
+        if (hsvValues[2] < 0.15){
+            scannedColor = colorTypes.NONE;
+        } else if (hsvValues[0] > 200 && hsvValues[0] <= 240){
+            scannedColor = colorTypes.PURPLE;
+        } else if (hsvValues[1] > 0.6 && hsvValues[1] < 0.75){
+            scannedColor = colorTypes.GREEN;
+        }
     }
 
     public String getMagPicture(){
-        return "   ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt(chamber+1)+")    ("+mag.charAt(chamber+2)+")  ";
+        return "     ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt( (chamber+1) % 3)+")    ("+mag.charAt( (chamber+2) % 3)+")  ";
     }
 
     public class RoadRunnerActions {

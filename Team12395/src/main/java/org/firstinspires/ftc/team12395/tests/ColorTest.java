@@ -53,7 +53,9 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
-    public static float gain = 1;
+    public static float gain = 100;
+    public static boolean testColor = false;
+    public static boolean shoot = false;
 
     @Override
     public void runOpMode() {
@@ -61,10 +63,15 @@ public class ColorTest extends LinearOpMode {
         double cT = 0;
         double prT = 0;
 
+        boolean runClock = false;
+        int clock = 0;
+
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
+
+        mag = "000";
 
         waitForStart();
 
@@ -73,23 +80,43 @@ public class ColorTest extends LinearOpMode {
         while (opModeIsActive()) {
             NormalizedRGBA color = robot.colorSensor.getNormalizedColors();
             Color.colorToHSV(color.toColor(), hsvValues);
-            if (!robot.spindexer.isBusy()) {
-                if (gamepad2.leftBumperWasPressed()) { // ccw
-                    robot.spindexerHandler( 120);
-                } else if (gamepad2.rightBumperWasPressed()) { // cw
-                    robot.spindexerHandler( -360);
-                }
+            if (testColor){
+                robot.setIntakeSpeed(-800);
+            }
 
-                if (gamepad2.x){
-                    String colorS = "UNKNOWN";
-                    if (hsvValues[0] > 250 || hsvValues[0] <= 40){
-                        colorS = "PURPLE";
-                    } else if (hsvValues[0] > 90 && hsvValues[0] < 160){
-                        colorS = "GREEN";
+            String colorS = "UNKNOWN/ROTATING";
+            if (shoot && !mag.contains("0") && !robot.spindexer.isBusy()){
+                robot.spindexerHandler(-480);
+                robot.setMagManualBulk("000");
+            } else if (testColor && !robot.spindexer.isBusy() && !runClock && mag.contains("0")){
+                if (hsvValues[2] < 0.15){
+                    colorS = "NONE";
+                } else if (hsvValues[0] > 200 && hsvValues[0] <= 240){
+                    colorS = "PURPLE";
+                    if (mag.charAt(chamber) == '0') {
+                        robot.setChamberManual('P');
                     }
-                    telemetry.addData("Color is: ", colorS);
+                    runClock = true;
+                } else if (hsvValues[1] > 0.6 && hsvValues[1] < 0.75){
+                    colorS = "GREEN";
+                    if (mag.charAt(chamber) == '0') {
+                        robot.setChamberManual('G');
+                    }
+                    runClock = true;
                 }
             }
+
+            if (runClock && clock < 5){
+                clock++;
+            }
+
+            if (clock == 4){
+                robot.spindexerHandler(120);
+                clock = 0;
+                runClock = false;
+            }
+
+            telemetry.addData("Color is: ", colorS);
 
             robot.colorSensor.setGain(gain);
 
@@ -98,6 +125,7 @@ public class ColorTest extends LinearOpMode {
             prT = cT;
             telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
             telemetry.addData("float Colors (RGB): ",  "R=%.3f G=%.3f B=%.3f ", color.red, color.green, color.blue);
+            telemetry.addData(robot.getMagPicture(),"");
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
