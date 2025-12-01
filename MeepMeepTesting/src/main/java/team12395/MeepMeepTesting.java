@@ -16,29 +16,22 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-                myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-48.5, -49.5, Math.toRadians(-125)))
-                        /*
-                        .lineTo(new Vector2d(-25, -17.3))
-                        //
-                        .lineToLinearHeading(new Pose2d(-12, -29, Math.toRadians(-90)))
-                        // start pick up
-                        .lineTo(new Vector2d(-12, -44.2), new TranslationalVelocityConstraint(10), null) // end pick up
-                        .lineTo(new Vector2d(-12, -23))
-                        // shoot 2nd volley
+                myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-38, -54, Math.toRadians(-90)))
+                                .setTangent(Math.atan2(-23 + 54, -23 + 38))
+                                .lineToY(-23) // shoot  & then scan pattern
 
-                        .lineTo(new Vector2d(12, -29))
-                        // start pick up
-                        .lineTo(new Vector2d(12, -44.2),  new TranslationalVelocityConstraint(10), null) // end pick up
-                        .lineTo(new Vector2d(-12, -23))
+                                .setTangent(Math.toRadians(-20))
+                                .splineToConstantHeading(new Vector2d(-11.5, -30), Math.toRadians(-90)) // move to row 1
 
-                        .lineTo(new Vector2d(34.5, -29))
-                        // shoot 3rd volley
+                                //.setTangent(Math.toRadians(-90))
+                                .lineToY(-48) // pick up balls
 
-                         */
+                                //.setTangent(Math.toRadians(-90))
+                                .splineTo(new Vector2d(-12, -20), Math.toRadians(90))
                         .build());
 
 
-        meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_OFFICIAL)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(myBot)

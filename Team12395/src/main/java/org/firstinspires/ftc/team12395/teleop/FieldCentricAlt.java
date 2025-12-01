@@ -40,7 +40,7 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
-@TeleOp(name="Field Centric ALT (Blue)", group="TeleOp")
+@TeleOp(name="Field Centric ALT (Blue Solo)", group="TeleOp")
 @Config
 public class FieldCentricAlt extends LinearOpMode {
 
@@ -52,7 +52,7 @@ public class FieldCentricAlt extends LinearOpMode {
 
     public static double preSetVelocityFar = 1440;
     public static double preSetAngleFar = 0.8;
-    public static double preSetAngleClose = 0.4;
+    public static double preSetAngleClose = 0;
     public static double preSetVelocityClose = 1120;
 
     public static int intakeVel = 0;
@@ -66,6 +66,8 @@ public class FieldCentricAlt extends LinearOpMode {
         double axial    ; // forward/back (+ forward)
         double lateral  ; // strafe left/right (+ right)
         double yaw      ; // rotation (+ CCW/left turn)
+
+        double tSkew = 0;
 
         double prevHeading = 0;
         int lastTrackingClock = 10;
@@ -167,11 +169,11 @@ public class FieldCentricAlt extends LinearOpMode {
                 }
             }
 
-            if (runTurnClock && turnClock < 5){
+            if (runTurnClock && turnClock < 3){
                 turnClock++;
             }
 
-            if (turnClock == 4){
+            if (turnClock == 2){
                 robot.spindexerHandler(120);
                 turnClock = 0;
                 runTurnClock = false;
@@ -187,9 +189,11 @@ public class FieldCentricAlt extends LinearOpMode {
             }
 
             if (turretToggle){
-                double errorDeg = robot.homeToAprilTagBlue();
+                double[] tData = robot.homeToAprilTagBlue();
+                double errorDeg = tData[0];
 
                 if (!Double.isNaN(errorDeg) ) {
+                    tSkew = tData[1];
                     double farFudge = 0;
                     if (velocity == preSetVelocityFar){ farFudge = Math.copySign(4, errorDeg); }
 
@@ -208,15 +212,17 @@ public class FieldCentricAlt extends LinearOpMode {
                 robot.setTurretHandlerAbsolute(0);
             }
 
-            robot.maintainSpindexerHandler();
+            //robot.maintainSpindexerHandler();
 
             prevHeading = robot.getHeading();
+            robot.turretHandler.runToTarget();
 
             // Telemetry for drivers + debugging
             telemetry.addData(robot.getMagPicture(), "");
             telemetry.addData("current Pattern: ", pattern);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
+            telemetry.addData("apt deg: ", tSkew);
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
