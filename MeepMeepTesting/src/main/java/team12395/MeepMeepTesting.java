@@ -24,10 +24,25 @@ public class MeepMeepTesting {
                                 .splineToConstantHeading(new Vector2d(-11.5, -30), Math.toRadians(-90)) // move to row 1
 
                                 //.setTangent(Math.toRadians(-90))
-                                .lineToY(-48) // pick up balls
+                                .lineToY(-43) // pick up balls & double back (48)
+                                .splineToSplineHeading(new Pose2d(-3, -52, Math.toRadians(-90)), Math.toRadians(60))
+                                .splineToConstantHeading(new Vector2d(-10, -22), Math.toRadians(90))
+                                //shoot
 
-                                //.setTangent(Math.toRadians(-90))
-                                .splineTo(new Vector2d(-12, -20), Math.toRadians(90))
+                                .setTangent(Math.atan2(-35 + 22, 11.5 + 10))
+                                .splineToConstantHeading(new Vector2d(11.5, -35), Math.toRadians(-90))
+                                .lineToY(-43)
+                                .splineToSplineHeading(new Pose2d(-10, -22, Math.toRadians(-90)), Math.toRadians(135))
+                                //shoot
+
+                                .setTangent(Math.atan2(-38 + 22, 35 + 10))
+                                .splineToConstantHeading(new Vector2d(35, -38), Math.toRadians(-90))
+                                .lineToY(-43)
+                                .splineToSplineHeading(new Pose2d(-10, -22, Math.toRadians(-90)), Math.toRadians(135))
+                                //shoot
+
+                                .lineToX(0)
+
                         .build());
 
 
