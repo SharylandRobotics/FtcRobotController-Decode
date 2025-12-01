@@ -45,19 +45,23 @@ public class NONMotid_red {
                 //path4intake_middle
                 //.turn(Math.toRadians(-36))
 
-                .setTangent(Math.atan2(30-24, 12+30))
-                .lineToYLinearHeading(30, Math.toRadians(90))
+                .setTangent(Math.atan2(30-24, 15+30))
+                .lineToYLinearHeading(30, Math.toRadians(98))
+                .setTangent(Math.atan2(52-32, 10-17))
+                .lineToYLinearHeading(52, Math.toRadians(98))
                 //.splineToConstantHeading(new Vector2d(16, 34),Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(10, 52),Math.toRadians(90))
+                //.splineToConstantHeading(new Vector2d(10, 52),Math.toRadians(90))
                 //path5
-                .setTangent(Math.atan2(24-52, -30-10))
+                .setTangent(Math.atan2(48-52, 10-10))
+                .lineToYLinearHeading(48, Math.toRadians(98))
+                .setTangent(Math.atan2(24-48, -30-10))
                 .lineToYLinearHeading(24, Math.toRadians(126))
                 .waitSeconds(2)
 
                 //path6_intakelast
                 //.turn(Math.toRadians(-36))
-                .setTangent(Math.atan2(30-24, 34+30))
-                .lineToYLinearHeading(30, Math.toRadians(90))
+                .setTangent(Math.atan2(34-24, 34+30))
+                .lineToYLinearHeading(34, Math.toRadians(90))
                 //.splineToConstantHeading(new Vector2d(38, 34),Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(30, 56),Math.toRadians(90))
 
