@@ -35,9 +35,9 @@ import org.firstinspires.ftc.team13580.RobotHardware;
 
 // Student Notes: Field‑centric TeleOp. Left stick = drive/strafe, Right stick = turn, LB = slow mode.
 // TODO(students): Adjust slow‑mode scale if you want finer aiming.
-@TeleOp(name = "Field Centric", group = "opMode")
+@TeleOp(name = "Camera Test", group = "opMode")
 
-public class FieldCentric extends LinearOpMode {
+public class CameraTest extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -53,63 +53,22 @@ public class FieldCentric extends LinearOpMode {
         double yaw;
 
         double intake;
-        double outtake;
+        double outtake = 0;
 
         // Student Note: Initialize hardware (motors, IMU, vision).
         robot.init();
-
-        while(opModeInInit()) {
-            // Student Note: Pre‑start check — rotate robot by hand; heading should change.
-            // "Vision: Ready (AprilTag)" means camera + processor initialized.
-            telemetry.addData("Status", "Hardware Initialized");
-            telemetry.addData("Vision", "Ready (AprilTag)");
-            telemetry.addData("Mode", "INIT");
-            //telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
-                    //robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
-            telemetry.addData("Heading", "%4.0f", robot.getHeading());
-            telemetry.update();
-        }
 
         waitForStart();
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
+            robot.updateAprilTagDetections();
 
-            // Keep vision fresh before using pose values each loop
-            //robot.updateAprilTagDetections();
+            axial = -gamepad1.left_stick_y;
+            lateral = gamepad1.left_stick_x;
+            yaw = gamepad1.right_stick_x;
 
-            // Student Note: Hold LB for precision (slow) mode.
-            boolean slow = gamepad1.left_bumper;
-            double scale = slow ? 0.4 : 1.0;
-
-            axial = -gamepad1.left_stick_y * scale;
-            lateral = gamepad1.left_stick_x * scale;
-            yaw = gamepad1.right_stick_x * scale;
-
-            // --- Vision helpers for concise telemetry ---
-            //Integer goalId = robot.getGoalTagId();
-            //double range = robot.getGoalRangeIn();
-            //double bearing = robot.getGoalBearingDeg();
-            //double elevation = robot.getGoalElevationDeg();
-
-            // Approx horizontal distance and aim-above-horizontal (camera pitched up 15°)
-            //double horiz = (Double.isNaN(range) || Double.isNaN(bearing))
-            //        ? Double.NaN
-            //        : range * Math.cos(Math.toRadians(bearing));
-            //double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (15.0 + elevation));
-
-            // Driver Assist: hold RB to auto-drive toward the visible goal tag (range->drive, yaw->strafe, bearing->turn).
-            boolean autoAssist = gamepad1.right_bumper;
-            boolean didAuto = false;
-            //if (autoAssist) {
-            //    robot.updateAprilTagDetections();
-            //    didAuto = robot.autoDriveToGoalStep();
-            //}
-
-            // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
-            if (!didAuto) {
-                robot.driveFieldCentric(axial, lateral, yaw);
-            }
+           robot.driveFieldCentric(axial, lateral, yaw);
 
             if (gamepad1.right_trigger == 1) {
                 intake = .6;
@@ -119,12 +78,6 @@ public class FieldCentric extends LinearOpMode {
                 intake = .3;
             } else {
                 intake = 0;
-            }
-
-            if (gamepad2.y) {
-                outtake = 1300;
-            } else {
-                outtake = gamepad1.left_trigger*2000;
             }
 
             if (gamepad1.b) {
@@ -139,13 +92,24 @@ public class FieldCentric extends LinearOpMode {
                 robot.setKickerLeftPower(kickerleftBackPos);
             }
 
+            if (gamepad2.y) {
+                outtake = 1300;
+            } else if (gamepad2.b){
+                outtake = 0;
+            }
+
+            if (gamepad2.dpad_up){
+                outtake += 10;
+            } else if (gamepad2.dpad_down){
+                outtake -= 10;
+            }
+
             robot.setIntakePower(intake);
             robot.setOuttakeVelocity((int) outtake);
 
-            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
-            telemetry.addData("Heading", "%4.0f°", robot.getHeading());
-            telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+           telemetry.addData("flat distance, in: ", Math.sqrt( Math.pow(robot.getGoalRangeIn(), 2) - Math.pow(16, 2) ) );
+           telemetry.addData(" current velocity: ", robot.getOuttakeVelocity());
+           telemetry.addData("  target velocity: ", outtake);
 
             //String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
             //telemetry.addData("Obelisk", motif);

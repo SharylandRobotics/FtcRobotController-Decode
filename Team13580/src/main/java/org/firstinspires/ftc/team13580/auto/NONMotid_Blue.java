@@ -145,11 +145,11 @@ public class NONMotid_Blue extends LinearOpMode {
 
         Action path2 = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(126)))
                 .setTangent(0)
-                .splineToLinearHeading(new Pose2d(0, -56, Math.toRadians(-90)),Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(6, -56, Math.toRadians(-90)),Math.toRadians(-90))
                 .build();
 
 
-        Action path3_opengate = drive.actionBuilder(new Pose2d(0,-56, Math.toRadians(90)))
+        Action path3_opengate = drive.actionBuilder(new Pose2d(6,-56, Math.toRadians(90)))
                 .setTangent(Math.atan2(-24+0, -30+56))
                 .lineToYLinearHeading(-24, Math.toRadians(-126), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
                 // .setTangent(Math.toRadians(0))
