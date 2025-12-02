@@ -16,8 +16,8 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-                myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-38, -54, Math.toRadians(-90)))
-                                .setTangent(Math.atan2(-23 + 54, -23 + 38))
+                myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-40, -54, Math.toRadians(-90)))
+                                .setTangent(Math.atan2(-23 + 54, -23 + 40))
                                 .lineToY(-23) // shoot  & then scan pattern
 
                                 .setTangent(Math.toRadians(-20))

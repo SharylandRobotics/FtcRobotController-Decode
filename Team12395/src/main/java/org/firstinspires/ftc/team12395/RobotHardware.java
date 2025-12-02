@@ -51,6 +51,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -701,6 +702,36 @@ public class RobotHardware {
         return "     ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt( (chamber+1) % 3)+")    ("+mag.charAt( (chamber+2) % 3)+")  ";
     }
 
+    private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
+            new double[]{0, 0},
+            new double[]{1, 1},
+            new double[]{2, 2}
+    ));
+
+    public double getCalculatedVelocity(double distance){
+        int maxIndex = velDataPoints.size()-1;
+        double[] slopeList = new double[maxIndex];
+        for (int i=0; i<maxIndex; i++){
+            slopeList[i] = (
+                    (velDataPoints.get(i+1)[1] - velDataPoints.get(i)[1]) /
+                    (velDataPoints.get(i+1)[0] - velDataPoints.get(i)[0])
+            );
+        }
+        double velZeroIntercept = velDataPoints.get(0)[1] - slopeList[0]*velDataPoints.get(0)[0];
+
+        for (int i=0; i<slopeList.length; i++){
+            if (i == 0){
+                if (distance >= 0 && distance <= velDataPoints.get(0)[0]){
+                    return velZeroIntercept + distance*slopeList[0];
+                }
+            } else if (distance > velDataPoints.get(i)[0] && distance <= velDataPoints.get(i+1)[0]){
+                return velDataPoints.get(i)[1] + distance*slopeList[i];
+            }
+        }
+
+        return 500;
+    }
+
     public class RoadRunnerActions {
         public class scanMotif implements Action {
             public scanMotif(){
@@ -775,7 +806,7 @@ public class RobotHardware {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 spindexerHandler(-480);
-                return spindexer.isBusy();
+                return false;
             }
         }
 

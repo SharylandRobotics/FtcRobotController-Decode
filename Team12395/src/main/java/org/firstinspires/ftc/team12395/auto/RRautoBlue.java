@@ -17,7 +17,7 @@ public class RRautoBlue extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
     RobotHardware.RoadRunnerActions actionLib = robot.new RoadRunnerActions();
-    Pose2d initialPose = new Pose2d(-38, -54, Math.toRadians(-90));
+    Pose2d initialPose = new Pose2d(-40, -54, Math.toRadians(-90));
     MecanumDrive drive;
     Pose2d latestPose = initialPose;
 
@@ -34,6 +34,7 @@ public class RRautoBlue extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         drive = new MecanumDrive(hardwareMap, initialPose);
 
+
         robot.init();
 
         // BLUE
@@ -43,9 +44,9 @@ public class RRautoBlue extends LinearOpMode {
         Pose2d ballRow1 = new Pose2d(-11.5, -30, initialPose.heading.real);
         Pose2d ballRow1End = new Pose2d(ballRow1.position.x,-43,initialPose.heading.real);
 
-        Pose2d openGate = new Pose2d(-3,-52, initialPose.heading.real);
+        Pose2d openGate = new Pose2d(-3,-52, Math.toRadians(-90));
 
-        Pose2d shootVolleyPose = new Pose2d(-10,-22, initialPose.heading.real);
+        Pose2d shootVolleyPose = new Pose2d(-10,-22, Math.toRadians(-90));
 
         Pose2d ballRow2 = new Pose2d(11.5, -35, initialPose.heading.real);
         Pose2d ballRow2End = new Pose2d(ballRow2.position.x, -43, initialPose.heading.real);
@@ -76,16 +77,18 @@ public class RRautoBlue extends LinearOpMode {
                     actionLib.setShooterVel(1120),
                     new ParallelAction(
                         new RaceAction(
-                                actionLib.setTurretPos(60),
-                                new SleepAction(10)
+                                actionLib.setTurretPos(32),
+                                new SleepAction(3)
                         ),
                         driveToPL
                     ),
                     actionLib.shootAllBalls(),
+                    new SleepAction(3),
                     updatePose()
 
                 )
         );
+
 
         Action driveToRow1 = drive.actionBuilder(latestPose)
                 .setTangent(Math.toRadians(-20))
@@ -125,6 +128,8 @@ public class RRautoBlue extends LinearOpMode {
                 )
         );
 
+        /*
+
         Action driveToRow2 = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(ballRow2.position.y - latestPose.position.y,
                         ballRow2.position.x - latestPose.position.x))
@@ -152,6 +157,9 @@ public class RRautoBlue extends LinearOpMode {
                 )
         );
 
+         */
+
+        /*
         Action driveToRow3 = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(ballRow3.position.y -latestPose.position.y,
                         ballRow3.position.x - latestPose.position.x))
@@ -188,5 +196,7 @@ public class RRautoBlue extends LinearOpMode {
                         park
                 )
         );
+
+         */
     }
 }
