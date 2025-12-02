@@ -166,13 +166,13 @@ public class NONMotid_red extends LinearOpMode {
                 .setTangent(Math.atan2(66-34, 26-17))
                 .lineToYLinearHeading(66, Math.toRadians(83))
                 .setTangent(Math.atan2(60-66, 26-26))
-                .lineToYLinearHeading(60, Math.toRadians(98))
+                .lineToYLinearHeading(60, Math.toRadians(98), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                // .splineToConstantHeading(new Vector2d(12, 65),Math.toRadians(98),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
 
         Action path5_shoot3rd = drive.actionBuilder(new Pose2d(26,60, Math.toRadians(83)))
                 .setTangent(Math.atan2(24-60, -30-26))
-                .lineToYLinearHeading(24, Math.toRadians(126))
+                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
         Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
@@ -185,7 +185,7 @@ public class NONMotid_red extends LinearOpMode {
 
         Action path7_lastshot = drive.actionBuilder(new Pose2d(32,64, Math.toRadians(90)))
                 .setTangent(Math.atan2(24-64, -30-32))
-                .lineToYLinearHeading(24, Math.toRadians(126))//, new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
         Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))

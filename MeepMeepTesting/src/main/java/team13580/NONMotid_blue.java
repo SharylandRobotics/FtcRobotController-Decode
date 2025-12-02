@@ -23,6 +23,7 @@ public class NONMotid_blue {
                 .waitSeconds(2)
                 .setTangent(0)
                 .splineToLinearHeading(new Pose2d(0, -56, Math.toRadians(-90)),Math.toRadians(-90))
+
                 //.setTangent(Math.toRadians(90))
                 //.splineToLinearHeading(new Pose2d(-28,-54, Math.toRadians(0)), Math.toRadians(90))
                 //path3

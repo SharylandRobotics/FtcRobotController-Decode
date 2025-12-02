@@ -166,13 +166,13 @@ public class NONMotid_Blue extends LinearOpMode {
                 .setTangent(Math.atan2(-66-34, 26-17))
                 .lineToYLinearHeading(-66, Math.toRadians(-83))
                 .setTangent(Math.atan2(-60+66, 26-26))
-                .lineToYLinearHeading(-60, Math.toRadians(-98))
+                .lineToYLinearHeading(-60, Math.toRadians(-98), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 //.splineToConstantHeading(new Vector2d(6, -52),Math.toRadians(-80))
                 .build();
 
         Action path5_shoot3rd = drive.actionBuilder(new Pose2d(26,-60, Math.toRadians(90)))
                 .setTangent(Math.atan2(-24+60, -30-26))
-                .lineToYLinearHeading(-24, Math.toRadians(-126))
+                .lineToYLinearHeading(-24, Math.toRadians(-126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
         Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-126)))
@@ -190,7 +190,7 @@ public class NONMotid_Blue extends LinearOpMode {
 
         Action path8_park = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-126)))
                 .setTangent(Math.atan2(-24+54, 0))
-                .lineToYLinearHeading(-54, Math.toRadians(-90))
+                .lineToYLinearHeading(-54, Math.toRadians(-90), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
 
