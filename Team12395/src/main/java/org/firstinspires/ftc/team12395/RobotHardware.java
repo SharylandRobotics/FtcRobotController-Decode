@@ -702,6 +702,18 @@ public class RobotHardware {
     }
 
     public class RoadRunnerActions {
+        public class setTurretPosition implements Action {
+            private double pos;
+            public setTurretPosition(double pos){
+                this.pos = pos;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                turretHandler.setTargetPos((int) pos);
+                return false;
+            }
+        }
         public class setShooterVelocity implements Action {
             private int vel;
 
@@ -716,46 +728,51 @@ public class RobotHardware {
             }
         }
 
-        public class turnTurretRelative implements Action{
-            private double deg;
+        public class automaticIntakeBalls implements Action{
+            public automaticIntakeBalls(){
 
-            public turnTurretRelative(double deg){
-                this.deg = deg;
             }
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                setTurretHandlerRelative(deg);
-
-                boolean done = turretHandler.runToTarget();
-                packet.put("done? ", done);
-                packet.put("target: ", deg);
-                return !done; // you are not done?
+                // run until spindexer is full
+                scanColor();
+                boolean rerun = true;
+                if (!spindexer.isBusy() && mag.contains("0")){
+                    if (scannedColor.equals(colorTypes.PURPLE)){
+                        if (mag.charAt(chamber) == '0') {
+                            setChamberManual('P');
+                            spindexerHandler(120);
+                        }
+                    } else if (scannedColor.equals(colorTypes.GREEN)){
+                        if (mag.charAt(chamber) == '0') {
+                            setChamberManual('G');
+                            spindexerHandler(120);
+                        }
+                    }
+                } else if (!mag.contains("0")){
+                    rerun = false;
+                }
+                return rerun;
             }
         }
 
-        public class turnTurretAbsolute implements Action{
-            private double deg;
+        public class shootBalls implements Action{
+            public shootBalls(){
 
-            public turnTurretAbsolute(double deg){
-                this.deg = deg;
             }
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                setTurretHandlerAbsolute(deg);
-
-                boolean done = turretHandler.runToTarget();
-                packet.put("done? ", done);
-                packet.put("target: ", deg);
-                return !done; // you are not done?
+                spindexerHandler(-480);
+                return spindexer.isBusy();
             }
         }
 
-        public class setPower0 implements Action{
+        public class setTurretPowerZero implements Action{
             private double deg;
 
-            public setPower0(){
+            public setTurretPowerZero(){
 
             }
 
@@ -766,45 +783,15 @@ public class RobotHardware {
             }
         }
 
-        public class spindexerHandler implements Action{
-            private int deg;
+        public class sortSpindexer implements Action{
 
-            public spindexerHandler(int deg){
-                this.deg = deg;
-            }
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(deg);
-                return false;
-            }
-        }
-
-        public class sortedSpindexer implements Action{
-
-            public sortedSpindexer(){
+            public sortSpindexer(){
 
             }
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 spindexerHandler(120*solvePattern()[0]);
-                return false;
-            }
-        }
-
-        public class spindexerHandlerVel implements Action{
-            private int deg;
-            private int vel;
-
-            public spindexerHandlerVel(int deg, int vel){
-                this.deg = deg;
-                this.vel = vel;
-            }
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(deg, vel);
                 return false;
             }
         }
@@ -834,6 +821,34 @@ public class RobotHardware {
                 setIntakeSpeed(vel);
                 return false;
             }
+        }
+
+        public Action shootAllBalls(){
+            return new shootBalls();
+        }
+
+        public Action automaticallyIntakeBalls(){
+            return new automaticIntakeBalls();
+        }
+
+        public Action setIntakeVel(int vel){
+            return new setIntakeVelocity(vel);
+        }
+
+        public Action setHoodAng(double angle){
+            return new setHoodAngle(angle);
+        }
+
+        public Action sortCurrentSpindexer(){
+            return new sortSpindexer();
+        }
+
+        public Action setShooterVel(int vel){
+            return new setShooterVelocity(vel);
+        }
+
+        public Action stopTurretPower(){
+            return new setTurretPowerZero();
         }
     }
 
