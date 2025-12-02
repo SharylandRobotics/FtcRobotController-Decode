@@ -59,11 +59,28 @@ public class RRautoBlue extends LinearOpMode {
                 .lineToY(shootVolleyPL.position.y)
                         .build();
 
+        // init action
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        actionLib.setHoodAng(0)
+                )
+        );
+
+        waitForStart();
+
+
 
         Actions.runBlocking(
                 new SequentialAction(
                     actionLib.setShooterVel(1120),
-                    driveToPL,
+                    new ParallelAction(
+                        new RaceAction(
+                                actionLib.setTurretPos(60),
+                                new SleepAction(10)
+                        ),
+                        driveToPL
+                    ),
                     actionLib.shootAllBalls(),
                     updatePose()
 
@@ -73,22 +90,102 @@ public class RRautoBlue extends LinearOpMode {
         Action driveToRow1 = drive.actionBuilder(latestPose)
                 .setTangent(Math.toRadians(-20))
                 .splineToConstantHeading(ballRow1.position, Math.toRadians(-90))
+
                 .lineToY(ballRow1End.position.y, new TranslationalVelConstraint(10))
                 .splineToSplineHeading(openGate, Math.toRadians(60))
                 .splineToConstantHeading(shootVolleyPose.position, Math.toRadians(90))
+
                 .build();
 
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-
+                                new SequentialAction(
+                                    new RaceAction(
+                                            actionLib.setTurretPos(110),
+                                            actionLib.scanMotif()
+                                    ),
+                                    new RaceAction(
+                                            actionLib.setTurretPos(60),
+                                            new SleepAction(10)
+                                    )
+                                ),
                                 driveToRow1,
                                 actionLib.setIntakeVel(-1400),
-                                new RaceAction(
-                                        new SleepAction(10),
-                                        actionLib.automaticallyIntakeBalls()
+                                new SequentialAction(
+                                        new RaceAction(
+                                                new SleepAction(15),
+                                                actionLib.automaticallyIntakeBalls()
+                                        ),
+                                        actionLib.sortCurrentSpindexer()
                                 )
-                        )
+                        ),
+                        actionLib.shootAllBalls(),
+                        updatePose()
+                )
+        );
+
+        Action driveToRow2 = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(ballRow2.position.y - latestPose.position.y,
+                        ballRow2.position.x - latestPose.position.x))
+                .splineToConstantHeading(ballRow2.position, Math.toRadians(-90))
+
+                .lineToY(ballRow2End.position.y)
+                .splineToSplineHeading(shootVolleyPose, Math.toRadians(135))
+
+                .build();
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        new ParallelAction(
+                                driveToRow2,
+                                new SequentialAction(
+                                        new RaceAction(
+                                                new SleepAction(15),
+                                                actionLib.automaticallyIntakeBalls()
+                                        ),
+                                        actionLib.sortCurrentSpindexer()
+                                )
+                        ),
+                        actionLib.shootAllBalls(),
+                        updatePose()
+                )
+        );
+
+        Action driveToRow3 = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(ballRow3.position.y -latestPose.position.y,
+                        ballRow3.position.x - latestPose.position.x))
+                .splineToConstantHeading(ballRow3.position, Math.toRadians(-90))
+
+                .lineToY(ballRow3End.position.y)
+                .splineToSplineHeading(shootVolleyPose, Math.toRadians(135))
+
+                .build();
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        new ParallelAction(
+                                driveToRow3,
+                                new SequentialAction(
+                                        new RaceAction(
+                                                new SleepAction(15),
+                                                actionLib.automaticallyIntakeBalls()
+                                        ),
+                                        actionLib.sortCurrentSpindexer()
+                                )
+                        ),
+                        actionLib.shootAllBalls(),
+                        updatePose()
+                )
+        );
+
+        Action park = drive.actionBuilder(latestPose)
+                        .lineToX(0)
+                                .build();
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        park
                 )
         );
     }

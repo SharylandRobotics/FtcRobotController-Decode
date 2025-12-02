@@ -702,6 +702,16 @@ public class RobotHardware {
     }
 
     public class RoadRunnerActions {
+        public class scanMotif implements Action {
+            public scanMotif(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                return !processObelisk();
+            }
+        }
         public class setTurretPosition implements Action {
             private double pos;
             public setTurretPosition(double pos){
@@ -710,8 +720,8 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                turretHandler.setTargetPos((int) pos);
-                return false;
+                setTurretHandlerAbsolute(pos);
+                return !turretHandler.runToTarget();
             }
         }
         public class setShooterVelocity implements Action {
@@ -849,6 +859,12 @@ public class RobotHardware {
 
         public Action stopTurretPower(){
             return new setTurretPowerZero();
+        }
+        public Action setTurretPos(double deg){
+            return new setTurretPosition(deg);
+        }
+        public Action scanMotif(){
+            return new scanMotif();
         }
     }
 
