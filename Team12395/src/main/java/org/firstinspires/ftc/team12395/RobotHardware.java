@@ -733,6 +733,20 @@ public class RobotHardware {
     }
 
     public class RoadRunnerActions {
+        public class setSpindexerTarget implements Action{
+            private int vel;
+            private int target;
+            public setSpindexerTarget(int target, int vel){
+                this.vel = vel;
+                this.target = target;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(target, vel);
+                return false;
+            }
+        }
         public class scanMotif implements Action {
             public scanMotif(){
 
@@ -896,6 +910,10 @@ public class RobotHardware {
         }
         public Action scanMotif(){
             return new scanMotif();
+        }
+
+        public Action spindexerTargetAddVel(int target, int vel){
+            return new setSpindexerTarget(target, vel);
         }
     }
 

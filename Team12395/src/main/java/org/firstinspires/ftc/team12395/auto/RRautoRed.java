@@ -42,12 +42,15 @@ public class RRautoRed extends LinearOpMode {
         Pose2d ballRow1 = new Pose2d(-6.5, 29, Math.toRadians(90));
         Pose2d ballRow1End = new Pose2d(ballRow1.position.x,44.2, Math.toRadians(90));
 
+        Pose2d openGate = new Pose2d(ballRow1.position.x + 8, 52, Math.toRadians(90));
+
         Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,23, Math.toRadians(90));
 
         Pose2d ballRow2 = new Pose2d(23, 30, Math.toRadians(90));
         Pose2d ballRow2End = new Pose2d(ballRow2.position.x, 44.2, Math.toRadians(90));
 
-        Pose2d ballRow3 = new Pose2d(35.5, 29, Math.toRadians(90));
+        Pose2d ballRow3 = new Pose2d(48, 29, Math.toRadians(90));
+        Pose2d ballRow3End = new Pose2d(ballRow3.position.x, 44.2, Math.toRadians(90));
 
         // return to volley pose
 
@@ -74,6 +77,8 @@ public class RRautoRed extends LinearOpMode {
         waitForStart();
 
         if (isStopRequested()) return;
+
+        robot.setMagManualBulk("GPP");
 
         Actions.runBlocking(
                 new SequentialAction(
@@ -109,10 +114,10 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         actionLib.sortCurrentSpindexer(),
 
-                        new SleepAction(2),
+                        new SleepAction(1),
                         actionLib.shootAllBalls(), // shoot first 3
                         updatePose(),
-                        new SleepAction(0.5)
+                        new SleepAction(3)
                 )
         );
 
@@ -144,25 +149,38 @@ public class RRautoRed extends LinearOpMode {
                         new ParallelAction(
                                 driveToRow1End,
                                 new SequentialAction(
-                                        actionLib.automaticallyIntakeBalls()
-                                        /*
-                                        new SleepAction(0.7),
-                                        spindexer.spindexerTargetAddVel(120, 1000),
-                                        new SleepAction(0.38),
-                                        spindexer.spindexerTargetAddVel(120, 1000)
 
-                                         */
+                                        new SleepAction(0.7),
+                                        actionLib.spindexerTargetAddVel(120, 1000),
+                                        new SleepAction(0.38),
+                                        actionLib.spindexerTargetAddVel(120, 1000)
+
+
                                 )
                         ),
 
                         actionLib.setIntakeVel(0), // finish intaking 1st row
                         //limelight.setMagBatch("GPP"),
+                        new SleepAction(1),
 
                         updatePose()
                 )
         );
 
+        robot.setMagManualBulk("GPP");
 
+        Action driveToGate = drive.actionBuilder(latestPose)
+                .setTangent(-90)
+                        .splineToConstantHeading(openGate.position, Math.toRadians(90))
+                                .build();
+
+        // open gate
+        Actions.runBlocking(
+                new SequentialAction(
+                        driveToGate,
+                        updatePose()
+                )
+        );
 
         Action driveToVolleyPose = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(shootVolleyPose.position.y - latestPose.position.y,
@@ -188,7 +206,7 @@ public class RRautoRed extends LinearOpMode {
                         actionLib.stopTurretPower(),
                         actionLib.shootAllBalls(),
                         updatePose(),
-                        new SleepAction(0.5)
+                        new SleepAction(3)
                 )
         );
 
@@ -223,18 +241,19 @@ public class RRautoRed extends LinearOpMode {
                         new ParallelAction(
                                 driveToRow2End,
                                 new SequentialAction(
-                                        /*
-                                        new SleepAction(0.7),
-                                        spindexer.spindexerTargetAddVel(-120, 1000),
-                                        new SleepAction(0.38),
-                                        spindexer.spindexerTargetAddVel(-120, 1000)
 
-                                         */
+                                        new SleepAction(0.7),
+                                        actionLib.spindexerTargetAddVel(120, 1000),
+                                        new SleepAction(0.38),
+                                        actionLib.spindexerTargetAddVel(120, 1000)
+
+
                                 )
                         ),
 
                         actionLib.setIntakeVel(0), // finish intaking 1st row
                         //limelight.setMagBatch("PGP"),
+                        new SleepAction(1),
 
                         updatePose()
                 )
@@ -251,6 +270,7 @@ public class RRautoRed extends LinearOpMode {
         telemetry.addData("turn: ", pattern);
         telemetry.update();
 
+        robot.setMagManualBulk("PGP");
 
         Actions.runBlocking(
                 new SequentialAction(
@@ -265,7 +285,7 @@ public class RRautoRed extends LinearOpMode {
                         new SleepAction(0.6),
                         actionLib.shootAllBalls(),
                         updatePose(),
-                        new SleepAction(0.5)
+                        new SleepAction(3)
                 )
         );
 
@@ -281,10 +301,63 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 driveToRow3,
-                                actionLib.setShooterVel(0),
-                                actionLib.setTurretPos(0),
-                                actionLib.setHoodAng(1)
-                        )
+                                actionLib.setIntakeVel(-1400)
+                        ),
+                        updatePose()
+                )
+        );
+
+        Action driveToRow3End = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(ballRow3End.position.y - latestPose.position.y,
+                        ballRow3End.position.x - latestPose.position.x))
+                .lineToY(ballRow3End.position.y, new TranslationalVelConstraint(10))
+                .build();
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        new ParallelAction(
+                                driveToRow3End,
+                                new SequentialAction(
+
+                                        new SleepAction(0.7),
+                                        actionLib.spindexerTargetAddVel(120, 1000),
+                                        new SleepAction(0.38),
+                                        actionLib.spindexerTargetAddVel(120, 1000)
+
+
+                                )
+                        ),
+
+                        actionLib.setIntakeVel(0), // finish intaking 1st row
+                        //limelight.setMagBatch("PGP"),
+                        new SleepAction(1),
+
+                        updatePose()
+                )
+        );
+
+        Action driveToVolleyPose3 = drive.actionBuilder(latestPose)
+                .setTangent(Math.atan2(shootVolleyPose.position.y - latestPose.position.y,
+                        shootVolleyPose.position.x - latestPose.position.x))
+                .lineToY(shootVolleyPose.position.y)
+                .build();
+
+        robot.setMagManualBulk("PPG");
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        new ParallelAction(
+                                driveToVolleyPose3,
+                                new SequentialAction(
+                                        actionLib.sortCurrentSpindexer()
+                                        //spindexer.spindexerTargetAdd(-120)
+                                )
+                        ),
+
+                        new SleepAction(0.6),
+                        actionLib.shootAllBalls(),
+                        updatePose(),
+                        new SleepAction(3)
                 )
         );
     }
