@@ -33,13 +33,10 @@ import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import com.qualcomm.robotcore.hardware.Servo;
 //april tag
 
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
@@ -97,7 +94,7 @@ public class RobotHardware {
     // intake motor
     private DcMotor intakeMotor;
     //turret motor
-    private DcMotor turretMotor;
+    private DcMotorEx turretMotor;
     // camera
     //private AprilTagProcessor aprilTag;
     //private VisionPortal visionPortal;
@@ -172,7 +169,7 @@ public class RobotHardware {
 
 
         //turret motor reverse?
-        turretMotor = myOpMode.hardwareMap.get(DcMotor.class, "turret_motor");
+        turretMotor = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor");
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -326,7 +323,7 @@ public class RobotHardware {
 
     //turret
     public void turretPower(double power){
-        turretMotor.setPower(power);
+        turretMotor.setVelocity(power);
     }
     // intake motor
     public void intakePower(double power){

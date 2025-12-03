@@ -70,9 +70,10 @@ TopRed extends LinearOpMode {
             Boolean phase3 = false;
 
             while(phase1){
-                robot.turretPower(.70);
+
                 robot.driveStraight(1, -50, 0);
-                robot.holdHeading(robot.YAW_SPEED, 0, 2);
+                robot.holdHeading(robot.YAW_SPEED, 0, 1);
+                robot.turretPower(950);
                 robot.turnToHeading(1,5);
                 robot.holdHeading(robot.YAW_SPEED, 5, 1);
 
@@ -98,15 +99,15 @@ TopRed extends LinearOpMode {
                robot.driveStraight(1, 20, -40);
                robot.driveStraight(.5,13,-40);
 
-               robot.holdHeading(robot.YAW_SPEED, -40, 2);
+               robot.holdHeading(robot.YAW_SPEED, -40, 1);
 
                robot.intakePower(0);
-               robot.turretPower(.80);
-               robot.driveStraight(1,-31,-40);
-               robot.holdHeading(robot.YAW_SPEED, -40, 2);
 
+               robot.driveStraight(1,-31,-40);
+               robot.holdHeading(robot.YAW_SPEED, -40, 1);
+               robot.turretPower(1000);
                robot.turnToHeading(1,5);
-               robot.holdHeading(robot.YAW_SPEED, 5, 2);
+               robot.holdHeading(robot.YAW_SPEED, 5, 1);
 
                robot.setIntakeServo(0);
                robot.holdHeading(robot.YAW_SPEED, 5, 2);
