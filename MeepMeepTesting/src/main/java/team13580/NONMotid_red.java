@@ -25,6 +25,8 @@ public class NONMotid_red {
                 //.setTangent(Math.toRadians(90))
                         .setTangent(0)
                 .splineToLinearHeading(new Pose2d(0, 56, Math.toRadians(90)),Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(4, 58, Math.toRadians(180)),Math.toRadians(90))
+
                 //.setTangent(Math.atan2(56-24, 0+30))
                 //.lineToYLinearHeading(56, Math.toRadians(90))
                // .setTangent(0)
@@ -38,7 +40,7 @@ public class NONMotid_red {
 
                // .splineToConstantHeading(new Vector2d(-2, 53),Math.toRadians(90))
 
-                .setTangent(Math.atan2(24-56, -30+0))
+                .setTangent(Math.atan2(24-58, -30-4))
                 .lineToYLinearHeading(24, Math.toRadians(126))
                 //.splineTo(new Vector2d(-30, 24), Math.toRadians(126))
                 .waitSeconds(2)

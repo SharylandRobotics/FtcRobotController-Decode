@@ -76,7 +76,7 @@ public class FieldCentric extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Keep vision fresh before using pose values each loop
-            //robot.updateAprilTagDetections();
+            robot.updateAprilTagDetections();
 
             // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
@@ -99,17 +99,9 @@ public class FieldCentric extends LinearOpMode {
             //double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (15.0 + elevation));
 
             // Driver Assist: hold RB to auto-drive toward the visible goal tag (range->drive, yaw->strafe, bearing->turn).
-            boolean autoAssist = gamepad1.right_bumper;
-            boolean didAuto = false;
-            //if (autoAssist) {
-            //    robot.updateAprilTagDetections();
-            //    didAuto = robot.autoDriveToGoalStep();
-            //}
-
+            robot.updateAprilTagDetections();
             // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
-            if (!didAuto) {
-                robot.driveFieldCentric(axial, lateral, yaw);
-            }
+            robot.driveFieldCentric(axial, lateral, yaw);
 
             if (gamepad1.right_trigger == 1) {
                 intake = .6;
@@ -121,11 +113,14 @@ public class FieldCentric extends LinearOpMode {
                 intake = 0;
             }
 
+            outtake = 0;
             if (gamepad2.y) {
                 outtake = 1300;
             } else {
                 outtake = gamepad1.left_trigger*2000;
             }
+            robot.setOuttakeVelocity((int) outtake);
+
 
             if (gamepad1.b) {
                 robot.setKickerPower(kickerForwardPos);
@@ -143,7 +138,6 @@ public class FieldCentric extends LinearOpMode {
             robot.setOuttakeVelocity((int) outtake);
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
 

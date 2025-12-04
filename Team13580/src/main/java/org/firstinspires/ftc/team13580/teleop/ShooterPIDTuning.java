@@ -27,22 +27,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team13580.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.team12395.RobotHardware;
+import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name="Velocity Test", group="TeleOp")
+@TeleOp(name="Tuning Test", group="TeleOp")
 @Config
-@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class VelocityTest extends LinearOpMode {
+public class ShooterPIDTuning extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
@@ -69,14 +67,14 @@ public class VelocityTest extends LinearOpMode {
 
         robot.init();
 
-        P = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
-        I = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
-        D = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
-        F = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
+        P = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
+        I = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
+        D = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
+        F = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
 
         waitForStart();
 
-        robot.setShooterVelocity(targetVel);
+        robot.setOuttakeVelocity((int) targetVel);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
@@ -86,20 +84,20 @@ public class VelocityTest extends LinearOpMode {
             }
 
             if (slow) {
-                robot.setShooterVelocity(targetVel);
-                currentVel = robot.shooter.getVelocity();
+                robot.setOuttakeVelocity((int) targetVel);
+                currentVel = robot.outtakeDrive.getVelocity();
                 TelemVel = targetVel;
             } else {
-                robot.setShooterVelocity(targetVel2);
-                currentVel = robot.shooter.getVelocity();
+                robot.setOuttakeVelocity((int) targetVel2);
+                currentVel = robot.outtakeDrive.getVelocity();
                 TelemVel = targetVel2;
             }
 
-            robot.shooter.setVelocityPIDFCoefficients(P, I, D, F);
+            robot.outtakeDrive.setVelocityPIDFCoefficients(P, I, D, F);
 
             telemetry.addData("target Velocity: ", TelemVel);
             telemetry.addData("current Velocity: ", currentVel);
-            telemetry.addData("PIDF: ", robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+            telemetry.addData("PIDF: ", robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

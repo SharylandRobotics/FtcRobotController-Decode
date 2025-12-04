@@ -46,6 +46,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 // Student Notes: Hardware wrapper ("robot API") for drive, IMU, and AprilTag vision.
@@ -61,7 +63,7 @@ public class RobotHardware {
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
     private DcMotor intakeDrive;
-    private DcMotorEx outtakeDrive;
+    public DcMotorEx outtakeDrive;
 
     private CRServo kicker;
     private CRServo kickerLeft;
@@ -161,10 +163,10 @@ public class RobotHardware {
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
 
-        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
-        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         intakeDrive.setDirection(DcMotor.Direction.REVERSE  );
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -188,6 +190,8 @@ public class RobotHardware {
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        outtakeDrive.setVelocityPIDFCoefficients(50, 1, 3, 1);
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
@@ -553,6 +557,48 @@ public class RobotHardware {
 
     public double getGoalRangeIn() { return goalRangeIn; }
 
+    private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
+            new double[]{34, 1110},
+            new double[]{50, 1160},
+            new double[]{85, 1330},
+            new double[]{105, 1470}
+    ));
+    public double getCalculatedVelocity(double distance){
+        double returnVal = 500;
+        int maxIndex = velDataPoints.size()-1;
+        double[] slopeList = new double[maxIndex];
+        for (int i=0; i<maxIndex; i++){
+            slopeList[i] = (
+                    (velDataPoints.get(i+1)[1] - velDataPoints.get(i)[1]) /
+                            (velDataPoints.get(i+1)[0] - velDataPoints.get(i)[0])
+            );
+        }
+        double velZeroIntercept = velDataPoints.get(0)[1] - slopeList[0]*velDataPoints.get(0)[0];
+
+        for (int i=0; i<slopeList.length; i++){
+            if (i == 0){
+                if (distance >= 0 && distance <= velDataPoints.get(0)[0]){
+                    returnVal = velZeroIntercept + distance*slopeList[0];
+                }
+            } else if (distance > velDataPoints.get(i)[0] && distance <= velDataPoints.get(i+1)[0]){
+                myOpMode.telemetry.addData("Bottom Reference: ", velDataPoints.get(i)[0] +", " +velDataPoints.get(i)[1]);
+                myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                returnVal = velDataPoints.get(i)[1] + (distance-velDataPoints.get(i)[0])*slopeList[i];
+            }
+        }
+
+        return returnVal;
+    }
+
+    public double getFloorDistance(){
+        return Math.sqrt(Math.pow(getGoalRangeIn(), 2) - Math.pow(16,2));
+    }
+
+
+
+    ;
+
+
     public double getGoalBearingDeg() { return goalBearingDeg; }
 
     public double getGoalElevationDeg() { return  goalElevationDeg; }
@@ -562,22 +608,6 @@ public class RobotHardware {
     public void resetObeliskMotif() {
         obeliskMotif = null;
         obeliskTagId = null;
-    }
-
-    public boolean autoDriveToGoalStep() {
-        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
-            return false;
-        }
-        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
-        double headingError =  goalBearingDeg;
-        double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
-
-        double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
-        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
-        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
-
-        driveRobotCentric(axial, lateral, yaw);
-        return true;
     }
     public void setKickerPower(double speed){
         kicker.setPower(-speed);
@@ -589,4 +619,5 @@ public class RobotHardware {
     public double getOuttakeVelocity(){
         return outtakeDrive.getVelocity();
     }
+
 }
