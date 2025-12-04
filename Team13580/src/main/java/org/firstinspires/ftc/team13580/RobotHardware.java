@@ -161,10 +161,10 @@ public class RobotHardware {
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
 
-        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
-        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         intakeDrive.setDirection(DcMotor.Direction.REVERSE  );
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -553,6 +553,25 @@ public class RobotHardware {
 
     public double getGoalRangeIn() { return goalRangeIn; }
 
+    private double mapDistanceToSpeed(double d) {
+        double minDistance = 24.0;  // closest distance
+        double maxDistance = 105.0; // farthest distance
+        double minSpeed = 1150;     // speed at closest
+        double maxSpeed = 1510;     // speed at farthest
+
+        // clamp distance
+        if (d < minDistance) d = minDistance;
+        if (d > maxDistance) d = maxDistance;
+
+        // linear interpolation
+        return minSpeed + (d - minDistance) * (maxSpeed - minSpeed) / (maxDistance - minDistance);
+    }
+
+
+
+    ;
+
+
     public double getGoalBearingDeg() { return goalBearingDeg; }
 
     public double getGoalElevationDeg() { return  goalElevationDeg; }
@@ -568,7 +587,15 @@ public class RobotHardware {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
         }
+
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+
+        // === NEW: Control OUTTAKE motor based on AprilTag distance ===
+        if (!Double.isNaN(goalRangeIn)) {
+            double speed = mapDistanceToSpeed(goalRangeIn);
+            outtakeDrive.setVelocity(speed);
+        }
+
         double headingError =  goalBearingDeg;
         double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
 
@@ -589,4 +616,5 @@ public class RobotHardware {
     public double getOuttakeVelocity(){
         return outtakeDrive.getVelocity();
     }
+
 }
