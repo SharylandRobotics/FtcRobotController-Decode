@@ -17,7 +17,7 @@ public class RRautoRed extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
     RobotHardware.RoadRunnerActions actionLib = robot.new RoadRunnerActions();
-    Pose2d initialPose = new Pose2d(-48.5, 49.5, Math.toRadians(125));
+    Pose2d initialPose = new Pose2d(-48.5, 49.5, Math.toRadians(126));
     MecanumDrive drive;
     Pose2d latestPose = initialPose;
 
@@ -40,17 +40,17 @@ public class RRautoRed extends LinearOpMode {
         Pose2d shootVolleyPL = new Pose2d(-25, 17.3, initialPose.heading.real);
 
         Pose2d ballRow1 = new Pose2d(-6.5, 29, Math.toRadians(90));
-        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,44.2, Math.toRadians(90));
+        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,46, Math.toRadians(90));
 
-        Pose2d openGate = new Pose2d(ballRow1.position.x + 8, 52, Math.toRadians(90));
+        Pose2d openGate = new Pose2d(ballRow1.position.x + 14, 58, Math.toRadians(90));
 
         Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,23, Math.toRadians(90));
 
-        Pose2d ballRow2 = new Pose2d(23, 30, Math.toRadians(90));
-        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, 44.2, Math.toRadians(90));
+        Pose2d ballRow2 = new Pose2d(23, 33, Math.toRadians(90));
+        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, 48, Math.toRadians(90));
 
-        Pose2d ballRow3 = new Pose2d(48, 29, Math.toRadians(90));
-        Pose2d ballRow3End = new Pose2d(ballRow3.position.x, 44.2, Math.toRadians(90));
+        Pose2d ballRow3 = new Pose2d(49, 33, Math.toRadians(90));
+        Pose2d ballRow3End = new Pose2d(ballRow3.position.x, 48, Math.toRadians(90));
 
         // return to volley pose
 
@@ -83,7 +83,7 @@ public class RRautoRed extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                actionLib.setShooterVel((int) (800*1.4)),
+                                actionLib.setShooterVel(1120),
                                 new SequentialAction(
                                         new ParallelAction(
                                                 new RaceAction(
@@ -91,7 +91,7 @@ public class RRautoRed extends LinearOpMode {
                                                         new SleepAction(2)
                                                 ),
                                                 new SequentialAction(
-                                                        new SleepAction(0.6),
+                                                        new SleepAction(1),
                                                         actionLib.scanMotif()
                                                 )
                                         ),
@@ -112,12 +112,9 @@ public class RRautoRed extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        actionLib.sortCurrentSpindexer(),
-
-                        new SleepAction(1),
                         actionLib.shootAllBalls(), // shoot first 3
                         updatePose(),
-                        new SleepAction(3)
+                        new SleepAction(2)
                 )
         );
 
@@ -161,7 +158,6 @@ public class RRautoRed extends LinearOpMode {
 
                         actionLib.setIntakeVel(0), // finish intaking 1st row
                         //limelight.setMagBatch("GPP"),
-                        new SleepAction(1),
 
                         updatePose()
                 )
@@ -171,12 +167,15 @@ public class RRautoRed extends LinearOpMode {
 
         Action driveToGate = drive.actionBuilder(latestPose)
                 .setTangent(-90)
-                        .splineToConstantHeading(openGate.position, Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(openGate.position.x, openGate.position.y-10), Math.toRadians(180))
+                .setTangent(Math.toRadians(90))
+                .lineToY(openGate.position.y)
                                 .build();
 
         // open gate
         Actions.runBlocking(
                 new SequentialAction(
+                        actionLib.setIntakeVel(0),
                         driveToGate,
                         updatePose()
                 )
@@ -188,25 +187,22 @@ public class RRautoRed extends LinearOpMode {
                 .lineToY(shootVolleyPose.position.y)
                 .build();
 
-        pattern = robot.solvePattern()[0];
-        telemetry.addData("pattern: ", RobotHardware.pattern);
-        telemetry.addData("turn: ", pattern);
-        telemetry.update();
-
         Actions.runBlocking(
                 new SequentialAction(
+                        actionLib.setIntakeVel(-1400),
                         new ParallelAction(
+                                actionLib.setShooterVel(1220),
                                 driveToVolleyPose,
                                 actionLib.sortCurrentSpindexer(),
                                 new RaceAction(
-                                        actionLib.setTurretPos(-45),
+                                        actionLib.setTurretPos(-43),
                                         new SleepAction(1.5)
                                 )
                         ),
                         actionLib.stopTurretPower(),
                         actionLib.shootAllBalls(),
                         updatePose(),
-                        new SleepAction(3)
+                        new SleepAction(2)
                 )
         );
 
@@ -253,7 +249,6 @@ public class RRautoRed extends LinearOpMode {
 
                         actionLib.setIntakeVel(0), // finish intaking 1st row
                         //limelight.setMagBatch("PGP"),
-                        new SleepAction(1),
 
                         updatePose()
                 )
@@ -285,7 +280,7 @@ public class RRautoRed extends LinearOpMode {
                         new SleepAction(0.6),
                         actionLib.shootAllBalls(),
                         updatePose(),
-                        new SleepAction(3)
+                        new SleepAction(2)
                 )
         );
 
@@ -330,7 +325,6 @@ public class RRautoRed extends LinearOpMode {
 
                         actionLib.setIntakeVel(0), // finish intaking 1st row
                         //limelight.setMagBatch("PGP"),
-                        new SleepAction(1),
 
                         updatePose()
                 )
@@ -348,16 +342,13 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 driveToVolleyPose3,
-                                new SequentialAction(
-                                        actionLib.sortCurrentSpindexer()
-                                        //spindexer.spindexerTargetAdd(-120)
-                                )
+                                actionLib.sortCurrentSpindexer()
                         ),
 
                         new SleepAction(0.6),
                         actionLib.shootAllBalls(),
                         updatePose(),
-                        new SleepAction(3)
+                        new SleepAction(2)
                 )
         );
     }

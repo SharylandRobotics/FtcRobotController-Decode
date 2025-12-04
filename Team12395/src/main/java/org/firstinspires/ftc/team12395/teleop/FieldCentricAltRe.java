@@ -39,9 +39,9 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
-@TeleOp(name="Field Centric ALT (Blue Solo)", group="TeleOp")
+@TeleOp(name="Field Centric ALT (Red Solo)", group="TeleOp")
 @Config
-public class FieldCentricAlt extends LinearOpMode {
+public class FieldCentricAltRe extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
@@ -216,7 +216,7 @@ public class FieldCentricAlt extends LinearOpMode {
             }
 
             if (turretToggle){
-                double[] tData = robot.homeToAprilTagBlue();
+                double[] tData = robot.homeToAprilTagRed();
                 double errorDeg = tData[0];
 
                 if (!Double.isNaN(errorDeg) ) {

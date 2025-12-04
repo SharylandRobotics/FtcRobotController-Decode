@@ -538,7 +538,7 @@ public class RobotHardware {
         return new double[]{Double.NaN, Double.NaN};
     }
 
-    public double homeToAprilTagRed(){
+    public double[] homeToAprilTagRed(){
         boolean check = processLLresult();
         if (check){
 
@@ -559,14 +559,16 @@ public class RobotHardware {
 
 
                 double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
+                double skew  = fresult.get(0).getCameraPoseTargetSpace().getOrientation().getYaw();
 
                 myOpMode.telemetry.addData("turning deg: ", tx);
-                return tx;
+                myOpMode.telemetry.addData("skew deg: ", skew);
+                return new double[]{tx, skew};
 
             }
 
         }
-        return Double.NaN;
+        return new double[]{Double.NaN, Double.NaN};
     }
 
     public boolean processObelisk(){
