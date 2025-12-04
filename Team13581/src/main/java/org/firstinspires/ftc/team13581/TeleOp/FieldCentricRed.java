@@ -29,15 +29,20 @@
 
 package org.firstinspires.ftc.team13581.TeleOp;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13581.RobotHardware;
 
+@Config
 @TeleOp(name="Field Centric Red Team", group="TeleOp")
 
 public class FieldCentricRed extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
+
+    public static double powerTFar = 0.58;
+    public static double powerTNear = 0.5;
 
     @Override
     public void runOpMode() {
@@ -46,48 +51,67 @@ public class FieldCentricRed extends LinearOpMode {
         double lateral  = 0;
         double yaw      = 0;
 
+        boolean runIntake = false;
+        boolean runIntakeBackwards = false;
+
+        double velocity = 0;
+
         robot.init();
 
         waitForStart();
 
         while (opModeIsActive()) {
 
-            lateral   =  -gamepad1.left_stick_y;
-            axial =  -gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            lateral = -gamepad1.left_stick_y;
+            axial = -gamepad1.left_stick_x;
+            yaw = gamepad1.right_stick_x;
 
             robot.teleOpFieldCentric(axial, lateral, yaw);
 
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             telemetry.addData("Servo Angle: ", robot.getAimPos());
+            telemetry.addData("Turret Angle: ", robot.hAimRPos());
             telemetry.addData("Power: ", robot.getBackPower());
+            telemetry.addData("Vel: ", robot.getOuttakeRVel());
 
             telemetry.update();
+            if (gamepad1.aWasPressed()){
+                runIntake = !runIntake;
+                if (runIntake){
+                    robot.setIntake1(1);
+                    robot.setIntake2(1);
+                }
+            }
+            if (gamepad1.yWasPressed()){
+                runIntake = !runIntake;
+                if (runIntake){
+                    robot.setIntake1(-1);
+                    robot.setIntake2(-1);
+                }
+            }
+            if (!runIntake){
+                robot.setIntake1(0);
+                robot.setIntake2(0);
+            }
 
-            if (gamepad1.a) {
-                robot.setFrontPower(1);
-            }
-            if (gamepad1.b) {
-                robot.setFrontPower(0);
-            }
-            if (gamepad1.y) {
-                robot.setFrontPower(-1);
+
+            if (gamepad1.right_bumper) {
+                robot.setIntake2(0);
             }
 
-            if (gamepad2.y) {
-                robot.setBackPower(0.8);
-            }
-            if (gamepad2.x && robot.getBackPower() > -0.4) {
-                robot.setBackPower(robot.getBackPower() - 0.1);
+            if (gamepad2.x) {
+                velocity = -700;
             }
             if (gamepad2.a) {
-                robot.setBackPower(0.75);
+                velocity = 1300;
             }
             if (gamepad2.b) {
-                robot.setBackPower(0);
+                velocity = 0;
             }
-            sleep(50);
+
+            robot.setShootSpeed(velocity);
+
 
             if (gamepad2.dpad_down) {
                 double tempPos = robot.getAimPos();
@@ -107,27 +131,38 @@ public class FieldCentricRed extends LinearOpMode {
                 }
             }
 
-            if (gamepad1.dpad_up) {
-                robot.setLeverPos(0.43);
-            }
-            if (gamepad1.dpad_left) {
-                robot.setLeverPos(0.4);
-            }
-            if (gamepad1.dpad_down) {
-                robot.setLeverPos(0.17);
-            }
-
             if (gamepad2.left_trigger > 0) {
-                robot.setTurrentPositionRelative(-15 *gamepad2.left_trigger);// increase number to increase sensitivity
+                double tempPosR = robot.hAimRPos();
+                double tempPosL = robot.hAimLPos();
+                if (tempPosR > (0)) {
+                    robot.setTurretPos(tempPosR - 0.1, tempPosR - 0.1);
+                }
             }
             if (gamepad2.right_trigger > 0) {
-                robot.setTurrentPositionRelative(15 *gamepad2.right_trigger);// increase number to increase sensitivity
+                double tempPosR = robot.hAimRPos();
+                double tempPosL = robot.hAimLPos();
+                if (tempPosR < (1)) {
+                    robot.setTurretPos(tempPosR + 0.1, tempPosR + 0.1);
+                }
             }
 
             if (gamepad2.left_bumper) {
-                //robot.setTurretPos(-50); //turret set positions
-                robot.setBackPower(.65);
+                robot.setBackPower(powerTNear);
             }
+            if (gamepad2.right_bumper) {
+                //robot.setTurretPos(31);
+                robot.setAimPos(0.9);
+                robot.setBackPower(powerTFar);
+            }
+            if (gamepad2.dpad_right) {
+                robot.setTurretPos(0.5, 0.5);
+            }
+            if (gamepad2.dpad_right) {
+                robot.setIntake1(-.3);
+
+            }
+
+            sleep(50);
         }
     }
 }

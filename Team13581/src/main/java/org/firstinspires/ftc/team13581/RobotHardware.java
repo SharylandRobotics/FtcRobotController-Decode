@@ -29,10 +29,8 @@
 
 package org.firstinspires.ftc.team13581;
 
-import android.graphics.Color;
 import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
@@ -63,11 +61,13 @@ public class RobotHardware {
     private DcMotor backLeftDrive   = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive  = null;
-    private DcMotor frontIntakeMotor = null;
-    private DcMotor outtakeMotor = null;
-    private DcMotorEx hAim = null;
+    private DcMotor Intake1 = null;
+    private DcMotor Intake2 = null;
+    private DcMotorEx outtakeMotorR = null;
+    private DcMotorEx outtakeMotorL = null;
+    private Servo hAimR = null;
+    private Servo hAimL = null;
     private Servo vAim = null;
-    private Servo lever = null;
 
     private IMU imu = null;
 
@@ -151,10 +151,17 @@ public class RobotHardware {
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
-        frontIntakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "front_intake_motor");
-        outtakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "outtake_motor");
-        hAim = myOpMode.hardwareMap.get(DcMotorEx.class, "h_aim");
 
+        Intake1 = myOpMode.hardwareMap.get(DcMotor.class, "intake1");
+        Intake2 = myOpMode.hardwareMap.get(DcMotor.class, "intake2");
+
+        outtakeMotorR = myOpMode.hardwareMap.get(DcMotorEx.class, "outtake_motor_r");
+        outtakeMotorL = myOpMode.hardwareMap.get(DcMotorEx.class, "outtake_motor_l");
+
+        hAimR = myOpMode.hardwareMap.get(Servo.class, "h_aim_r");
+        hAimL = myOpMode.hardwareMap.get(Servo.class, "h_aim_l");
+
+        vAim = myOpMode.hardwareMap.get(Servo.class, "v_aim");
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
@@ -169,38 +176,45 @@ public class RobotHardware {
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontIntakeMotor.setDirection(DcMotor.Direction.REVERSE);
-        outtakeMotor.setDirection(DcMotor.Direction.FORWARD);
-        hAim.setDirection(DcMotor.Direction.FORWARD);
+        Intake1.setDirection(DcMotor.Direction.FORWARD);
+        Intake2.setDirection(DcMotor.Direction.REVERSE);
+
+        outtakeMotorR.setDirection(DcMotor.Direction.FORWARD);
+        outtakeMotorL.setDirection(DcMotor.Direction.REVERSE);
 
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        hAim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        outtakeMotorR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontIntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        outtakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        hAim.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        outtakeMotorR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        outtakeMotorL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        Intake1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Intake2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        hAim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        hAim.setTargetPosition(0);
-        hAim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        hAim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        outtakeMotorR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        outtakeMotorL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        vAim = myOpMode.hardwareMap.get(Servo.class, "v_aim");
-        lever = myOpMode.hardwareMap.get(Servo.class, "lever");
+
+        hAimR.setPosition(0.5);
+        hAimL.setPosition(0.5);
+
 
         while(myOpMode.opModeInInit()) {
             myOpMode.telemetry.addData("Status", "Hardware Initialized");
@@ -227,25 +241,29 @@ public class RobotHardware {
 
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
-    public void setFrontPower(double fp) {frontIntakeMotor.setPower(fp);}
-    public void setBackPower(double bp) {outtakeMotor.setPower(bp);}
-    public double getBackPower() {return outtakeMotor.getPower();}
-    public void setAimPower(double hp) {hAim.setPower(hp);}
+    public double getOuttakeRVel(){
+        return outtakeMotorR.getVelocity();
+    }
+    public void setIntake1(double p1) {
+        Intake1.setPower(p1);}
+    public void setIntake2(double p2) {Intake2.setPower(p2);}
+    public void setBackPower(double bp) {setShootSpeed(bp*2600);}
+    public double getBackPower() {return outtakeMotorR.getPower();}
+    public void setShootSpeed(double v) {
+        outtakeMotorR.setVelocity(v);
+        outtakeMotorL.setPower(outtakeMotorR.getPower());
+    }
+
     public void setAimPos(double pos) {vAim.setPosition(pos);}
     public double getAimPos() { return vAim.getPosition();}
-    public void setLeverPos(double l) {lever.setPosition(l);}
-    public double hAimPos(){
-        return hAim.getCurrentPosition()/turretTicksPerDegree;
+    public double hAimRPos(){
+        return hAimR.getPosition();
     }
-    public void setTurrentPositionRelative(double deg) {
-        deg += hAimPos();
-        deg = Range.clip(deg, -100, 100);
+    public double hAimLPos(){return hAimL.getPosition();}
 
-        hAim.setTargetPosition((int) (deg*turretTicksPerDegree ));
-
-        hAim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        hAim.setVelocity(2500);// increase speed
+    public void setTurretPos(double posR, double posL) {
+        hAimR.setPosition(posR);
+        hAimL.setPosition(posL);
     }
 
 
@@ -407,15 +425,6 @@ public class RobotHardware {
         return orientation.getYaw(AngleUnit.DEGREES);
     }
 
-    public void setTurretPos(double pos) {
-        hAim.setTargetPosition((int) (pos*turretTicksPerDegree));
-
-        hAim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        ((DcMotorEx) hAim).setVelocity(1750);
-
-
-    }
     private void initAprilTag() {
         // Student Note: Build AprilTag processor with camera pose + intrinsics; start Dashboard stream.
         // TODO(students): If Dashboard video looks flipped, add a display‑only flip in a processor.

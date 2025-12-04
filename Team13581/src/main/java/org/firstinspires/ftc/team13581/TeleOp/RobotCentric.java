@@ -68,13 +68,13 @@ public class RobotCentric extends LinearOpMode {
             telemetry.update();
 
             if (gamepad1.a) {
-                robot.setFrontPower(1);
+                robot.setIntake1(1);
             }
             if (gamepad1.b) {
-                robot.setFrontPower(0);
+                robot.setIntake1(0);
             }
             if (gamepad1.y) {
-                robot.setFrontPower(-1);
+                robot.setIntake1(-1);
             }
 
             if (gamepad2.y) {
@@ -108,24 +108,8 @@ public class RobotCentric extends LinearOpMode {
                     robot.setAimPos(tempPos + 0.05);
                 }
             }
-
-            if (gamepad1.dpad_up) {
-                robot.setLeverPos(0.43);
-            }
-            if (gamepad1.dpad_left) {
-                robot.setLeverPos(0.4);
-            }
-            if (gamepad1.dpad_down) {
-                robot.setLeverPos(0.17);
-            }
-
-            if (gamepad2.left_trigger > 0) {
-                robot.setTurrentPositionRelative(-15 *gamepad2.left_trigger);// increase number to increase sensitivity
-            }
-            if (gamepad2.right_trigger > 0) {
-                robot.setTurrentPositionRelative(15 *gamepad2.right_trigger);// increase number to increase sensitivity
-            }
         }
     }
 }
+
 

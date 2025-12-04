@@ -66,20 +66,20 @@ public class FieldCentricBlue extends LinearOpMode {
             telemetry.update();
 
             if (gamepad1.a) {
-                robot.setFrontPower(1);
+                robot.setIntake1(1);
             }
             if (gamepad1.b) {
-                robot.setFrontPower(0);
+                robot.setIntake1(0);
             }
             if (gamepad1.y) {
-                robot.setFrontPower(-1);
+                robot.setIntake1(-1);
             }
 
             if (gamepad2.y) {
                 robot.setBackPower(0.8);
             }
-            if (gamepad2.x && robot.getBackPower() > 0.5) {
-                robot.setBackPower(robot.getBackPower() - 0.05);
+            if (gamepad2.x) {
+                robot.setBackPower(-0.4);
             }
             if (gamepad2.a) {
                 robot.setBackPower(0.75);
@@ -107,26 +107,17 @@ public class FieldCentricBlue extends LinearOpMode {
                 }
             }
 
-            if (gamepad1.dpad_up) {
-                robot.setLeverPos(0.43);
-            }
-            if (gamepad1.dpad_left) {
-                robot.setLeverPos(0.4);
-            }
-            if (gamepad1.dpad_down) {
-                robot.setLeverPos(0.17);
-            }
-
-            if (gamepad2.left_trigger > 0) {
-                robot.setTurrentPositionRelative(-15 *gamepad2.left_trigger);// increase number to increase sensitivity
-            }
-            if (gamepad2.right_trigger > 0) {
-                robot.setTurrentPositionRelative(15 *gamepad2.right_trigger);// increase number to increase sensitivity
-            }
 
             if (gamepad2.left_bumper) {
-                //robot.setTurretPos(-50); //turret set positions
                 robot.setBackPower(.65);
+            }
+            if (gamepad2.right_bumper) {
+                //robot.setTurretPos(-31);
+                robot.setAimPos(0.9);
+                robot.setBackPower(0.8);
+            }
+            if (gamepad2.dpad_right) {
+                robot.setTurretPos(0, 1);
             }
         }
     }
