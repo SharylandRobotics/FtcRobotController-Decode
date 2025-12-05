@@ -41,7 +41,7 @@ import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Field Centric ALT (Red Solo)", group="TeleOp")
 @Config
-public class FieldCentricAltRe extends LinearOpMode {
+public class FieldCentricAltRed extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
@@ -85,7 +85,7 @@ public class FieldCentricAltRe extends LinearOpMode {
 
         robot.limelight.start();
 
-        mag = "000";
+        robot.mag = "000";
 
         robot.disableDriveEncoders();
 
@@ -161,15 +161,15 @@ public class FieldCentricAltRe extends LinearOpMode {
                     robot.setMagManualBulk("000");
                 } else if (gamepad1.dpadUpWasPressed()) {
                     robot.spindexerHandler(120*robot.solvePattern()[0]);
-                } else if (!runTurnClock && mag.contains("0")) {
+                } else if (!runTurnClock && robot.mag.contains("0")) {
 
                     if (scannedColor.equals(colorTypes.PURPLE)){
-                        if (mag.charAt(chamber) == '0') {
+                        if (robot.mag.charAt(chamber) == '0') {
                             robot.setChamberManual('P');
                             runTurnClock = true;
                         }
                     } else if (scannedColor.equals(colorTypes.GREEN)){
-                        if (mag.charAt(chamber) == '0') {
+                        if (robot.mag.charAt(chamber) == '0') {
                             robot.setChamberManual('G');
                             runTurnClock = true;
                         }
@@ -246,7 +246,7 @@ public class FieldCentricAltRe extends LinearOpMode {
 
             // Telemetry for drivers + debugging
             telemetry.addData(robot.getMagPicture(), "");
-            telemetry.addData("current Pattern: ", pattern);
+            telemetry.addData("current Pattern: ", robot.pattern);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
             telemetry.addData("apt deg: ", tSkew);

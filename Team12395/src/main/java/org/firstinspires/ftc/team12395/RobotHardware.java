@@ -67,8 +67,8 @@ public class RobotHardware {
     public NormalizedColorSensor colorSensor;
     public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
-    public static String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
-    public static String pattern = "PPG";// a pattern is better than no pattern
+    public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
+    public String pattern = "PPG";// a pattern is better than no pattern
     public static int chamber = 0;
 
     // Drivetrain motors for a mecanum chassis

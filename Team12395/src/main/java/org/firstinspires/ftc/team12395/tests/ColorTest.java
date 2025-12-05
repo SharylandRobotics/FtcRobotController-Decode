@@ -56,6 +56,7 @@ public class ColorTest extends LinearOpMode {
     public static float gain = 100;
     public static boolean testColor = false;
     public static boolean shoot = false;
+    public static boolean sort = false;
 
     @Override
     public void runOpMode() {
@@ -71,7 +72,7 @@ public class ColorTest extends LinearOpMode {
 
         robot.init();
 
-        mag = "000";
+        robot.mag = "000";
 
         waitForStart();
 
@@ -85,25 +86,30 @@ public class ColorTest extends LinearOpMode {
             }
 
             String colorS = "UNKNOWN/ROTATING";
-            if (shoot && !mag.contains("0") && !robot.spindexer.isBusy()){
+            if (shoot && !robot.mag.contains("0") && !robot.spindexer.isBusy()){
+                robot.setShooterVelocity(400);
                 robot.spindexerHandler(-480);
                 robot.setMagManualBulk("000");
-            } else if (testColor && !robot.spindexer.isBusy() && !runClock && mag.contains("0")){
+            } else if (testColor && !robot.spindexer.isBusy() && !runClock && robot.mag.contains("0")){
                 if (hsvValues[2] < 0.15){
                     colorS = "NONE";
                 } else if (hsvValues[0] > 200 && hsvValues[0] <= 240){
                     colorS = "PURPLE";
-                    if (mag.charAt(chamber) == '0') {
+                    if (robot.mag.charAt(chamber) == '0') {
                         robot.setChamberManual('P');
                     }
                     runClock = true;
                 } else if (hsvValues[1] > 0.6 && hsvValues[1] < 0.75){
                     colorS = "GREEN";
-                    if (mag.charAt(chamber) == '0') {
+                    if (robot.mag.charAt(chamber) == '0') {
                         robot.setChamberManual('G');
                     }
                     runClock = true;
                 }
+            }
+
+            if (sort && !robot.mag.contains("0") && !robot.spindexer.isBusy()){
+                robot.spindexerHandler(120*robot.solvePattern()[0]);
             }
 
             if (runClock && clock < 5){

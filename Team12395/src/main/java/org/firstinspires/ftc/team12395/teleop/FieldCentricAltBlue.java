@@ -41,7 +41,7 @@ import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Field Centric ALT (Blue Solo)", group="TeleOp")
 @Config
-public class FieldCentricAlt extends LinearOpMode {
+public class FieldCentricAltBlue extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
@@ -49,8 +49,8 @@ public class FieldCentricAlt extends LinearOpMode {
     public static double velocity = 0;
     public static double angle = 0.1;
 
-    public static double preSetVelocityFar = 1440;
-    public static double preSetAngleFar = 0.8;
+    public static double preSetVelocityFar = 1600;
+    public static double preSetAngleFar = 0.3;
     public static double preSetAngleClose = 0;
     public static double preSetVelocityClose = 1120;
 
@@ -85,12 +85,9 @@ public class FieldCentricAlt extends LinearOpMode {
 
         robot.limelight.start();
 
-        mag = "000";
+        robot.mag = "000";
 
         robot.disableDriveEncoders();
-
-        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
-        relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
 
         waitForStart();
 
@@ -141,12 +138,6 @@ public class FieldCentricAlt extends LinearOpMode {
                 layoutColor = Color.LTGRAY;
             }
 
-            relativeLayout.post(new Runnable() {
-                public void run(){
-                    relativeLayout.setBackgroundColor(layoutColor);
-                }
-            });
-
 
             // gamepad 2 (g1 cuz solo)--
             if (!robot.spindexer.isBusy()) {
@@ -154,29 +145,29 @@ public class FieldCentricAlt extends LinearOpMode {
                     robot.spindexerHandler(120);
                 } else if (gamepad1.rightBumperWasPressed()) { // cw
                     if (velocity == preSetVelocityFar){
-                        robot.spindexerHandler(-480, 600);
+                        robot.spindexerHandler(-480, 575);
                     } else {
                         robot.spindexerHandler(-480);
                     }
                     robot.setMagManualBulk("000");
                 } else if (gamepad1.dpadUpWasPressed()) {
                     robot.spindexerHandler(120*robot.solvePattern()[0]);
-                } else if (!runTurnClock && mag.contains("0")) {
+                } else if (!runTurnClock && robot.mag.contains("0")) {
 
                     if (scannedColor.equals(colorTypes.PURPLE)){
-                        if (mag.charAt(chamber) == '0') {
+                        if (robot.mag.charAt(chamber) == '0') {
                             robot.setChamberManual('P');
                             runTurnClock = true;
                         }
                     } else if (scannedColor.equals(colorTypes.GREEN)){
-                        if (mag.charAt(chamber) == '0') {
+                        if (robot.mag.charAt(chamber) == '0') {
                             robot.setChamberManual('G');
                             runTurnClock = true;
                         }
                     }
                 }
             } else if (gamepad1.dpadLeftWasPressed()){
-                robot.spindexer.setPower(0);
+                robot.spindexer.setVelocity(0);
                 runJammingClock = true;
             }
 
@@ -246,7 +237,7 @@ public class FieldCentricAlt extends LinearOpMode {
 
             // Telemetry for drivers + debugging
             telemetry.addData(robot.getMagPicture(), "");
-            telemetry.addData("current Pattern: ", pattern);
+            telemetry.addData("current Pattern: ", robot.pattern);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
             telemetry.addData("apt deg: ", tSkew);
@@ -259,10 +250,6 @@ public class FieldCentricAlt extends LinearOpMode {
                 lastTrackingClock++;
             }
         }
-
-        relativeLayout.post(new Runnable(){
-            public void run(){relativeLayout.setBackgroundColor(Color.RED);}
-        });
 
     }
 }

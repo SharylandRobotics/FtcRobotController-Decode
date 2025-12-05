@@ -84,23 +84,9 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 actionLib.setShooterVel(1120),
-                                new SequentialAction(
-                                        new ParallelAction(
-                                                new RaceAction(
-                                                        actionLib.setTurretPos(-70),
-                                                        new SleepAction(2)
-                                                ),
-                                                new SequentialAction(
-                                                        new SleepAction(1),
-                                                        actionLib.scanMotif()
-                                                )
-                                        ),
-                                        new RaceAction(
-                                                actionLib.setTurretPos(-5),
-                                                new SleepAction(1.6)
-
-                                        ),
-                                        actionLib.stopTurretPower()
+                                new RaceAction(
+                                    actionLib.setTurretPos(-10),
+                                        new SleepAction(1.6)
                                 ),
                                 driveToPLShoot
                         )
@@ -128,7 +114,14 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction( // drive to first row & switch spindexer
                                 driveToRow1,
-                                actionLib.setIntakeVel(-1400)
+                                actionLib.setIntakeVel(-1400),
+                                new SequentialAction(
+                                        new RaceAction(
+                                                actionLib.setTurretPos(-110),
+                                                new SleepAction(2)
+                                        ),
+                                        actionLib.scanMotif()
+                                )
                         ),
 
                         updatePose()
@@ -148,11 +141,19 @@ public class RRautoRed extends LinearOpMode {
                                 new SequentialAction(
 
                                         new SleepAction(0.7),
-                                        actionLib.spindexerTargetAddVel(120, 1000),
+                                        actionLib.spindexerTargetAddVel(120, 1200),
                                         new SleepAction(0.38),
-                                        actionLib.spindexerTargetAddVel(120, 1000)
+                                        actionLib.spindexerTargetAddVel(120, 1200)
 
 
+                                ),
+                                new SequentialAction(
+                                        new RaceAction(
+                                                actionLib.setTurretPos(-50),
+                                                new SleepAction(1.6)
+
+                                        ),
+                                        actionLib.stopTurretPower()
                                 )
                         ),
 
@@ -175,7 +176,7 @@ public class RRautoRed extends LinearOpMode {
         // open gate
         Actions.runBlocking(
                 new SequentialAction(
-                        actionLib.setIntakeVel(0),
+                        //actionLib.setIntakeVel(0),
                         driveToGate,
                         updatePose()
                 )
@@ -193,13 +194,16 @@ public class RRautoRed extends LinearOpMode {
                         new ParallelAction(
                                 actionLib.setShooterVel(1220),
                                 driveToVolleyPose,
-                                actionLib.sortCurrentSpindexer(),
+                                actionLib.sortCurrentSpindexer()
+                                /*
                                 new RaceAction(
                                         actionLib.setTurretPos(-43),
                                         new SleepAction(1.5)
                                 )
+
+                                 */
                         ),
-                        actionLib.stopTurretPower(),
+                        //actionLib.stopTurretPower(),
                         actionLib.shootAllBalls(),
                         updatePose(),
                         new SleepAction(2)
@@ -239,9 +243,9 @@ public class RRautoRed extends LinearOpMode {
                                 new SequentialAction(
 
                                         new SleepAction(0.7),
-                                        actionLib.spindexerTargetAddVel(120, 1000),
+                                        actionLib.spindexerTargetAddVel(120, 1200),
                                         new SleepAction(0.38),
-                                        actionLib.spindexerTargetAddVel(120, 1000)
+                                        actionLib.spindexerTargetAddVel(120, 1200)
 
 
                                 )
@@ -315,9 +319,9 @@ public class RRautoRed extends LinearOpMode {
                                 new SequentialAction(
 
                                         new SleepAction(0.7),
-                                        actionLib.spindexerTargetAddVel(120, 1000),
+                                        actionLib.spindexerTargetAddVel(120, 1200),
                                         new SleepAction(0.38),
-                                        actionLib.spindexerTargetAddVel(120, 1000)
+                                        actionLib.spindexerTargetAddVel(120, 1200)
 
 
                                 )

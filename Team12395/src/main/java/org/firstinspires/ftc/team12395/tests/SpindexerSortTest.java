@@ -79,7 +79,7 @@ public class SpindexerSortTest extends LinearOpMode {
             telemetry.addData("solve?: ", solve);
             telemetry.addData("performing shooting action?: ", trigger);
             telemetry.addData("busy?: ", robot.spindexer.isBusy());
-            telemetry.addData("current Pattern: ", pattern);
+            telemetry.addData("current Pattern: ", robot.pattern);
             telemetry.addData(robot.getMagPicture(), "");
            telemetry.update();
 
