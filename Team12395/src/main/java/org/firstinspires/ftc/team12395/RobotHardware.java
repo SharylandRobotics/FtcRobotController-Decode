@@ -76,7 +76,7 @@ public class RobotHardware {
 
     public DcMotorEx shooter2, shooter, spindexer, intake;
     public CRServo turretR, turretL;
-    public OverflowEncoder turretE;
+    public OverflowEncoder turretE, spindexerE;
 
     public servoDrivenEncoder turretHandler;
 
@@ -92,8 +92,11 @@ public class RobotHardware {
     private final static double spoolToSpindexerRatio = 1;
     private final static double spindexerTicksPerRevolution = spoolToSpindexerRatio*((((1+(46./17))) * (1+(46./11))) * 28);
     public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
+    public final double spindexerETicksPerRevolution = 8192;
+    public final double spindexerETicksPerDegree = spindexerETicksPerRevolution/360;
     private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
 
+    public double spindexerFudge = 0;
     public int spindexerTarget = 0;
 
     // Servos
@@ -147,6 +150,8 @@ public class RobotHardware {
 
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
+        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "intake")));
+
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
 
@@ -178,11 +183,13 @@ public class RobotHardware {
         shooter2.setDirection(DcMotorEx.Direction.FORWARD);
         shooter.setDirection(DcMotorEx.Direction.REVERSE);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
-        intake.setDirection(DcMotorEx.Direction.FORWARD);
+        intake.setDirection(DcMotorEx.Direction.REVERSE);
 
         turretR.setDirection(DcMotorSimple.Direction.REVERSE);
         turretL.setDirection(DcMotorSimple.Direction.REVERSE);
         turretE.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        spindexerE.setDirection(DcMotorSimple.Direction.REVERSE);
 
         turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
 
@@ -228,7 +235,7 @@ public class RobotHardware {
         shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
-        intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         colorSensor.setGain(100);
 
@@ -351,8 +358,8 @@ public class RobotHardware {
     }
 
 
-    public void setIntakeSpeed(int vel){
-        intake.setVelocity(vel);
+    public void setIntakeSpeed(double vel){
+        intake.setPower(vel);
     }
 
     public void setTurretHandlerRelative(double deg){
@@ -427,14 +434,20 @@ public class RobotHardware {
         return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
     }
 
+    // 8192
+    public void getSpindexerOffset(){
+        spindexerFudge = (spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) - (spindexer.getCurrentPosition()/spindexerTicksPerDegree);
+    }
+
     public void spindexerHandler(int targetAdd){
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd) * spindexerTicksPerDegree) );
+        getSpindexerOffset();
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexerTarget += targetAdd;
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(800);
+        spindexer.setVelocity(900);
         //  -intake-
         //    (0)
         // (1)   (2)
@@ -448,7 +461,7 @@ public class RobotHardware {
     }
 
     public void maintainSpindexerHandler(){
-        spindexer.setTargetPosition( (int) ( (spindexerTarget) * spindexerTicksPerDegree) );
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -456,7 +469,8 @@ public class RobotHardware {
     }
 
     public void spindexerHandler(int targetAdd,  int vel){
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd) * spindexerTicksPerDegree) );
+        getSpindexerOffset();
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexerTarget += targetAdd;
 
@@ -868,8 +882,8 @@ public class RobotHardware {
         }
 
         public class setIntakeVelocity implements Action{
-            private int vel;
-            public setIntakeVelocity(int vel){
+            private double vel;
+            public setIntakeVelocity(double vel){
                 this.vel = vel;
             }
 
@@ -888,7 +902,7 @@ public class RobotHardware {
             return new automaticIntakeBalls();
         }
 
-        public Action setIntakeVel(int vel){
+        public Action setIntakeVel(double vel){
             return new setIntakeVelocity(vel);
         }
 

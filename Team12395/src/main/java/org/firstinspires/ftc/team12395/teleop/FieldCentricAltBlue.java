@@ -32,7 +32,9 @@ package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to you
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team12395.RobotHardware;
@@ -54,13 +56,14 @@ public class FieldCentricAltBlue extends LinearOpMode {
     public static double preSetAngleClose = 0;
     public static double preSetVelocityClose = 1120;
 
-    public static int intakeVel = 0;
+    public static double intakeVel = 0;
 
     View relativeLayout;
 
 
     @Override
     public void runOpMode() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         // Driver inputs (range roughly [-1, 1])
         double axial    ; // forward/back (+ forward)
         double lateral  ; // strafe left/right (+ right)
@@ -113,31 +116,20 @@ public class FieldCentricAltBlue extends LinearOpMode {
             robot.setHoodAngle(angle);
 
             if (gamepad1.yWasPressed()){
-                if (intakeVel == -1400 || intakeVel == 1400){
+                if (intakeVel == 1 || intakeVel == -1){
                     intakeVel = 0;
 
-                } else if (intakeVel == 0){ intakeVel = -1400; }
+                } else if (intakeVel == 0){ intakeVel = 1; }
                 robot.setIntakeSpeed(intakeVel);
             } else if (gamepad1.dpadDownWasPressed()){
-                if (intakeVel != 1400){
-                    intakeVel = 1400;
+                if (intakeVel != -1){
+                    intakeVel = -1;
 
                 } else  { intakeVel = 0; }
                 robot.setIntakeSpeed(intakeVel);
             }
 
             robot.scanColor();
-            int layoutColor;
-            if (scannedColor.equals(colorTypes.PURPLE)){
-                layoutColor = Color.MAGENTA;
-            } else if (scannedColor.equals(colorTypes.GREEN)){
-                layoutColor = Color.GREEN;
-            } else if (scannedColor.equals(colorTypes.UNKNOWN)){
-                layoutColor = Color.DKGRAY;
-            } else {
-                layoutColor = Color.LTGRAY;
-            }
-
 
             // gamepad 2 (g1 cuz solo)--
             if (!robot.spindexer.isBusy()) {
@@ -235,11 +227,15 @@ public class FieldCentricAltBlue extends LinearOpMode {
             prevHeading = robot.getHeading();
             robot.turretHandler.runToTarget();
 
+            robot.getSpindexerOffset();
+
             // Telemetry for drivers + debugging
             telemetry.addData(robot.getMagPicture(), "");
             telemetry.addData("current Pattern: ", robot.pattern);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
             telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
+            telemetry.addData("spindexerE position? ", (robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree));
+            telemetry.addData("spindexer error: ", robot.spindexerFudge);
             telemetry.addData("apt deg: ", tSkew);
             telemetry.update();
 

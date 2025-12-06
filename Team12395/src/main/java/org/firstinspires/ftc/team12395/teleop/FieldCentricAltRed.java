@@ -116,14 +116,14 @@ public class FieldCentricAltRed extends LinearOpMode {
             robot.setHoodAngle(angle);
 
             if (gamepad1.yWasPressed()){
-                if (intakeVel == -1400 || intakeVel == 1400){
+                if (intakeVel == 1 || intakeVel == -1){
                     intakeVel = 0;
 
-                } else if (intakeVel == 0){ intakeVel = -1400; }
+                } else if (intakeVel == 0){ intakeVel = 1; }
                 robot.setIntakeSpeed(intakeVel);
             } else if (gamepad1.dpadDownWasPressed()){
-                if (intakeVel != 1400){
-                    intakeVel = 1400;
+                if (intakeVel != -1){
+                    intakeVel = - 1;
 
                 } else  { intakeVel = 0; }
                 robot.setIntakeSpeed(intakeVel);

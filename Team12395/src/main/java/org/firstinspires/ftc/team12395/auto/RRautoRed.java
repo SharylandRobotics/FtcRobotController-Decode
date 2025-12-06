@@ -31,6 +31,7 @@ public class RRautoRed extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        double intakeSpeed = 1;
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         drive = new MecanumDrive(hardwareMap, initialPose);
 
@@ -46,10 +47,10 @@ public class RRautoRed extends LinearOpMode {
 
         Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,23, Math.toRadians(90));
 
-        Pose2d ballRow2 = new Pose2d(23, 33, Math.toRadians(90));
+        Pose2d ballRow2 = new Pose2d(24, 33, Math.toRadians(88));
         Pose2d ballRow2End = new Pose2d(ballRow2.position.x, 48, Math.toRadians(90));
 
-        Pose2d ballRow3 = new Pose2d(49, 33, Math.toRadians(90));
+        Pose2d ballRow3 = new Pose2d(51, 33, Math.toRadians(85));
         Pose2d ballRow3End = new Pose2d(ballRow3.position.x, 48, Math.toRadians(90));
 
         // return to volley pose
@@ -94,8 +95,6 @@ public class RRautoRed extends LinearOpMode {
                 )
         );
 
-        int pattern = robot.solvePattern()[0];
-
         Actions.runBlocking(
                 new SequentialAction(
                         actionLib.shootAllBalls(), // shoot first 3
@@ -114,7 +113,7 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction( // drive to first row & switch spindexer
                                 driveToRow1,
-                                actionLib.setIntakeVel(-1400),
+                                actionLib.setIntakeVel(intakeSpeed),
                                 new SequentialAction(
                                         new RaceAction(
                                                 actionLib.setTurretPos(-110),
@@ -190,7 +189,7 @@ public class RRautoRed extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        actionLib.setIntakeVel(-1400),
+                        actionLib.setIntakeVel(intakeSpeed),
                         new ParallelAction(
                                 actionLib.setShooterVel(1220),
                                 driveToVolleyPose,
@@ -215,7 +214,7 @@ public class RRautoRed extends LinearOpMode {
         Action driveToRow2 = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(ballRow2.position.y - latestPose.position.y,
                         ballRow2.position.x - latestPose.position.x))
-                .lineToY(ballRow2.position.y)
+                .lineToYLinearHeading(ballRow2.position.y, ballRow2.heading)
                 .build();
 
         Actions.runBlocking(
@@ -223,7 +222,7 @@ public class RRautoRed extends LinearOpMode {
 
                         new ParallelAction( // drive to 2nd row & switch spindexer
                                 driveToRow2,
-                                actionLib.setIntakeVel(-1400)
+                                actionLib.setIntakeVel(intakeSpeed)
                         ),
 
                         updatePose()
@@ -265,8 +264,6 @@ public class RRautoRed extends LinearOpMode {
                 .lineToY(shootVolleyPose.position.y)
                 .build();
 
-        pattern = robot.solvePattern()[0];
-        telemetry.addData("turn: ", pattern);
         telemetry.update();
 
         robot.setMagManualBulk("PGP");
@@ -291,7 +288,7 @@ public class RRautoRed extends LinearOpMode {
         Action driveToRow3 = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(ballRow3.position.y - latestPose.position.y,
                         ballRow3.position.x - latestPose.position.x))
-                .lineToY(ballRow3.position.y)
+                .lineToYLinearHeading(ballRow3.position.y, ballRow3.heading)
                 .build();
 
 
@@ -300,7 +297,7 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 driveToRow3,
-                                actionLib.setIntakeVel(-1400)
+                                actionLib.setIntakeVel(intakeSpeed)
                         ),
                         updatePose()
                 )
