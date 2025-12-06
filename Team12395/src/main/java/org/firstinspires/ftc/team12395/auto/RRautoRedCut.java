@@ -72,7 +72,7 @@ public class RRautoRedCut extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        actionLib.setHoodAng(0.4)
+                        actionLib.setHoodAng(0.2)
                 )
         );
 
@@ -124,6 +124,7 @@ public class RRautoRedCut extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction( // drive to first row & switch spindexer
+                                actionLib.setHoodAng(0.3),
                                 driveToRow1,
                                 actionLib.setIntakeVel(intakeSpeed)
 
