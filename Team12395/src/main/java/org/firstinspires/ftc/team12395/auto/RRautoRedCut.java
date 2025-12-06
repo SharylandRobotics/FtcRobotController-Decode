@@ -12,8 +12,8 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import java.lang.Math;
 
-@Autonomous(name="RR Long Auto Red", group="Alliance")
-public class RRautoRed extends LinearOpMode {
+@Autonomous(name="RR Cut Auto Red", group="Alliance")
+public class RRautoRedCut extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
     RobotHardware.RoadRunnerActions actionLib = robot.new RoadRunnerActions();
@@ -50,8 +50,11 @@ public class RRautoRed extends LinearOpMode {
         Pose2d ballRow2 = new Pose2d(24, 33, Math.toRadians(88));
         Pose2d ballRow2End = new Pose2d(ballRow2.position.x, 48, Math.toRadians(90));
 
+        /*
         Pose2d ballRow3 = new Pose2d(51, 33, Math.toRadians(85));
         Pose2d ballRow3End = new Pose2d(ballRow3.position.x, 48, Math.toRadians(90));
+
+         */
 
         // return to volley pose
 
@@ -85,9 +88,18 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 actionLib.setShooterVel(1120),
-                                new RaceAction(
-                                    actionLib.setTurretPos(-10),
-                                        new SleepAction(1.6)
+                                new SequentialAction(
+                                        new RaceAction(
+                                                actionLib.setTurretPos(-110),
+                                                new RaceAction(
+                                                        actionLib.scanMotif(),
+                                                        new SleepAction(5)
+                                                )
+                                        ),
+                                        new RaceAction(
+                                                actionLib.setTurretPos(-10),
+                                                new SleepAction(1.6)
+                                        )
                                 ),
                                 driveToPLShoot
                         )
@@ -113,14 +125,8 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction( // drive to first row & switch spindexer
                                 driveToRow1,
-                                actionLib.setIntakeVel(intakeSpeed),
-                                new SequentialAction(
-                                        new RaceAction(
-                                                actionLib.setTurretPos(-110),
-                                                new SleepAction(2)
-                                        ),
-                                        actionLib.scanMotif()
-                                )
+                                actionLib.setIntakeVel(intakeSpeed)
+
                         ),
 
                         updatePose()
@@ -167,10 +173,10 @@ public class RRautoRed extends LinearOpMode {
 
         Action driveToGate = drive.actionBuilder(latestPose)
                 .setTangent(-90)
-                        .splineToConstantHeading(new Vector2d(openGate.position.x, openGate.position.y-10), Math.toRadians(180))
+                .splineToConstantHeading(new Vector2d(openGate.position.x, openGate.position.y-10), Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
                 .lineToY(openGate.position.y)
-                                .build();
+                .build();
 
         // open gate
         Actions.runBlocking(
@@ -285,6 +291,27 @@ public class RRautoRed extends LinearOpMode {
                 )
         );
 
+        Action driveToPark =drive.actionBuilder(latestPose)
+                        .lineToX(0)
+                                .build();
+
+        Actions.runBlocking(
+                new SequentialAction(
+                        new ParallelAction(
+                                driveToPark,
+                                new RaceAction(
+                                    actionLib.setTurretPos(0),
+                                    new SleepAction(3)
+                                ),
+                                actionLib.setIntakeVel(0),
+                                actionLib.setShooterVel(0),
+                                actionLib.setHoodAng(0.1)
+                        )
+                )
+        );
+
+        /*
+
         Action driveToRow3 = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(ballRow3.position.y - latestPose.position.y,
                         ballRow3.position.x - latestPose.position.x))
@@ -352,5 +379,7 @@ public class RRautoRed extends LinearOpMode {
                         new SleepAction(2)
                 )
         );
+
+         */
     }
 }

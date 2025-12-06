@@ -49,15 +49,12 @@ public class FieldCentricAltRed extends LinearOpMode {
     public static double velocity = 0;
     public static double angle = 0.1;
 
-    public static double preSetVelocityFar = 1440;
-    public static double preSetAngleFar = 0.8;
+    public static double preSetVelocityFar = 1600;
+    public static double preSetAngleFar = 0.3;
     public static double preSetAngleClose = 0;
     public static double preSetVelocityClose = 1120;
 
     public static int intakeVel = 0;
-
-    View relativeLayout;
-
 
     @Override
     public void runOpMode() {
@@ -88,9 +85,6 @@ public class FieldCentricAltRed extends LinearOpMode {
         robot.mag = "000";
 
         robot.disableDriveEncoders();
-
-        int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
-        relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
 
         waitForStart();
 
@@ -130,23 +124,6 @@ public class FieldCentricAltRed extends LinearOpMode {
             }
 
             robot.scanColor();
-            int layoutColor;
-            if (scannedColor.equals(colorTypes.PURPLE)){
-                layoutColor = Color.MAGENTA;
-            } else if (scannedColor.equals(colorTypes.GREEN)){
-                layoutColor = Color.GREEN;
-            } else if (scannedColor.equals(colorTypes.UNKNOWN)){
-                layoutColor = Color.DKGRAY;
-            } else {
-                layoutColor = Color.LTGRAY;
-            }
-
-            relativeLayout.post(new Runnable() {
-                public void run(){
-                    relativeLayout.setBackgroundColor(layoutColor);
-                }
-            });
-
 
             // gamepad 2 (g1 cuz solo)--
             if (!robot.spindexer.isBusy()) {
@@ -154,7 +131,7 @@ public class FieldCentricAltRed extends LinearOpMode {
                     robot.spindexerHandler(120);
                 } else if (gamepad1.rightBumperWasPressed()) { // cw
                     if (velocity == preSetVelocityFar){
-                        robot.spindexerHandler(-480, 600);
+                        robot.spindexerHandler(-480, 575);
                     } else {
                         robot.spindexerHandler(-480);
                     }
@@ -244,6 +221,8 @@ public class FieldCentricAltRed extends LinearOpMode {
             prevHeading = robot.getHeading();
             robot.turretHandler.runToTarget();
 
+            robot.getSpindexerOffset();
+
             // Telemetry for drivers + debugging
             telemetry.addData(robot.getMagPicture(), "");
             telemetry.addData("current Pattern: ", robot.pattern);
@@ -259,11 +238,6 @@ public class FieldCentricAltRed extends LinearOpMode {
                 lastTrackingClock++;
             }
         }
-
-        relativeLayout.post(new Runnable(){
-            public void run(){relativeLayout.setBackgroundColor(Color.RED);}
-        });
-
     }
 }
 

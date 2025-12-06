@@ -58,8 +58,6 @@ public class FieldCentricAltBlue extends LinearOpMode {
 
     public static double intakeVel = 0;
 
-    View relativeLayout;
-
 
     @Override
     public void runOpMode() {
