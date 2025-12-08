@@ -361,7 +361,7 @@ public class RobotHardware {
     // Default speeds and proportional gains; HEADING_THRESHOLD in degrees
     public static final double AXIAL_SPEED = 0.4;
     public static final double LATERAL_SPEED = 0.4;
-    public static final double YAW_SPEED = 0.2;
+    public static final double YAW_SPEED = 1;
     //static final double HEADING_THRESHOLD = 1.0;
 
     static final double P_AXIAL_GAIN = 0.03;
@@ -704,7 +704,7 @@ public class RobotHardware {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
         }
-        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE)*0;
 
 
         double headingError =  goalBearingDeg;
@@ -712,7 +712,7 @@ public class RobotHardware {
 
         double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
         //changed yaw error to range error lateral
-        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL)*0;
         double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
 
         driveRobotCentric(axial, lateral, yaw);

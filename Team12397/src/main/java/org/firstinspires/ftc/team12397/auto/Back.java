@@ -33,12 +33,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team12397.RobotHardware;
 
-import static org.firstinspires.ftc.team12397.RobotHardware.*;
-
-@Autonomous(name = "BottomRed", group = "opMode")
+@Autonomous(name = "Back", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class BottomRed extends LinearOpMode {
+public class
+Back extends LinearOpMode {
 
 
     // Instantiate RobotHardware and link this OpMode
@@ -63,32 +62,16 @@ public class BottomRed extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
-
-            Boolean aprilTagFound = false;
-
-            Boolean phase1 = true;
-            Boolean phase2 = false;
-            Boolean phase3 = false;
-
-              while(phase1){
-
-                  robot.driveStraight(AXIAL_SPEED, 36, 0);
-
-
-                  //to due: calculate offset for auto  & config shoot motors & servo
-                 // robot.autoDriveToGoalStep();
-                  //robot.startIntakeMotor();
-                  //robot.shootMotors();
-                  phase1 = false;
-            }
-            while(aprilTagFound){
+                robot.driveStraight(1,36,0);
 
             }
+
 
 
         }
     }
-}
+
+
 
 
 

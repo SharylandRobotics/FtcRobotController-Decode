@@ -72,19 +72,26 @@ TopBlue extends LinearOpMode {
             Boolean phase3 = false;
 
             while(phase1){
+                robot.setHoodPositions(0.5);
                 robot.driveStraight(1, -50, 0);
                 robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.turretPower(950);
+                robot.turretPower(400);
                 robot.turnToHeading(1,-5);
                 robot.holdHeading(robot.YAW_SPEED, -5, 1);
 
+
+                robot.intakePower(-.5);
                 robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
                 robot.setIntakeServo(1);
-                robot.intakePower(-.3);
-                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
                 robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
+                robot.setIntakeServo(1);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
+                robot.setIntakeServo(0);
+
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
 
                 robot.setIntakeServo(1);
 
@@ -92,6 +99,7 @@ TopBlue extends LinearOpMode {
                 robot.turretPower(0);
                 robot.intakePower(0);
                 //phase 2
+
 
                 robot.turnToHeading(1,40);
                 robot.holdHeading(robot.YAW_SPEED, 40, 1);
@@ -106,19 +114,22 @@ TopBlue extends LinearOpMode {
 
                 robot.driveStraight(1,-31,40);
                 robot.holdHeading(robot.YAW_SPEED, 40, 1);
-                robot.turretPower(1000);
+                robot.turretPower(400);
                 robot.turnToHeading(1,-5);
                 robot.holdHeading(robot.YAW_SPEED, -5, 1);
 
-                robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, -5, 2);
 
+                robot.intakePower(-.5);
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
                 robot.setIntakeServo(1);
-                robot.intakePower(-.3);
-                robot.holdHeading(robot.YAW_SPEED, -5, 2);
-
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
                 robot.setIntakeServo(0);
-                robot.holdHeading(robot.YAW_SPEED, -5, 2);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
+                robot.setIntakeServo(1);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
+                robot.setIntakeServo(0);
+                robot.holdHeading(robot.YAW_SPEED, -5, 1);
 
 
                 // turn off motors

@@ -86,7 +86,7 @@ public class RobotCentric extends LinearOpMode {
                 shooterOn = !shooterOn;
             }
             if(shooterOn){
-                robot.turretPower(1000);
+                robot.turretPower(400);
             }
             else{
                 robot.turretPower(0);
