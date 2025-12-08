@@ -12,12 +12,12 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import java.lang.Math;
 
-@Autonomous(name="RR CUT Auto Red", group="Alliance")
-public class RRautoRedCut extends LinearOpMode {
+@Autonomous(name="RR CUT Auto Blue", group="Alliance")
+public class RRautoBlueCut extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
     RobotHardware.RoadRunnerActions actionLib = robot.new RoadRunnerActions();
-    Pose2d initialPose = new Pose2d(-48.5, 49.5, Math.toRadians(126));
+    Pose2d initialPose = new Pose2d(-48.5, -49.5, Math.toRadians(-126));
     MecanumDrive drive;
     Pose2d latestPose = initialPose;
 
@@ -38,17 +38,17 @@ public class RRautoRedCut extends LinearOpMode {
         robot.init();
 
         // shoot pose PL 30 in back from startPose
-        Pose2d shootVolleyPL = new Pose2d(-25, 17.3, initialPose.heading.real);
+        Pose2d shootVolleyPL = new Pose2d(-25, -17.3, initialPose.heading.real);
 
-        Pose2d ballRow1 = new Pose2d(-6.5, 29, Math.toRadians(90));
-        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,48, Math.toRadians(90));
+        Pose2d ballRow1 = new Pose2d(-6.5, -29, Math.toRadians(-90));
+        Pose2d ballRow1End = new Pose2d(ballRow1.position.x,-48, Math.toRadians(-90));
 
         //Pose2d openGate = new Pose2d(ballRow1.position.x + 14, 58, Math.toRadians(90));
 
-        Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,23, Math.toRadians(90));
+        Pose2d shootVolleyPose = new Pose2d(ballRow1.position.x,-23, Math.toRadians(-90));
 
-        Pose2d ballRow2 = new Pose2d(24, 29, Math.toRadians(86.5));
-        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, 48, Math.toRadians(90));
+        Pose2d ballRow2 = new Pose2d(24, -29, Math.toRadians(-86.5));
+        Pose2d ballRow2End = new Pose2d(ballRow2.position.x, -48, Math.toRadians(-90));
 
         /*
         Pose2d ballRow3 = new Pose2d(51, 33, Math.toRadians(85));
@@ -90,14 +90,14 @@ public class RRautoRedCut extends LinearOpMode {
                                 actionLib.setShooterVel(1120),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(-110),
+                                                actionLib.setTurretPos(110),
                                                 new RaceAction(
                                                         actionLib.scanMotif(),
                                                         new SleepAction(5)
                                                 )
                                         ),
                                         new RaceAction(
-                                                actionLib.setTurretPos(-13),
+                                                actionLib.setTurretPos(13),
                                                 new SleepAction(2.2)
                                         ),
                                         actionLib.stopTurretPower()
@@ -158,7 +158,7 @@ public class RRautoRedCut extends LinearOpMode {
                                 ),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(-49),
+                                                actionLib.setTurretPos(49),
                                                 new SleepAction(2.5)
 
                                         ),
@@ -301,16 +301,16 @@ public class RRautoRedCut extends LinearOpMode {
 
         Action driveToPark =drive.actionBuilder(latestPose)
                 .setTangent(0)
-                        .lineToX(10)
-                                .build();
+                .lineToX(10)
+                .build();
 
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
                                 driveToPark,
                                 new RaceAction(
-                                    actionLib.setTurretPos(0),
-                                    new SleepAction(3)
+                                        actionLib.setTurretPos(0),
+                                        new SleepAction(3)
                                 ),
                                 actionLib.setIntakeVel(0),
                                 actionLib.setShooterVel(0),

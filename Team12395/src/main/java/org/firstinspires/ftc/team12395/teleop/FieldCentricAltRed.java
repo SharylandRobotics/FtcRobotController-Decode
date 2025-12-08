@@ -201,7 +201,7 @@ public class FieldCentricAltRed extends LinearOpMode {
                     double farFudge = 0;
                     if (velocity == preSetVelocityFar){ farFudge = Math.copySign(4, errorDeg); }
 
-                    lastTargetTurretPos = errorDeg - 1.5*(robot.getHeading() - prevHeading) + farFudge;
+                    lastTargetTurretPos = errorDeg - 1*(robot.getHeading() - prevHeading) + farFudge;
                     robot.setTurretHandlerRelative(lastTargetTurretPos);
                     lastTargetTurretPos += robot.getCurrentTurretDegreePos();
                     lastTargetHeading = robot.getHeading();
@@ -220,6 +220,14 @@ public class FieldCentricAltRed extends LinearOpMode {
 
             prevHeading = robot.getHeading();
             robot.turretHandler.runToTarget();
+
+            if (gamepad2.a){
+                robot.pattern = "GPP";
+            } else if (gamepad2.b){
+                robot.pattern = "PGP";
+            } else if (gamepad2.y){
+                robot.pattern = "PPG";
+            }
 
             robot.getSpindexerOffset();
 

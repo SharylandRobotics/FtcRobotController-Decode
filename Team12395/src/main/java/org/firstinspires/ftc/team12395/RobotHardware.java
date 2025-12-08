@@ -241,12 +241,12 @@ public class RobotHardware {
 
         // SERVO POSITIONS
 
-        hoodAngle.setPosition(1);
+        hoodAngle.setPosition(0.3);
 
         limelight.start();
         limelight.pipelineSwitch(1);
 
-        pattern = "PPG";
+        //pattern = "PPG";
         mag = "GPP";
 
         SoundPlayer.getInstance().setMasterVolume(1.0f);
@@ -835,7 +835,7 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480);
+                spindexerHandler(-480, 600);
                 return false;
             }
         }
