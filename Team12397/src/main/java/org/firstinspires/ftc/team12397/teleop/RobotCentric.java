@@ -82,17 +82,34 @@ public class RobotCentric extends LinearOpMode {
             //shooting mechanism
 
             boolean currentShooterState = (gamepad1.right_trigger > .5);
-            if(currentShooterState && !lastShooterState){
+            if(currentShooterState){
                 shooterOn = !shooterOn;
             }
             if(shooterOn){
-                robot.turretPower(400);
-            }
-            else{
-                robot.turretPower(0);
 
+                while(gamepad1.x){ //killswitch
+                    robot.turretPower(10);
+
+                    robot.holdHeading(0,0,2); // inital hold time
+                    robot.intakePower(-.5);
+                    robot.setIntakeServo(0);
+                    robot.holdHeading(0,0,1);
+                    robot.setIntakeServo(1);
+                    robot.holdHeading(0,0,1);
+                    robot.setIntakeServo(0);
+                    robot.holdHeading(0,0,1);
+
+                    break;
+                }
+                shooterOn = !shooterOn;
+                //power off
+                robot.setIntakeServo(1);
+                robot.turretPower(0);
+                robot.intakePower(0);
             }
-            lastShooterState = currentShooterState;
+
+
+
 
             boolean currentIntakeState = (gamepad1.left_trigger > .5);
 
