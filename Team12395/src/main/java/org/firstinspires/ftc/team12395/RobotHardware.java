@@ -33,6 +33,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.media.AudioManager;
 import androidx.annotation.NonNull;
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
@@ -260,6 +261,8 @@ public class RobotHardware {
         myOpMode.telemetry.addData("Sound3 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break));
         //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
+
+        FtcDashboard.getInstance().startCameraStream(limelight, 20);
 
     }
 

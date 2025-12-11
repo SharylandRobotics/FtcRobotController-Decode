@@ -168,12 +168,12 @@ public class FieldCentricAltBlue extends LinearOpMode {
                 jammingClock++;
             } else {
                 // dont run turn clock until done with jamming clock
-                if (runTurnClock && turnClock < 3){
+                if (runTurnClock && turnClock < 2){
                     turnClock++;
                 }
 
-                if (turnClock == 2){
-                    robot.spindexerHandler(120);
+                if (turnClock == 1){
+                    robot.spindexerHandler(120, 1100);
                     turnClock = 0;
                     runTurnClock = false;
                 }
