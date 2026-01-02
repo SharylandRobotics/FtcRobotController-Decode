@@ -86,10 +86,10 @@ public class FieldCentric extends LinearOpMode {
                 shooterOn = !shooterOn;
             }
             if(shooterOn){
-                robot.turretPower(1);
+                robot.turretVelocity(80);
             }
             else{
-                robot.turretPower(0);
+                robot.turretVelocity(0);
             }
             lastShooterState = currentShooterState;
 

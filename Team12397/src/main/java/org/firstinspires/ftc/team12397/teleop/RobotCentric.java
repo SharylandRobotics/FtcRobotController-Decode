@@ -56,7 +56,6 @@ public class RobotCentric extends LinearOpMode {
         boolean intakeOn = false;
         boolean lastIntakeState = false;
 
-
         // --- INIT PHASE ---
         // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
         // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
@@ -87,25 +86,26 @@ public class RobotCentric extends LinearOpMode {
             }
             if(shooterOn){
 
-                while(gamepad1.x){ //killswitch
-                    robot.turretPower(10);
 
-                    robot.holdHeading(0,0,2); // inital hold time
-                    robot.intakePower(-.5);
-                    robot.setIntakeServo(0);
-                    robot.holdHeading(0,0,1);
-                    robot.setIntakeServo(1);
-                    robot.holdHeading(0,0,1);
-                    robot.setIntakeServo(0);
-                    robot.holdHeading(0,0,1);
+                robot.turretVelocity(85);
+                //robot.intakePower(-.5);
+                robot.holdHeading(0, 0, 10); // inital hold time
 
-                    break;
-                }
-                shooterOn = !shooterOn;
+                robot.setIntakeServo(0);
+                robot.holdHeading(0, 0, 1);
+                robot.intakePower(- .5);
+                robot.setIntakeServo(1);
+                robot.holdHeading(0, 0, 1);
+                robot.setIntakeServo(0);
+                robot.holdHeading(0, 0, 1);
+
+
+
                 //power off
                 robot.setIntakeServo(1);
-                robot.turretPower(0);
+                robot.turretVelocity(0);
                 robot.intakePower(0);
+                shooterOn = !shooterOn;
             }
 
 
@@ -133,10 +133,10 @@ public class RobotCentric extends LinearOpMode {
                 servoOn = !servoOn;
             }
             if(servoOn){
-                robot.setHoodPositions(.5);
+                robot.setHoodPositions(.6);
             }
             else{
-                robot.setHoodPositions(0.0);
+                robot.setHoodPositions(0.3);
             }
             lastServoState = currentServoState;
 

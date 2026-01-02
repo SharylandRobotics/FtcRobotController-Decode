@@ -47,18 +47,11 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import java.util.List;
 
 import static java.lang.Thread.sleep;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.*;
 //lamoin code
-import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
 /**
  * RobotHardware
  *
@@ -95,6 +88,8 @@ public class RobotHardware {
     private DcMotor intakeMotor;
     //turret motor
     private DcMotorEx turretMotor;
+
+
     // camera
     //private AprilTagProcessor aprilTag;
     //private VisionPortal visionPortal;
@@ -160,7 +155,7 @@ public class RobotHardware {
         hood.setPosition(MID_SERVO);
         // second servo
         intakeServo = myOpMode.hardwareMap.get(Servo.class, "intake_servo");
-        intakeServo.setPosition(1);
+        //intakeServo.setPosition(1);
         //intake motor
         intakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "intake_motor");
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -172,12 +167,8 @@ public class RobotHardware {
         turretMotor = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor");
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //april tag
-        //aprilTag = new AprilTagProcessor.Builder().setDrawTagID(true).setDrawAxes(true).build();
-
-        // Step 2: Create the VisionPortal, and add the processor to it.
-        //visionPortal = new VisionPortal.Builder().setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1")).addProcessor(aprilTag).build();
+        turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turretMotor.setVelocityPIDFCoefficients(100,1,2,1);
 
 
 
@@ -322,8 +313,16 @@ public class RobotHardware {
 
 
     //turret
+    public void turretVelocity(double velocity){
+        turretMotor.setVelocity(velocity);
+
+    }
     public void turretPower(double power){
-        turretMotor.setVelocity(power);
+        turretMotor.setPower(power);
+    }
+
+    public double getVelocity(){
+        return turretMotor.getVelocity();
     }
     // intake motor
     public void intakePower(double power){

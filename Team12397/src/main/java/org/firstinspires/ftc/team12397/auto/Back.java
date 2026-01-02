@@ -62,9 +62,9 @@ Back extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
-                robot.driveStraight(1,36,0);
+            robot.driveStraight(1,36,0);
 
-            }
+        }
 
 
 
