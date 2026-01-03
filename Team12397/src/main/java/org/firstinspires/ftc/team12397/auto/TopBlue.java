@@ -70,8 +70,8 @@ TopBlue extends LinearOpMode {
             Boolean phase3 = false;
 
             while(phase1){
-                robot.setHoodPositions(0);
-                robot.turretVelocity(50);
+                robot.setHoodPositions(0.4);
+                robot.turretVelocity(60);
                 robot.driveStraight(1, -50, 0);
                 robot.holdHeading(robot.YAW_SPEED, 0, 1);
                 robot.turnToHeading(1,-5);
@@ -93,7 +93,6 @@ TopBlue extends LinearOpMode {
                 robot.intakePower(0);
                 //phase 2
 
-                robot.turretVelocity(60);
                 robot.turnToHeading(1,40);
                 robot.holdHeading(robot.YAW_SPEED, 40, 1);
                 robot.straif(1,-12,40);
@@ -103,6 +102,8 @@ TopBlue extends LinearOpMode {
 
                 //extra time
                 robot.holdHeading(robot.YAW_SPEED, 40, 1);
+                robot.turretVelocity(60);
+
                 robot.intakePower(0);
                 //shooting
 

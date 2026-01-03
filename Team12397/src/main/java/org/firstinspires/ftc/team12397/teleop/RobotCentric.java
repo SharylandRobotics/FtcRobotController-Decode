@@ -73,6 +73,7 @@ public class RobotCentric extends LinearOpMode {
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
             telemetry.update();
         }
+
         // Wait for driver to press START on Driver Station
         waitForStart();
         if (isStopRequested()) return;
@@ -86,11 +87,14 @@ public class RobotCentric extends LinearOpMode {
             }
             if(shooterOn){
 
+                if(robot.getHoodPosition() <=.5){
+                    robot.turretVelocity(100);  //low arc velocity
+                }
+                else{
+                    robot.turretVelocity(90); //high arc velocity
+                }
 
-                robot.turretVelocity(85);
-                //robot.intakePower(-.5);
                 robot.holdHeading(0, 0, 10); // inital hold time
-
                 robot.setIntakeServo(0);
                 robot.holdHeading(0, 0, 1);
                 robot.intakePower(- .5);
@@ -133,10 +137,10 @@ public class RobotCentric extends LinearOpMode {
                 servoOn = !servoOn;
             }
             if(servoOn){
-                robot.setHoodPositions(.6);
+                robot.setHoodPositions(.8);
             }
             else{
-                robot.setHoodPositions(0.3);
+                robot.setHoodPositions(.4);
             }
             lastServoState = currentServoState;
 

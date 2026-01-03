@@ -152,7 +152,7 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
         //servo
         hood = myOpMode.hardwareMap.get(Servo.class, "hood_servo");
-        hood.setPosition(MID_SERVO);
+        //hood.setPosition(MID_SERVO);
         // second servo
         intakeServo = myOpMode.hardwareMap.get(Servo.class, "intake_servo");
         //intakeServo.setPosition(1);
@@ -304,6 +304,10 @@ public class RobotHardware {
     //servos
     public void setHoodPositions(double position) {
         hood.setPosition(position);
+    }
+    public double getHoodPosition(){
+        double x = hood.getPosition();
+        return x;
     }
     public void setIntakeServo(double position){
         intakeServo.setPosition(position);
