@@ -31,21 +31,41 @@ package org.firstinspires.ftc.team12397.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.team12397.RobotHardware;
 
-@TeleOp(name="Robot Centric", group="TeleOp")
+@TeleOp(name = "Robot Centric", group = "TeleOp")
 // TODO(STUDENTS): You may rename this OpMode in the annotation for clarity (e.g., "Robot-Centric - Practice Bot")
 public class RobotCentric extends LinearOpMode {
+
 
     // NOTE: One RobotHardware instance per OpMode keeps mapping/telemetry simple.
     RobotHardware robot = new RobotHardware(this);
 
+    enum ShooterState {
+        Start, HoldWait, Fire, ResetIntake, End
+
+    }
+
+    ShooterState shooterState = ShooterState.Start;
+    ElapsedTime shooterTimer = new ElapsedTime();
+    String statusMsg;
+
+
+    public boolean isTimeUp(double seconds) {
+        if (shooterTimer.milliseconds() >= seconds * 1000) {
+            shooterTimer.reset(); // Auto-reset for the next state
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void runOpMode() {
         // Driver inputs (range roughly [-1, 1])
-        double axial    = 0; // forward/back (+ forward)
-        double lateral  = 0; // strafe left/right (+ right)
-        double yaw      = 0; // rotation (+ CCW/left turn)
+        double axial = 0; // forward/back (+ forward)
+        double lateral = 0; // strafe left/right (+ right)
+        double yaw = 0; // rotation (+ CCW/left turn)
 
         boolean servoOn = false;
         boolean lastServoState = false;
@@ -56,12 +76,13 @@ public class RobotCentric extends LinearOpMode {
         boolean intakeOn = false;
         boolean lastIntakeState = false;
 
+
         // --- INIT PHASE ---
         // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
         // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
         robot.init();
 
-        while(opModeInInit()) {
+        while (opModeInInit()) {
 
             // Student Note: Pre‑start check — rotate robot by hand; heading should change.
             // "Vision: Ready (AprilTag)" means camera + processor initialized.
@@ -81,49 +102,74 @@ public class RobotCentric extends LinearOpMode {
         while (opModeIsActive()) {
             //shooting mechanism
 
-            boolean currentShooterState = (gamepad1.right_trigger > .5);
-            if(currentShooterState){
-                shooterOn = !shooterOn;
-            }
-            if(shooterOn){
 
-                if(robot.getHoodPosition() <=.5){
-                    robot.turretVelocity(100);  //low arc velocity
-                }
-                else{
-                    robot.turretVelocity(90); //high arc velocity
-                }
-
-                robot.holdHeading(0, 0, 10); // inital hold time
-                robot.setIntakeServo(0);
-                robot.holdHeading(0, 0, 1);
-                robot.intakePower(- .5);
-                robot.setIntakeServo(1);
-                robot.holdHeading(0, 0, 1);
-                robot.setIntakeServo(0);
-                robot.holdHeading(0, 0, 1);
-
-
-
-                //power off
+            //kill switch
+            if (gamepad1.y) {
                 robot.setIntakeServo(1);
                 robot.turretVelocity(0);
                 robot.intakePower(0);
-                shooterOn = !shooterOn;
+                shooterState = ShooterState.Start;
+                //telementry
+                shooterTimer.reset();
+                statusMsg = "KILLED";
+
+
             }
 
+            switch (shooterState) {
+                case Start:
+                    if (gamepad1.right_trigger > .5) {
+                        statusMsg = "RUNNING AUTO SHOOTER"; //telementry
+                        robot.setIntakeServo(1);
+                        // Set velocity based on hood
+                        robot.turretVelocity(robot.getHoodPosition() <= .5 ? 100 : 90);
 
+                        shooterTimer.reset(); // RESET TIMER HERE (Only once!)
+                        shooterState = ShooterState.HoldWait;
+                    }
+                    break;
+
+                case HoldWait:
+                    if (isTimeUp(10)) { // Wait 1 second (1000ms)
+                        robot.setIntakeServo(0);
+                        // Timer is auto-reset by your isTimeUp method!
+                        shooterState = ShooterState.Fire;
+                    }
+                    break;
+
+                case Fire:
+                    if (isTimeUp(1)) {
+                        robot.intakePower(-0.5);
+                        robot.setIntakeServo(1);
+                        shooterState = ShooterState.ResetIntake;
+                    }
+                    break;
+
+                case ResetIntake:
+                    if (isTimeUp(1)) {
+                        robot.setIntakeServo(0);
+                        shooterState = ShooterState.End;
+                    }
+                    break;
+
+                case End:
+                    statusMsg = "";
+                    robot.setIntakeServo(1);
+                    robot.turretVelocity(0);
+                    robot.intakePower(0);
+                    shooterState = ShooterState.Start; // Go back to start so you can shoot again!
+                    break;
+            }
 
 
             boolean currentIntakeState = (gamepad1.left_trigger > .5);
 
-            if(currentIntakeState && !lastIntakeState){
+            if (currentIntakeState && !lastIntakeState) {
                 intakeOn = !intakeOn;
             }
-            if(intakeOn){
+            if (intakeOn) {
                 robot.intakePower(-.5);
-            }
-            else{
+            } else {
                 robot.intakePower(0);
 
             }
@@ -133,29 +179,27 @@ public class RobotCentric extends LinearOpMode {
             //hood servo
 
             boolean currentServoState = (gamepad1.b);
-            if(currentServoState && !lastServoState){
+            if (currentServoState && !lastServoState) {
                 servoOn = !servoOn;
             }
-            if(servoOn){
+            if (servoOn) {
                 robot.setHoodPositions(.8);
-            }
-            else{
+            } else {
                 robot.setHoodPositions(.4);
             }
             lastServoState = currentServoState;
 
             // intake servo
 
-            if(gamepad1.a){
+            if (gamepad1.a) {
 
                 robot.setIntakeServo(0);
-            }
-            else{
+            } else {
                 robot.setIntakeServo(1);
             }
 
             //inverse intake
-            if(gamepad1.x){
+            if (gamepad1.x) {
                 intakeOn = false;
                 lastIntakeState = !lastIntakeState;
                 robot.intakePower(.5);
@@ -163,7 +207,6 @@ public class RobotCentric extends LinearOpMode {
             }
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
-
 
 
             // Student Note: Hold LB for precision (slow) mode.
@@ -207,7 +250,7 @@ public class RobotCentric extends LinearOpMode {
             String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
 
             telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
-            telemetry.addData("Aim",  "horiz=%.1f in  aboveHoriz=%s",
+            telemetry.addData("Aim", "horiz=%.1f in  aboveHoriz=%s",
                     horiz,
                     Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal));
             telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
@@ -222,7 +265,17 @@ public class RobotCentric extends LinearOpMode {
             //telemetry.addData("intake Servo Up/Down", "Button Y toggle");
 
 
-            telemetry.addData("-", "-------");
+            telemetry.addLine("-----------------------------");
+            if (statusMsg.equals("KILLED") && shooterTimer.milliseconds() < 3000) {
+                telemetry.addLine("-----------------------------");
+                telemetry.addLine("      SYSTEM KILLED          ");
+                telemetry.addLine("-----------------------------");
+            }
+            if (statusMsg.equals("RUNNING AUTO SHOOTER")) {
+                telemetry.addLine("-----------------------------");
+                telemetry.addLine(statusMsg);
+                telemetry.addLine("-----------------------------");
+            }
 
             telemetry.addData("Obelisk", motif);
             telemetry.addData("Goal", (goalId != null) ? goalId : "–");
@@ -236,8 +289,6 @@ public class RobotCentric extends LinearOpMode {
 
             telemetry.addData("Drive to tag", "Hold Right Bumper");
             telemetry.addData(" Slow drive to tag", "Hold Left Bumper");
-
-
 
 
             telemetry.update();
