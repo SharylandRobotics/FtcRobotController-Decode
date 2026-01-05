@@ -33,12 +33,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
-import static org.firstinspires.ftc.team00000.RobotHardware.*;
+import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_AXIAL;
+import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_YAW;
 
-@Autonomous(name = "Gyro", group = "opMode")
+@Autonomous(name = "Red Alliance", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class Gyro extends LinearOpMode {
+public class RedAlliance extends LinearOpMode {
 
     // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
@@ -63,19 +64,9 @@ public class Gyro extends LinearOpMode {
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
             // Drive 24" forward, then turn and hold headings as defined
-            robot.driveStraight(MAX_AUTO_AXIAL, 24.0, 0.0);
-            robot.turnToHeading(MAX_AUTO_YAW, -45.0);
-            robot.holdHeading(MAX_AUTO_YAW, -45.0, 0.5);
-
-            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, -45.0);
-            robot.turnToHeading(MAX_AUTO_YAW, 45.0);
-            robot.holdHeading(MAX_AUTO_YAW, 45.0, 0.5);
-
-            robot.driveStraight(MAX_AUTO_AXIAL, 17.0, 45.0);
-            robot.turnToHeading(MAX_AUTO_YAW, 0.0);
-            robot.holdHeading(MAX_AUTO_YAW, 0.0, 1.0);
-
-            robot.driveStraight(MAX_AUTO_AXIAL, -48.0, 0.0);
+            robot.driveOmni(MAX_AUTO_AXIAL, 48.0, 0.0, 0.0);
+            robot.turnToHeading(MAX_AUTO_YAW, -90.0);
+            robot.holdHeading(MAX_AUTO_YAW, -90.0, 0.5);
 
             // Indicate completion and pause for display
             telemetry.addData("Path", "Complete");

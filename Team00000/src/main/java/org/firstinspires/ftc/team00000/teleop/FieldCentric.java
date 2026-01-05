@@ -29,17 +29,20 @@
 
 package org.firstinspires.ftc.team00000.teleop;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
 // Student Notes: Field‑centric TeleOp. Left stick = drive/strafe, Right stick = turn, LB = slow mode.
 // TODO(students): Adjust slow‑mode scale if you want finer aiming.
+@Config
 @TeleOp(name = "Field Centric", group = "opMode")
 
 public class FieldCentric extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
+    public static double shooter = 0.0;
 
     @Override
     public void runOpMode() {
@@ -102,6 +105,7 @@ public class FieldCentric extends LinearOpMode {
             // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
             if (!didAuto) {
                 robot.driveFieldCentric(axial, lateral, yaw);
+                robot.setShooterPower(shooter);
             }
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");

@@ -29,24 +29,18 @@
 
 package org.firstinspires.ftc.team13580;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
-import java.util.List;
 
 // Student Notes: Hardware wrapper ("robot API") for drive, IMU, and AprilTag vision.
 // Keep comments concise; use TODOs to guide improvements.
@@ -60,6 +54,13 @@ public class RobotHardware {
     private DcMotor backLeftDrive;
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
+    private DcMotor intakeDrive;
+    private DcMotor outtakeDrive;
+
+    private CRServo kicker;
+    private CRServo kickerLeft;
+
+
 
     // Student Note: IMU provides yaw (heading) for field‑centric drive and turns.
     // TODO(students): If heading seems rotated, check hub orientation in init().
@@ -76,6 +77,8 @@ public class RobotHardware {
     private double backLeftSpeed;
     private double frontRightSpeed;
     private double backRightSpeed;
+    private double intakeSpeed;
+    private double outtakeSpeed;
     private int frontLeftTarget;
     private int backLeftTarget;
     private int frontRightTarget;
@@ -84,10 +87,10 @@ public class RobotHardware {
     // Student Note: Camera pose (robot frame). +X forward, +Y left, +Z up (in).
     // Pitch +15° = camera looks UP 15°. Update if you remount the camera.
     // TODO(students): Measure real offsets when you rely on precise vision assists.
-    private final Position cameraPosition = new Position(DistanceUnit.INCH,
-            0, 0, 0, 0);
-    private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, 15, 0, 0);
+   // private final Position cameraPosition = new Position(DistanceUnit.INCH,
+         //   0, 0, 0, 0);
+   // private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
+           // 0, 15, 0, 0);
 
     private AprilTagProcessor aprilTag = null;
 
@@ -141,19 +144,28 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        // Student Note: Control Hub mounting directions for correct IMU yaw.
+        intakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "intake_drive");
+        outtakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "outtake_drive");
+
+        kicker = myOpMode.hardwareMap.get(CRServo.class, "kicker");
+        kickerLeft = myOpMode.hardwareMap.get(CRServo.class, "kicker_left");
+
+                // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+
+        intakeDrive.setDirection(DcMotor.Direction.FORWARD);
+        outtakeDrive.setDirection(DcMotor.Direction.REVERSE);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -165,6 +177,9 @@ public class RobotHardware {
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        intakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        outtakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -172,7 +187,7 @@ public class RobotHardware {
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
-        initAprilTag();
+        //initAprilTag();
     }
 
     public void driveStraight(double maxAxialSpeed, double distance, double heading) {
@@ -223,7 +238,7 @@ public class RobotHardware {
                         headingError, yawSpeed);
                 myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
                         frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-                updateAprilTagDetections();
+                //updateAprilTagDetections();
                 myOpMode.telemetry.update();
             }
 
@@ -257,7 +272,7 @@ public class RobotHardware {
                     headingError, yawSpeed);
             myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
                     frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            updateAprilTagDetections();
+            //updateAprilTagDetections();
             myOpMode.telemetry.update();
         }
 
@@ -285,7 +300,7 @@ public class RobotHardware {
                     headingError, yawSpeed);
             myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
                     frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            updateAprilTagDetections();
+            //updateAprilTagDetections();
             myOpMode.telemetry.update();
         }
 
@@ -360,12 +375,22 @@ public class RobotHardware {
         backRightDrive.setPower(backRightWheel);
     }
 
+    public void setIntakePower(double intakeWheel) {
+        intakeSpeed = intakeWheel;
+        intakeDrive.setPower(intakeWheel);
+    }
+
+    public void setOuttakePower(double outtakeWheel) {
+        outtakeSpeed = outtakeWheel;
+        outtakeDrive.setPower(outtakeWheel);
+    }
+
     // Student Note: Convenience — current yaw (degrees) from the IMU.
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
     }
-
+/*
     private void initAprilTag() {
         // Student Note: Build AprilTag processor with camera pose + intrinsics; start Dashboard stream.
         // TODO(students): If Dashboard video looks flipped, add a display‑only flip in a processor.
@@ -388,14 +413,14 @@ public class RobotHardware {
                 .addProcessor(aprilTag)
                 .build();
 
-        FtcDashboard.getInstance().startCameraStream(visionPortal, 0);
+        //FtcDashboard.getInstance().startCameraStream(visionPortal, 0);
         visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
     // Student Note: Never navigate on Obelisk tags—only latch which one we saw.
     // Goal targeting: keep current goal if visible; else take first non‑Obelisk.
     // Clears pose when no goal is visible to avoid stale data.
-    // TODO(students): Add a "target lock" button if drivers want sticky targeting.
+    // TODO(students): Add a "target lock" btton if drivers want sticky targeting.
     public void updateAprilTagDetections() {
         if (aprilTag == null) return;
 
@@ -496,4 +521,11 @@ public class RobotHardware {
         driveRobotCentric(axial, lateral, yaw);
         return true;
     }
+*/
+    public void setKickerPower(double pos){
+        kicker.setPower(pos);
+        kicker.setDirection(DcMotorSimple.Direction.FORWARD);
+    }
+
+    public void setKickerLeftPower(double pos) {kickerLeft.setPower(pos);}
 }
