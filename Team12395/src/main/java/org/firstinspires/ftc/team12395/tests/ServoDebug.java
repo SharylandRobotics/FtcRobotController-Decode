@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
+import android.graphics.Color;
+import android.telephony.IccOpenLogicalChannelResponse;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -36,77 +38,41 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
-@TeleOp(name="Velocity Test", group="TeleOp")
+import static org.firstinspires.ftc.team12395.RobotHardware.*;
+
+@TeleOp(name="Servo Test", group="TeleOp")
 @Config
 @Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class VelocityTest extends LinearOpMode {
+public class ServoDebug extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double targetVel = 700;
-    public static double targetVel2 = 400;
-    public static double currentVel;
-    public static double cycles = 20;
-    public static double P;
-    public static double I;
-    public static double D;
-    public static double F;
-
-    public static double TelemVel;
-
+    public static double multi = 0;
+    public static double left = 0;
+    public static double right = 0;
 
     @Override
     public void runOpMode() {
 
-        double clock = 0;
-        boolean slow = true;
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
-        P = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
-        I = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
-        D = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
-        F = robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
-
         waitForStart();
-
-        robot.setShooterVelocity(targetVel);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            if (clock > cycles){
-                slow = !slow;
-                clock = 0;
-            }
 
-            if (slow) {
-                robot.setShooterVelocity(targetVel);
-                currentVel = robot.shooter.getVelocity();
-                TelemVel = targetVel;
-            } else {
-                robot.setShooterVelocity(targetVel2);
-                currentVel = robot.shooter.getVelocity();
-                TelemVel = targetVel2;
-            }
+            robot.turretR.setPower(multi + right);
+            robot.turretL.setPower(multi + left);
 
-            robot.shooter.setVelocityPIDFCoefficients(P, I, D, F);
-
-            telemetry.addData("target Velocity: ", TelemVel);
-            telemetry.addData("current Velocity: ", currentVel);
-            telemetry.addData("PIDF: ", robot.shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
-            telemetry.update();
-
-            // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
-            if (clock <= cycles) {
-                clock++;
-            }
         }
     }
 }

@@ -32,33 +32,25 @@ package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Sort Test", group="TeleOp")
 @Config
-@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class SpindexerSortTest extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
-
-    public static double targetVel = 700;
-
     public static boolean trigger = false;
-    public String action;
+    public static boolean solve = false;
 
     @Override
     public void runOpMode() {
         int[] solution;
-        boolean setup = false;
-        int pacer = 0;
 
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -71,37 +63,28 @@ public class SpindexerSortTest extends LinearOpMode {
         while (opModeIsActive()) {
             solution = robot.solvePattern();
 
-            if (solution != null && !setup){
-                robot.setSpindexerRelativeAngle(120 * solution[0]);
-                setup = true;
+            if (solution != null && solve){
+                robot.spindexerHandler(120 * solution[0]);
+                solve = false;
             }
 
             if (!robot.spindexer.isBusy()) {
 
-                if (setup && trigger && (pacer == 0 || pacer == 40)) {
-                    robot.setSpindexerRelativeAngle(120);
-                    if (pacer == 40) {
-                        pacer = 0;
-                        trigger = false;
-                    }
+                if (!solve && trigger) {
+                    robot.spindexerHandler(-480);
+                    trigger = false;
                 }
-
             }
 
-            telemetry.addData("setup?: ", setup);
+            telemetry.addData("solve?: ", solve);
             telemetry.addData("performing shooting action?: ", trigger);
-            telemetry.addData("pacer: ", pacer);
             telemetry.addData("busy?: ", robot.spindexer.isBusy());
-            telemetry.addData("target Velocity: ", targetVel);
-            telemetry.addData("current Action: ", action);
-            telemetry.addData("current Pattern: ", pattern);
+            telemetry.addData("current Pattern: ", robot.pattern);
+            telemetry.addData(robot.getMagPicture(), "");
            telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
             sleep(50); // ~20 Hz;
-            if (trigger && pacer <= 40){
-                pacer++;
-            }
         }
     }
 }

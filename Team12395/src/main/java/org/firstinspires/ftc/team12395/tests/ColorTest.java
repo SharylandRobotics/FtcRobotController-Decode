@@ -45,7 +45,6 @@ import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Color Test", group="TeleOp")
 @Config
-@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class ColorTest extends LinearOpMode {
 
@@ -54,72 +53,85 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
+    public static float gain = 100;
+    public static boolean testColor = false;
+    public static boolean shoot = false;
+    public static boolean sort = false;
+
     @Override
     public void runOpMode() {
-        char scannedColor;
-        int[] solution = null;
-        int spinAngle;
-        String chamberString = "_  ";
-        NormalizedRGBA colors;
+
+        double cT = 0;
+        double prT = 0;
+
+        boolean runClock = false;
+        int clock = 0;
 
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
+        robot.mag = "000";
+
         waitForStart();
+
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            colors = robot.colorSensor.getNormalizedColors();
-            Color.colorToHSV(colors.toColor(), hsvValues);
-            if (gamepad2.a){
-                spinAngle = 60;
-            } else {
-                spinAngle = 120;
+            NormalizedRGBA color = robot.colorSensor.getNormalizedColors();
+            Color.colorToHSV(color.toColor(), hsvValues);
+            if (testColor){
+                robot.setIntakeSpeed(-800);
             }
-            if (!robot.spindexer.isBusy()) {
-                if (gamepad2.leftBumperWasPressed()) { // ccw
-                    robot.spindexerHandler( spinAngle);
-                } else if (gamepad2.rightBumperWasPressed()) { // cw
-                    robot.spindexerHandler( -spinAngle);
-                }
 
-                chamberString = "UUU";
-                StringBuilder chamberBuilder = new StringBuilder(chamberString);
-                chamberBuilder.setCharAt(robot.chamber, 'V');
-                chamberString = chamberBuilder.toString();
-
-                if (gamepad1.xWasPressed()){
-                    scannedColor = robot.scanColor();
-
-                    if (scannedColor != '0'){
-                        StringBuilder magBuilder = new StringBuilder(mag);
-                        magBuilder.setCharAt(robot.chamber, scannedColor);
-                        mag = magBuilder.toString();
-
-                        //
-
+            String colorS = "UNKNOWN/ROTATING";
+            if (shoot && !robot.mag.contains("0") && !robot.spindexer.isBusy()){
+                robot.setShooterVelocity(400);
+                robot.spindexerHandler(-480);
+                robot.setMagManualBulk("000");
+            } else if (testColor && !robot.spindexer.isBusy() && !runClock && robot.mag.contains("0")){
+                if (hsvValues[2] < 0.15){
+                    colorS = "NONE";
+                } else if (hsvValues[0] > 200 && hsvValues[0] <= 240){
+                    colorS = "PURPLE";
+                    if (robot.mag.charAt(chamber) == '0') {
+                        robot.setChamberManual('P');
                     }
-                }
-
-                if (gamepad1.yWasPressed()){
-                    solution = robot.solvePattern();
+                    runClock = true;
+                } else if (hsvValues[1] > 0.6 && hsvValues[1] < 0.75){
+                    colorS = "GREEN";
+                    if (robot.mag.charAt(chamber) == '0') {
+                        robot.setChamberManual('G');
+                    }
+                    runClock = true;
                 }
             }
 
-
-            telemetry.addData("current Chamber: ", robot.chamber);
-            telemetry.addData("chamber pic: ", chamberString);
-            telemetry.addData("current Mag: ", mag);
-            telemetry.addData("current Pattern: ", pattern);
-            if (solution != null) {
-                telemetry.addData("current solution: ", solution[0] + "120 deg, then " + solution[1] + " 120 deg");
-            } else {
-                telemetry.addData("current solution: ", "no solution");
+            if (sort && !robot.mag.contains("0") && !robot.spindexer.isBusy()){
+                robot.spindexerHandler(120*robot.solvePattern()[0]);
             }
+
+            if (runClock && clock < 5){
+                clock++;
+            }
+
+            if (clock == 4){
+                robot.spindexerHandler(120);
+                clock = 0;
+                runClock = false;
+            }
+
+            telemetry.addData("Color is: ", colorS);
+
+            robot.colorSensor.setGain(gain);
+
+            cT = getRuntime();
+            telemetry.addData("Delay from previous update (s): ", cT - prT);
+            prT = cT;
             telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
-            telemetry.addData("Colors (HSV): ",  "R=%d%n G=%d%n B=%d%n ", colors.red, colors.green, colors.blue);
+            telemetry.addData("float Colors (RGB): ",  "R=%.3f G=%.3f B=%.3f ", color.red, color.green, color.blue);
+            telemetry.addData(robot.getMagPicture(),"");
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
