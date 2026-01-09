@@ -87,7 +87,6 @@ public class RobotHardware {
     private final double driveToTurretRatio = 3.2; // 3.2 rotations to 1, 80/25 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev
     public final double turretTicksPerDegree = turretTicksPerRevolution/360;
-    private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
     private final int shooterMaxTPM = 2800;
 
     private final static double spoolToSpindexerRatio = 1;
@@ -95,8 +94,6 @@ public class RobotHardware {
     public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
     public final double spindexerETicksPerRevolution = 8192;
     public final double spindexerETicksPerDegree = spindexerETicksPerRevolution/360;
-    private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
-
     public double spindexerFudge = 0;
     public int spindexerTarget = 0;
 
@@ -104,9 +101,6 @@ public class RobotHardware {
     private Servo hoodAngle;
 
     // physics
-
-    private final double g = 9.81;
-    private final double xOffset = 5.5; //cm
     private final double yOffset = 16.5*2.54; //cm
     private final double verticalTargetDistance = 70-yOffset;
 
@@ -115,16 +109,9 @@ public class RobotHardware {
     private IMU imu;
 
     // COLOR SENSOR
-
-    public int[] prevColor = null;
-    public int[] currentColor;
-
-    boolean orbPreload;
-    boolean orbDeepPreload;
     private Context appContext;
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
-        //appContext = opmode.hardwareMap.appContext;
     }
 
     /**
@@ -281,33 +268,6 @@ public class RobotHardware {
 
     }
 
-
-    /**
-     * Robot-Centric drive (driver-relative): no IMU rotation applied.
-     * @param axial     forward/backward (+forward)
-     * @param lateral   left/right (+ right)
-     * @param yaw       rotate CCW (+ left turn)
-     */
-    public void driveRobotCentric(double axial, double lateral, double yaw) {
-        // WHY: Standard mecanum mixing (A + L + Y. etc.). Values may exceed |1|; we normalize below.
-        double frontLeftPower  = axial + lateral + yaw;
-        double frontRightPower = axial - lateral - yaw;
-        double backLeftPower   = axial - lateral + yaw;
-        double backRightPower  = axial + lateral - yaw;
-
-        // Normalize so that the highest magnitude is 1.0, preserving ratios
-        double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
-                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-        if (max > 1.0) {
-            frontLeftPower  /= max;
-            frontRightPower /= max;
-            backLeftPower   /= max;
-            backRightPower  /= max;
-        }
-
-        setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
-    }
-
     /**
      * Field-Centric drive (field-relative): rotates driver inputs by -heading so forward is field-forward.
      * @param axial     forward/backward from stick
@@ -397,42 +357,6 @@ public class RobotHardware {
         return turretHandler.getCurrentPosition()/ turretTicksPerDegree;
     }
 
-    /**
-     * angle solver
-     * @param xT x which the curve will fall on (distance)
-     * @param v given velocity
-     * @return (0) the low arc, (1) the high arc)
-     */
-    public double[] findTurretAngles(double xT, double v){
-        double yT = 38.75;
-        double discriminant = Math.sqrt( Math.pow(v,4) - g*((g*xT*xT) + (2*yT*v*v)));
-
-        return new double[] {Math.atan((v * v - discriminant) / g * xT), Math.atan((v * v + discriminant) / g * xT)};
-    }
-
-    /**
-     * graph function
-     * @param x distance to check
-     * @param v given velocity
-     * @param z given angle
-     * @return distance from floor + offset the projectile will be at
-     */
-    public double trajectoryOf(double x, double v, double z){
-        return ( x*Math.tan(z) -( (g*x*x)/(2*v*v*Math.cos(z)*Math.cos(z) ) ) );
-    }
-
-    /**
-     * checks if a given velocity can reach a given coordinate
-     * @param x target x
-     * @param y target y
-     * @param v given velocity
-     * @return boolean response
-     */
-    public boolean shotPossible(double x, double y, double v){
-
-        return Math.sqrt( (x*2*g)/(Math.sin(2*(Math.atan(2*y/x)))) ) == v;
-    }
-
     public double getCurrentSpindexerDegreesPos(){
         return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
     }
@@ -490,12 +414,6 @@ public class RobotHardware {
         } else if (turns > 0){// ccw
             chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
-    }
-
-    public void setSpindexerRelativeAngle(double angle){
-        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
-
-        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     private double[] getValuesToTarget(){
@@ -802,35 +720,6 @@ public class RobotHardware {
             }
         }
 
-        public class automaticIntakeBalls implements Action{
-            public automaticIntakeBalls(){
-
-            }
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                // run until spindexer is full
-                scanColor();
-                boolean rerun = true;
-                if (!spindexer.isBusy() && mag.contains("0")){
-                    if (scannedColor.equals(colorTypes.PURPLE)){
-                        if (mag.charAt(chamber) == '0') {
-                            setChamberManual('P');
-                            spindexerHandler(120);
-                        }
-                    } else if (scannedColor.equals(colorTypes.GREEN)){
-                        if (mag.charAt(chamber) == '0') {
-                            setChamberManual('G');
-                            spindexerHandler(120);
-                        }
-                    }
-                } else if (!mag.contains("0")){
-                    rerun = false;
-                }
-                return rerun;
-            }
-        }
-
         public class shootBalls implements Action{
             public shootBalls(){
 
@@ -899,10 +788,6 @@ public class RobotHardware {
 
         public Action shootAllBalls(){
             return new shootBalls();
-        }
-
-        public Action automaticallyIntakeBalls(){
-            return new automaticIntakeBalls();
         }
 
         public Action setIntakeVel(double vel){
