@@ -49,7 +49,7 @@ public class RobotCentric extends LinearOpMode {
 
     ShooterState shooterState = ShooterState.Start;
     ElapsedTime shooterTimer = new ElapsedTime();
-    String statusMsg;
+    String statusMsg = "";
 
 
     public boolean isTimeUp(double seconds) {
@@ -120,7 +120,7 @@ public class RobotCentric extends LinearOpMode {
                 case Start:
                     if (gamepad1.right_trigger > .5) {
                         statusMsg = "RUNNING AUTO SHOOTER"; //telementry
-                        robot.setIntakeServo(1);
+                        //robot.setIntakeServo(1);
                         // Set velocity based on hood
                         robot.turretVelocity(robot.getHoodPosition() <= .5 ? 100 : 90);
 
@@ -146,7 +146,7 @@ public class RobotCentric extends LinearOpMode {
                     break;
 
                 case ResetIntake:
-                    if (isTimeUp(1)) {
+                    if (isTimeUp(2)) {
                         robot.setIntakeServo(0);
                         shooterState = ShooterState.End;
                     }
@@ -167,12 +167,7 @@ public class RobotCentric extends LinearOpMode {
             if (currentIntakeState && !lastIntakeState) {
                 intakeOn = !intakeOn;
             }
-            if (intakeOn) {
-                robot.intakePower(-.5);
-            } else {
-                robot.intakePower(0);
 
-            }
             lastIntakeState = currentIntakeState;
 
 
@@ -189,21 +184,23 @@ public class RobotCentric extends LinearOpMode {
             }
             lastServoState = currentServoState;
 
-            // intake servo
+            if (shooterState == ShooterState.Start) {
 
-            if (gamepad1.a) {
+                // Manual Intake Power (Triggers/X)
+                if (gamepad1.left_trigger > .5) {
+                    robot.intakePower(-.5);
+                } else if (gamepad1.x) {
+                    robot.intakePower(.5);
+                } else {
+                    robot.intakePower(0);
+                }
 
-                robot.setIntakeServo(0);
-            } else {
-                robot.setIntakeServo(1);
-            }
-
-            //inverse intake
-            if (gamepad1.x) {
-                intakeOn = false;
-                lastIntakeState = !lastIntakeState;
-                robot.intakePower(.5);
-
+                // Manual Intake Servo (A Button)
+                if (gamepad1.a) {
+                    robot.setIntakeServo(0);
+                } else {
+                    robot.setIntakeServo(1);
+                }
             }
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
@@ -265,7 +262,7 @@ public class RobotCentric extends LinearOpMode {
             //telemetry.addData("intake Servo Up/Down", "Button Y toggle");
 
 
-            telemetry.addLine("-----------------------------");
+            telemetry.addLine("Y = Auto shooter kill switch");
             if (statusMsg.equals("KILLED") && shooterTimer.milliseconds() < 3000) {
                 telemetry.addLine("-----------------------------");
                 telemetry.addLine("      SYSTEM KILLED          ");
