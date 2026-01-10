@@ -134,22 +134,19 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        shooter2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
-
-        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "turret")));
-        turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
-        turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
-        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
-
-
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
+        shooter2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "turret")));
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
-        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
-
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
 
+        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
+        turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
+        turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
 
+
+        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
         colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
 
         // --- IMU ORIENTATION ---
@@ -169,10 +166,10 @@ public class RobotHardware {
 
         // --- MOTOR DIRECTIONS ---
         // NOTE: these reversals are common for mecanum so "axial + lateral" maps correctly.
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         shooter2.setDirection(DcMotorEx.Direction.FORWARD);
         shooter.setDirection(DcMotorEx.Direction.REVERSE);
@@ -183,7 +180,7 @@ public class RobotHardware {
         turretL.setDirection(DcMotorSimple.Direction.REVERSE);
         turretE.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        spindexerE.setDirection(DcMotorSimple.Direction.REVERSE);
+        //spindexerE.setDirection(DcMotorSimple.Direction.REVERSE);
 
         turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
 
