@@ -37,9 +37,11 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.ftccommon.SoundPlayer;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -48,6 +50,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.team12395.rr.Localizer;
+import org.firstinspires.ftc.team12395.rr.MecanumDrive;
+import org.firstinspires.ftc.team12395.rr.PinpointLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
@@ -63,6 +68,7 @@ public class RobotHardware {
     private LinearOpMode myOpMode = null;
 
     public Limelight3A limelight;
+    public MecanumDrive standardDrive;
     public LLResult result;
 
     public NormalizedColorSensor colorSensor;
@@ -73,7 +79,7 @@ public class RobotHardware {
     public static int chamber = 0;
 
     // Drivetrain motors for a mecanum chassis
-    private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
+    public DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
 
     public DcMotorEx shooter2, shooter, spindexer, intake;
     public CRServo turretR, turretL;
@@ -138,7 +144,7 @@ public class RobotHardware {
 
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
-        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "intake")));
+        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
 
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
@@ -242,6 +248,8 @@ public class RobotHardware {
         int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
 
+
+
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         myOpMode.telemetry.addData("Sound Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb));
         myOpMode.telemetry.addData("Sound2 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep));
@@ -251,6 +259,18 @@ public class RobotHardware {
 
         FtcDashboard.getInstance().startCameraStream(limelight, 20);
 
+    }
+
+    public void setupMecanumDrive(){
+        standardDrive = new MecanumDrive(myOpMode.hardwareMap, new Pose2d(0, 0, 0));
+    }
+
+    public void setLocalizerPosition(Pose2d pose){
+        try {
+            standardDrive.localizer.setPose(pose);
+        } catch (Exception ex) {
+
+        }
     }
 
 

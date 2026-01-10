@@ -9,6 +9,7 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -25,7 +26,7 @@ public final class PinpointLocalizer implements Localizer {
     public final GoBildaPinpointDriver.EncoderDirection initialParDirection, initialPerpDirection;
 
     private Pose2d txWorldPinpoint;
-    private Pose2d txPinpointRobot = new Pose2d(108/25.4, -168/25.4, 0);
+    private Pose2d txPinpointRobot = new Pose2d(174.92/25.4, -87/25.4, 0);
 
     public PinpointLocalizer(HardwareMap hardwareMap, double inPerTick, Pose2d initialPose) {
         // TODO: make sure your config has a Pinpoint device with this name
@@ -68,5 +69,15 @@ public final class PinpointLocalizer implements Localizer {
             return new PoseVelocity2d(robotVelocity, driver.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS));
         }
         return new PoseVelocity2d(new Vector2d(0, 0), 0);
+    }
+
+    /**
+     *
+     * @return pose formatted in x, y: h deg
+     */
+    @Override
+    public String toString(){
+        Pose2d pose = getPose();
+        return pose.position.x + ", " + pose.position.y + ": " + pose.heading + " deg";
     }
 }
