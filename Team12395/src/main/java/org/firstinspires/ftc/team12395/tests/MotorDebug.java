@@ -27,19 +27,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team12395.tests;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.team12395.RobotHardware;
 import org.firstinspires.ftc.team12395.rr.Localizer;
-
-import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Motor Test", group="TeleOp")
 @Config
@@ -56,7 +52,6 @@ public class MotorDebug extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
-        robot.setupMecanumDrive();
 
         Localizer localizer = robot.standardDrive.localizer;
 
@@ -107,6 +102,8 @@ public class MotorDebug extends LinearOpMode {
             robot.standardDrive.updatePoseEstimate();
 
             telemetry.addData("Pose:", localizer.toString());
+            telemetry.addData("PP heading: ", robot.getPinPointHeading());
+            telemetry.addData("Standard heading: ", robot.getHeading());
             telemetry.update();
 
             sleep(50);

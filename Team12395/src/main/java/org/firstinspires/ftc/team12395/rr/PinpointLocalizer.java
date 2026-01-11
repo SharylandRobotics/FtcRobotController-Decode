@@ -9,7 +9,6 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -56,6 +55,10 @@ public final class PinpointLocalizer implements Localizer {
     @Override
     public Pose2d getPose() {
         return txWorldPinpoint.times(txPinpointRobot);
+    }
+
+    public GoBildaPinpointDriver getDriver(){
+        return driver;
     }
 
     @Override

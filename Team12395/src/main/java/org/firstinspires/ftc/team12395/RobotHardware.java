@@ -38,6 +38,8 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Twist2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.ftccommon.SoundPlayer;
@@ -49,12 +51,9 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.team12395.rr.Localizer;
+import org.firstinspires.ftc.robotcore.external.navigation.*;
 import org.firstinspires.ftc.team12395.rr.MecanumDrive;
 import org.firstinspires.ftc.team12395.rr.PinpointLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,6 +69,7 @@ public class RobotHardware {
     public Limelight3A limelight;
     public MecanumDrive standardDrive;
     public LLResult result;
+    public GoBildaPinpointDriver pinpointDriver;
 
     public NormalizedColorSensor colorSensor;
     public static colorTypes scannedColor = colorTypes.UNKNOWN;
@@ -154,7 +154,7 @@ public class RobotHardware {
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,        // e.g., logo pointing up
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards right
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
@@ -174,7 +174,7 @@ public class RobotHardware {
         shooter2.setDirection(DcMotorEx.Direction.FORWARD);
         shooter.setDirection(DcMotorEx.Direction.REVERSE);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
-        intake.setDirection(DcMotorEx.Direction.REVERSE);
+        intake.setDirection(DcMotorEx.Direction.FORWARD);
 
         turretR.setDirection(DcMotorSimple.Direction.REVERSE);
         turretL.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -256,10 +256,8 @@ public class RobotHardware {
 
         FtcDashboard.getInstance().startCameraStream(limelight, 20);
 
-    }
-
-    public void setupMecanumDrive(){
         standardDrive = new MecanumDrive(myOpMode.hardwareMap, new Pose2d(0, 0, 0));
+        pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
     }
 
     public void setLocalizerPosition(Pose2d pose){
@@ -268,6 +266,10 @@ public class RobotHardware {
         } catch (Exception ex) {
 
         }
+    }
+
+    public double getPinPointHeading(){
+        return pinpointDriver.getHeading(AngleUnit.DEGREES);
     }
 
 
@@ -359,12 +361,6 @@ public class RobotHardware {
         shooter.setVelocity(Range.clip(tPs, 0, shooterMaxTPM));
         shooter2.setPower(shooter.getPower());
     }
-
-    /**
-     *
-     * @return rpm in rps, not tps
-     * max rpm is 100. (6000 mRPM / 60 sec = 100 mRPS * 28 TPR = 2800 mTPS)
-     */
 
     public void setHoodAngle(double angle){
         hoodAngle.setPosition(angle);
@@ -521,6 +517,53 @@ public class RobotHardware {
 
         }
         return new double[]{Double.NaN, Double.NaN};
+    }
+
+    public Pose2d fetchLocalizedPose(){
+        boolean check  = processLLresult();
+        if (check){
+            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
+
+            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Tags: ", fresult.size());
+
+            //TODO check if filtering of tags can be done thru LL config instead
+            for (LLResultTypes.FiducialResult fiducial : fresultCC){
+                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23){
+                    fresult.remove(fiducial);
+                }
+            }
+
+            if (!fresult.isEmpty()) {
+                // placeholder values
+                double cameraOffset = -5;
+                double turretAngle = getCurrentTurretDegreePos();
+                double turretOffset = 10;
+
+                // LL uses meters & deg, RR uses inches & rads
+                limelight.updateRobotOrientation(getHeading() + turretAngle);
+
+                Pose3D rawMT2Pose3D = result.getBotpose_MT2();
+                Position rawMT2Position = rawMT2Pose3D.getPosition().toUnit(DistanceUnit.INCH);
+
+                //TODO translate LL grid into RR grid before finalizing (including yaw & units)
+                Pose2d rawPose = new Pose2d(rawMT2Position.x,
+                                            rawMT2Position.y,
+                                            rawMT2Pose3D.getOrientation().getYaw(AngleUnit.RADIANS));
+
+                Pose2d translatedPose = rawPose
+                        // camera-turret axis offset
+                        .plus(new Twist2d(new Vector2d(-cameraOffset,0), Math.toRadians(0)))
+                        // turret rotation
+                        .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)))
+                        // turret axis-bot center offset
+                        .plus(new Twist2d(new Vector2d(turretOffset,0), Math.toRadians(0)));
+                
+                return translatedPose;
+            }
+        }
+        return new Pose2d(Double.NaN, Double.NaN, Math.toRadians(0));
     }
 
     public boolean processObelisk(){
@@ -750,8 +793,6 @@ public class RobotHardware {
         }
 
         public class setTurretPowerZero implements Action{
-            private double deg;
-
             public setTurretPowerZero(){
 
             }
@@ -797,7 +838,7 @@ public class RobotHardware {
             }
 
             @Override
-            public boolean run(TelemetryPacket packet){
+            public boolean run(@NonNull TelemetryPacket packet){
                 setIntakeSpeed(vel);
                 return false;
             }
