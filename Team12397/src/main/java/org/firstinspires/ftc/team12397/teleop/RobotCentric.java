@@ -42,19 +42,19 @@ public class RobotCentric extends LinearOpMode {
     // NOTE: One RobotHardware instance per OpMode keeps mapping/telemetry simple.
     RobotHardware robot = new RobotHardware(this);
 
-    enum ShooterState {
+    enum TurretState {
         Start, HoldWait, Fire, ResetIntake, End
 
     }
 
-    ShooterState shooterState = ShooterState.Start;
-    ElapsedTime shooterTimer = new ElapsedTime();
+    TurretState turretState = TurretState.Start;
+    ElapsedTime turretTimer = new ElapsedTime();
     String statusMsg = "";
 
 
     public boolean isTimeUp(double seconds) {
-        if (shooterTimer.milliseconds() >= seconds * 1000) {
-            shooterTimer.reset(); // Auto-reset for the next state
+        if (turretTimer.milliseconds() >= seconds * 1000) {
+            turretTimer.reset(); // Auto-reset for the next state
             return true;
         }
         return false;
@@ -103,29 +103,16 @@ public class RobotCentric extends LinearOpMode {
             //shooting mechanism
 
 
-            //kill switch
-            if (gamepad1.y) {
-                robot.setIntakeServo(1);
-                robot.turretVelocity(0);
-                robot.intakePower(0);
-                shooterState = ShooterState.Start;
-                //telementry
-                shooterTimer.reset();
-                statusMsg = "KILLED";
-
-
-            }
-
-            switch (shooterState) {
+            switch (turretState) {
                 case Start:
                     if (gamepad1.right_trigger > .5) {
                         statusMsg = "RUNNING AUTO SHOOTER"; //telementry
-                        //robot.setIntakeServo(1);
-                        // Set velocity based on hood
+
+                        // Set velocity based on hood. 1 = high arch, 0 = low arch
                         robot.turretVelocity(robot.getHoodPosition() <= .5 ? 100 : 90);
 
-                        shooterTimer.reset(); // RESET TIMER HERE (Only once!)
-                        shooterState = ShooterState.HoldWait;
+                        turretTimer.reset(); // RESET TIMER HERE (Only once!)
+                        turretState = TurretState.HoldWait;
                     }
                     break;
 
@@ -133,7 +120,7 @@ public class RobotCentric extends LinearOpMode {
                     if (isTimeUp(10)) { // Wait 1 second (1000ms)
                         robot.setIntakeServo(0);
                         // Timer is auto-reset by your isTimeUp method!
-                        shooterState = ShooterState.Fire;
+                        turretState = TurretState.Fire;
                     }
                     break;
 
@@ -141,14 +128,14 @@ public class RobotCentric extends LinearOpMode {
                     if (isTimeUp(1)) {
                         robot.intakePower(-0.5);
                         robot.setIntakeServo(1);
-                        shooterState = ShooterState.ResetIntake;
+                        turretState = TurretState.ResetIntake;
                     }
                     break;
 
                 case ResetIntake:
                     if (isTimeUp(2)) {
                         robot.setIntakeServo(0);
-                        shooterState = ShooterState.End;
+                        turretState = TurretState.End;
                     }
                     break;
 
@@ -157,36 +144,26 @@ public class RobotCentric extends LinearOpMode {
                     robot.setIntakeServo(1);
                     robot.turretVelocity(0);
                     robot.intakePower(0);
-                    shooterState = ShooterState.Start; // Go back to start so you can shoot again!
+                    turretState = TurretState.Start; // Go back to start so you can shoot again!
                     break;
             }
 
+                //############ CONTROLS ##############
+            //kill switch for auto shooter
+            if (gamepad1.y && turretState != turretState.Start) {
+                robot.setIntakeServo(1);
+                robot.turretVelocity(0);
+                robot.intakePower(0);
+                turretState = TurretState.Start;
+                //telementry
+                turretTimer.reset();
+                statusMsg = "KILLED";
 
-            boolean currentIntakeState = (gamepad1.left_trigger > .5);
 
-            if (currentIntakeState && !lastIntakeState) {
-                intakeOn = !intakeOn;
             }
+            if (turretState == TurretState.Start) {
 
-            lastIntakeState = currentIntakeState;
-
-
-            //hood servo
-
-            boolean currentServoState = (gamepad1.b);
-            if (currentServoState && !lastServoState) {
-                servoOn = !servoOn;
-            }
-            if (servoOn) {
-                robot.setHoodPositions(.8);
-            } else {
-                robot.setHoodPositions(.4);
-            }
-            lastServoState = currentServoState;
-
-            if (shooterState == ShooterState.Start) {
-
-                // Manual Intake Power (Triggers/X)
+                // Manual Intake Power (Trigger/X)
                 if (gamepad1.left_trigger > .5) {
                     robot.intakePower(-.5);
                 } else if (gamepad1.x) {
@@ -200,6 +177,22 @@ public class RobotCentric extends LinearOpMode {
                     robot.setIntakeServo(0);
                 } else {
                     robot.setIntakeServo(1);
+                }
+                // Manual Hood  0 = High arch
+                if (gamepad1.b) {
+
+                    servoOn = !servoOn;
+
+                }
+                if(servoOn){
+                    robot.setHoodPositions(.8);
+                }
+                else {
+                    robot.setHoodPositions(.4);
+                }
+                // manual turret shooter #note same as slow mode camera
+                if(gamepad1.left_bumper){
+                    robot.turretVelocity(90);
                 }
             }
             // Keep vision fresh before using pose values each loop
@@ -238,14 +231,31 @@ public class RobotCentric extends LinearOpMode {
             if (!didAuto) {
                 robot.driveRobotCentric(axial, lateral, yaw);
             }
-
+            // ############### Controls ################
+            if (statusMsg.equals("KILLED") && turretTimer.milliseconds() < 3000) {
+                telemetry.addLine("-----------------------------");
+                telemetry.addLine("      SYSTEM KILLED          ");
+                telemetry.addLine("-----------------------------");
+            }
+            if (statusMsg.equals("RUNNING AUTO SHOOTER")) {
+                telemetry.addLine("-----------------------------");
+                telemetry.addLine(statusMsg);
+                telemetry.addLine("-----------------------------");
+            }
+            telemetry.addLine("Right Trigger Toggle = Auto Turret");
+            telemetry.addLine("Y = Auto shooter kill switch");
+            telemetry.addData("Turn to tag", "Hold Right Bumper");
+            telemetry.addLine("Left Bumper Hold = Manual Turret (Auto Off)");
+            telemetry.addLine("Left Trigger Hold = Intake");
+            telemetry.addLine("B = Hood Servo");
+            telemetry.addLine("A = Intake Servo");
+            telemetry.addLine("X = Reverse Intake");
+            // ############### Camera Data ################
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
-
             String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
-
             telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
             telemetry.addData("Aim", "horiz=%.1f in  aboveHoriz=%s",
                     horiz,
@@ -259,35 +269,9 @@ public class RobotCentric extends LinearOpMode {
             //servo stuff
             telemetry.addData("Drive", "Left Stick");
             telemetry.addData("Turn", "Right Stick");
-            //telemetry.addData("intake Servo Up/Down", "Button Y toggle");
-
-
-            telemetry.addLine("Y = Auto shooter kill switch");
-            if (statusMsg.equals("KILLED") && shooterTimer.milliseconds() < 3000) {
-                telemetry.addLine("-----------------------------");
-                telemetry.addLine("      SYSTEM KILLED          ");
-                telemetry.addLine("-----------------------------");
-            }
-            if (statusMsg.equals("RUNNING AUTO SHOOTER")) {
-                telemetry.addLine("-----------------------------");
-                telemetry.addLine(statusMsg);
-                telemetry.addLine("-----------------------------");
-            }
 
             telemetry.addData("Obelisk", motif);
             telemetry.addData("Goal", (goalId != null) ? goalId : "–");
-
-            telemetry.addData("Intake Servo Up/Down", "Hold A");
-            telemetry.addData("Reverse Intake Motor", "Hold x");
-            telemetry.addData("Hood Servo Up/Down", "Button B toggle");
-
-            telemetry.addData("Turret Motor", "Right Trigger toggle");
-            telemetry.addData("Intake Motor", "Left Trigger toggle");
-
-            telemetry.addData("Drive to tag", "Hold Right Bumper");
-            telemetry.addData(" Slow drive to tag", "Hold Left Bumper");
-
-
             telemetry.update();
 
             sleep(50);
