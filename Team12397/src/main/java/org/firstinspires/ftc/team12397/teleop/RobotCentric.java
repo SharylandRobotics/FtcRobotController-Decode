@@ -194,6 +194,9 @@ public class RobotCentric extends LinearOpMode {
                 if(gamepad1.left_bumper){
                     robot.turretVelocity(90);
                 }
+                else{
+                    robot.turretVelocity(0);
+                }
             }
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
