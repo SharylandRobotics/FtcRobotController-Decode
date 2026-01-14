@@ -29,7 +29,9 @@
 
 package org.firstinspires.ftc.team00000.teleop;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team00000.RobotHardware;
@@ -43,6 +45,13 @@ public class FieldCentric extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
     public static double shooter = 0.0;
+    public static double shooterMaxRpm = 6000.0;
+    public static double shooterKp = 0.0;
+    public static double shooterKi = 0.0;
+    public static double shooterKd = 0.0;
+
+    public static double stopperPower = 0.0;
+    public static double transferPower = 0.0;
 
     @Override
     public void runOpMode() {
@@ -53,6 +62,8 @@ public class FieldCentric extends LinearOpMode {
 
         // Student Note: Initialize hardware (motors, IMU, vision).
         robot.init();
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        telemetry.setMsTransmissionInterval(100);
 
         while(opModeInInit()) {
             // Student Note: Pre‑start check — rotate robot by hand; heading should change.
@@ -68,6 +79,13 @@ public class FieldCentric extends LinearOpMode {
 
         waitForStart();
         if (isStopRequested()) return;
+
+        // Shooter telemetry smoothing (exponential moving average)
+        double shooterActL_f = 0.0;
+        double shooterActR_f = 0.0;
+        double shooterRpmL_f = 0.0;
+        double shooterRpmR_f = 0.0;
+        final double shooterAlpha = 0.20; // higher = more responsive, lower = smoother
 
         while (opModeIsActive()) {
 
@@ -105,13 +123,34 @@ public class FieldCentric extends LinearOpMode {
             // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
             if (!didAuto) {
                 robot.driveFieldCentric(axial, lateral, yaw);
-                robot.setShooterPower(shooter);
             }
+
+            robot.configureShooterVelocityPidfForMaxRpm(shooterMaxRpm, shooterKp, shooterKi, shooterKd);
+            robot.setShooterVelocityPercent(shooter, shooterMaxRpm);
+            robot.setStopperPosition(stopperPower);
+            robot.setTransferPower(transferPower);
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+            telemetry.addData("ShooterCmd", "%.2f", shooter);
+            telemetry.addData("StopperPwr", "%.2f", stopperPower);
+            telemetry.addData("TransferPwr", "%.2f", transferPower);
+            telemetry.addData("ShooterTgt", "%.0f t/s", robot.getShooterTargetTicksPerSec());
+
+            double shooterActL = robot.getTopShooterTicksPerSec();
+            double shooterActR = robot.getBottomShooterTicksPerSec();
+            double shooterRpmL = robot.getTopShooterRpm();
+            double shooterRpmR = robot.getBottomShooterRpm();
+
+            shooterActL_f = shooterAlpha * shooterActL + (1.0 - shooterAlpha) * shooterActL_f;
+            shooterActR_f = shooterAlpha * shooterActR + (1.0 - shooterAlpha) * shooterActR_f;
+            shooterRpmL_f = shooterAlpha * shooterRpmL + (1.0 - shooterAlpha) * shooterRpmL_f;
+            shooterRpmR_f = shooterAlpha * shooterRpmR + (1.0 - shooterAlpha) * shooterRpmR_f;
+
+            telemetry.addData("ShooterAct", "L=%.0f  R=%.0f t/s", shooterActL_f, shooterActR_f);
+            telemetry.addData("ShooterRPM", "L=%.0f  R=%.0f", shooterRpmL_f, shooterRpmR_f);
 
             String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
             telemetry.addData("Obelisk", motif);
@@ -124,7 +163,7 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
-            sleep(50);
+            sleep(100);
         }
     }
 }
