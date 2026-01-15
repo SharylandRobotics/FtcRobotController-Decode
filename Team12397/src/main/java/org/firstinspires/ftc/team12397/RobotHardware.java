@@ -179,7 +179,7 @@ public class RobotHardware {
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,        // e.g., logo pointing up
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards front
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu"); // TODO(STUDENTS): confirm IMU name
@@ -192,9 +192,9 @@ public class RobotHardware {
         // --- MOTOR DIRECTIONS ---
         // NOTE: these reversals are common for mecanum so "axial + lateral" maps correctly.
         // TODO(STUDENTS): If the robot strafes opposite or spins wrong, swap these directions.
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         // --- ENCODER MODES ---
