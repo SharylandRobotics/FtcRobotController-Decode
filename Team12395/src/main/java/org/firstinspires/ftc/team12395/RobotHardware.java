@@ -180,7 +180,7 @@ public class RobotHardware {
         turretL.setDirection(DcMotorSimple.Direction.REVERSE);
         turretE.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        //spindexerE.setDirection(DcMotorSimple.Direction.REVERSE);
+        spindexerE.setDirection(DcMotorSimple.Direction.REVERSE);
 
         turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
 
@@ -537,9 +537,9 @@ public class RobotHardware {
 
             if (!fresult.isEmpty()) {
                 // placeholder values
-                double cameraOffset = -5;
+                double cameraOffset = -77.9953;
                 double turretAngle = getCurrentTurretDegreePos();
-                double turretOffset = 10;
+                double turretOffset = 55;
 
                 // LL uses meters & deg, RR uses inches & rads
                 limelight.updateRobotOrientation(getHeading() + turretAngle);
@@ -554,7 +554,7 @@ public class RobotHardware {
 
                 Pose2d translatedPose = rawPose
                         // camera-turret axis offset
-                        .plus(new Twist2d(new Vector2d(-cameraOffset,0), Math.toRadians(0)))
+                        .plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))
                         // turret rotation
                         .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)))
                         // turret axis-bot center offset

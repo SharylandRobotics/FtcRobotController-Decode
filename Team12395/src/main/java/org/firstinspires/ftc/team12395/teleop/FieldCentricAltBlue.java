@@ -35,9 +35,11 @@ import android.view.View;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team12395.RobotHardware;
+import org.firstinspires.ftc.team12395.rr.Drawing;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
@@ -243,6 +245,19 @@ public class FieldCentricAltBlue extends LinearOpMode {
             telemetry.addData("spindexerE position? ", (robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree));
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
             telemetry.addData("apt deg: ", tSkew);
+
+            robot.standardDrive.updatePoseEstimate();
+
+            TelemetryPacket packet = new TelemetryPacket();
+            packet.fieldOverlay().setStroke("#3F51B5");
+            Drawing.drawRobot(packet.fieldOverlay(), robot.fetchLocalizedPose());
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
+            TelemetryPacket packetRed = new TelemetryPacket();
+            packet.fieldOverlay().setStroke("#B53F51");
+            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose());
+            FtcDashboard.getInstance().sendTelemetryPacket(packetRed);
+
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

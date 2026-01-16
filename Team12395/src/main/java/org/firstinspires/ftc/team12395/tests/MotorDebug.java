@@ -104,6 +104,8 @@ public class MotorDebug extends LinearOpMode {
             telemetry.addData("Pose:", localizer.toString());
             telemetry.addData("PP heading: ", robot.getPinPointHeading());
             telemetry.addData("Standard heading: ", robot.getHeading());
+            telemetry.addData("U spindexer: ", robot.getCurrentSpindexerDegreesPos());
+            telemetry.addData("E spindexer: ", robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree);
             telemetry.update();
 
             sleep(50);
