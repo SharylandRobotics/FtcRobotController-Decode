@@ -19,9 +19,11 @@ public class Red_Meep_meep_13580 {
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-50, 50, Math.toRadians(126)))
                 //path1
-                .lineToY(24)
+                .lineToYLinearHeading(24, Math.toRadians(180))
                 //path2
                 .waitSeconds(2)
+                                .turnTo(Math.toRadians(126))
+                                .waitSeconds(2)
                 //.setTangent(Math.toRadians(90))
                 .setTangent(Math.atan2(54-24, -24+30))
                 .lineToYLinearHeading(54, Math.toRadians(0))
@@ -43,10 +45,10 @@ public class Red_Meep_meep_13580 {
                 //path4intake_middle
                 //.turn(Math.toRadians(-36))
 
-                .setTangent(Math.atan2(30-24, 12+30))
+                .setTangent(Math.atan2(30-24, 8+30))
                 .lineToYLinearHeading(30, Math.toRadians(90))
-                //.splineToConstantHeading(new Vector2d(16, 34),Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(10, 52),Math.toRadians(90))
+                .setTangent(Math.atan2(12-30, 52+30))
+                //.splineToConstantHeading(new Vector2d(10, 52),Math.toRadians(90))
                 //path5
                 .setTangent(Math.atan2(24-52, -30-10))
                 .lineToYLinearHeading(24, Math.toRadians(126))

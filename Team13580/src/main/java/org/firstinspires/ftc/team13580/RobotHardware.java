@@ -171,10 +171,7 @@ public class RobotHardware {
         intakeDrive.setDirection(DcMotor.Direction.REVERSE  );
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         outtakeDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -186,10 +183,6 @@ public class RobotHardware {
         outtakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         outtakeDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         outtakeDrive.setVelocityPIDFCoefficients(50, 1, 3, 1);
 
@@ -252,10 +245,7 @@ public class RobotHardware {
 
             driveRobotCentric(0, 0, 0);
 
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         }
     }
 
@@ -561,7 +551,8 @@ public class RobotHardware {
             new double[]{34, 1110},
             new double[]{50, 1160},
             new double[]{85, 1330},
-            new double[]{105, 1470}
+            new double[]{105, 1470},
+            new double[]{151, 1770}
     ));
     public double getCalculatedVelocity(double distance){
         double returnVal = 500;

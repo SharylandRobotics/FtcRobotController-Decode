@@ -140,19 +140,18 @@ public class NONMotid_Blue extends LinearOpMode {
         robot.init();
 
         Action path1 = drive.actionBuilder(new Pose2d(-50,-50, Math.toRadians(-126)))
-                .lineToY(-24, new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
+                .lineToY(-24, new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
 
         Action path2 = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-126)))
                 .setTangent(0)
-                .splineToLinearHeading(new Pose2d(-4, -58, Math.toRadians(-90)),Math.toRadians(-90))
-                .splineToLinearHeading(new Pose2d(4, -60, Math.toRadians(0)),Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-4, -58, Math.toRadians(-96)),Math.toRadians(-90))
                 .build();
 
 
-        Action path3_opengate = drive.actionBuilder(new Pose2d(4,-60, Math.toRadians(0)))
-                .setTangent(Math.atan2(-24+0, -30+56))
-                .lineToYLinearHeading(-24, Math.toRadians(-136), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
+        Action path3_opengate = drive.actionBuilder(new Pose2d(4,-58, Math.toRadians(-96)))
+                .setTangent(Math.atan2(-24+0, -33+56))
+                .lineToYLinearHeading(-24, Math.toRadians(-130), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
                 // .setTangent(Math.toRadians(0))
                 //.splineTo(new Vector2d(-4, 36),Math.toRadians(-90), new TranslationalVelConstraint(20))
                 //.splineToConstantHeading(new Vector2d(-4, 62),Math.toRadians(-90))
@@ -160,7 +159,7 @@ public class NONMotid_Blue extends LinearOpMode {
                 //.waitSeconds(2)
                 .build();
 
-        Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-126)))
+        Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-33,-24, Math.toRadians(-130)))
                 .setTangent(Math.atan2(-34+24, 17+30))
                 .lineToYLinearHeading(-34, Math.toRadians(-80))
                 //.splineToConstantHeading(new Vector2d(22, 34),Math.toRadians(90))
@@ -172,11 +171,11 @@ public class NONMotid_Blue extends LinearOpMode {
                 .build();
 
         Action path5_shoot3rd = drive.actionBuilder(new Pose2d(26,-60, Math.toRadians(-98)))
-                .setTangent(Math.atan2(-24+60, -30-26))
-                .lineToYLinearHeading(-24, Math.toRadians(-126), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(-24+60, -33-26))
+                .lineToYLinearHeading(-24, Math.toRadians(-130), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
                         .build();
 
-        Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-126)))
+        Action path6_intakelast = drive.actionBuilder(new Pose2d(-33,-24, Math.toRadians(-130)))
                 .setTangent(Math.atan2(-34+24, 52+30))
                 .lineToYLinearHeading(-34, Math.toRadians(-102))
                 .setTangent(Math.atan2(-64+34, 32-52))
@@ -185,11 +184,11 @@ public class NONMotid_Blue extends LinearOpMode {
                         .build();
 
         Action path7_lastshot = drive.actionBuilder(new Pose2d(32,-64, Math.toRadians(-102)))
-                .setTangent(Math.atan2(-24+64, -30-32))
+                .setTangent(Math.atan2(-24+64, -32-32))
                 .lineToYLinearHeading(-24, Math.toRadians(-131), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
                         .build();
 
-        Action path8_park = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-131)))
+        Action path8_park = drive.actionBuilder(new Pose2d(-32,-24, Math.toRadians(-131)))
                 .setTangent(Math.atan2(-24+54, 0))
                 .lineToYLinearHeading(-54, Math.toRadians(-90), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
                         .build();
