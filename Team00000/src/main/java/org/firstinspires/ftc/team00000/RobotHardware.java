@@ -64,8 +64,8 @@ public class RobotHardware {
     private DcMotorEx topShooter;
     private DcMotorEx bottomShooter;
 
-    private Servo leftStopper;
-    private Servo rightStopper;
+    private CRServo leftStopper;
+    private CRServo rightStopper;
     private CRServo frontLeftTransfer;
     private CRServo frontRightTransfer;
 
@@ -88,12 +88,12 @@ public class RobotHardware {
     private int backRightTarget;
 
     // Student Note: Camera pose (robot frame). +X forward, +Y left, +Z up (in).
-    // Pitch +15° = camera looks UP 15°. Update if you remount the camera.
+    // Pitch +8° = camera looks UP 8°. Update if you remount the camera.
     // TODO(students): Measure real offsets when you rely on precise vision assists.
     private final Position cameraPosition = new Position(DistanceUnit.INCH,
-            0, 0, 0, 0);
+            0, -2.34, 16, 0);
     private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, 15, 0, 0);
+            0, 8, 0, 0);
 
     private AprilTagProcessor aprilTag = null;
 
@@ -154,15 +154,15 @@ public class RobotHardware {
         topShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "top_shooter");
         bottomShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "bottom_shooter");
 
-        leftStopper = myOpMode.hardwareMap.get(Servo.class, "left_stopper");
-        rightStopper = myOpMode.hardwareMap.get(Servo.class, "right_stopper");
+        leftStopper = myOpMode.hardwareMap.get(CRServo.class, "left_stopper");
+        rightStopper = myOpMode.hardwareMap.get(CRServo.class, "right_stopper");
         frontLeftTransfer = myOpMode.hardwareMap.get(CRServo.class, "front_left_transfer");
         frontRightTransfer = myOpMode.hardwareMap.get(CRServo.class, "front_right_transfer");
 
         // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
@@ -176,6 +176,8 @@ public class RobotHardware {
         topShooter.setDirection(DcMotor.Direction.REVERSE);
         bottomShooter.setDirection(DcMotor.Direction.REVERSE);
 
+        leftStopper.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightStopper.setDirection(DcMotorSimple.Direction.REVERSE);
         frontLeftTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRightTransfer.setDirection(DcMotorSimple.Direction.FORWARD);
 
@@ -455,10 +457,10 @@ public class RobotHardware {
         return Math.abs(bottomShooter.getVelocity() * 60.0 / ticksPerRev);
     }
 
-    public void setStopperPosition(double position) {
-        double p = Range.clip(position, -1.0, 1.0);
-        leftStopper.setPosition(p);
-        rightStopper.setPosition(p);
+    public void setStopperPower(double power) {
+        double p = Range.clip(power, -1.0, 1.0);
+        leftStopper.setPower(p);
+        rightStopper.setPower(p);
     }
 
     public void setTransferPower(double power) {

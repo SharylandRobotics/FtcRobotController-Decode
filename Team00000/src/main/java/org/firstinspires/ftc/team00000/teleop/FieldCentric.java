@@ -127,7 +127,7 @@ public class FieldCentric extends LinearOpMode {
 
             robot.configureShooterVelocityPidfForMaxRpm(shooterMaxRpm, shooterKp, shooterKi, shooterKd);
             robot.setShooterVelocityPercent(shooter, shooterMaxRpm);
-            robot.setStopperPosition(stopperPower);
+            robot.setStopperPower(stopperPower);
             robot.setTransferPower(transferPower);
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
