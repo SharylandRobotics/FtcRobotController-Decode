@@ -71,7 +71,7 @@ public class RobotHardware {
     public LLResult result;
     public GoBildaPinpointDriver pinpointDriver;
 
-    public NormalizedColorSensor colorSensor;
+    public NormalizedColorSensor color0, color1, color2;
     public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
     public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
@@ -90,7 +90,7 @@ public class RobotHardware {
     public static int maxTurnR = 100 ;
     public static int maxTurnL = 100; // negative
 
-    private final double driveToTurretRatio = 3.2; // 3.2 rotations to 1, 80/25 teeth
+    private final double driveToTurretRatio = 3; // 3.2 rotations to 1, 120/40 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev
     public final double turretTicksPerDegree = turretTicksPerRevolution/360;
     private final int shooterMaxTPM = 2800;
@@ -147,7 +147,9 @@ public class RobotHardware {
 
 
         spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
-        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
+        color0 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color0");
+        color1 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color1");
+        color2 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color2");
 
         // --- IMU ORIENTATION ---
         // TODO: UPDATE ALONGSIDE ROADRUNNER
@@ -228,7 +230,9 @@ public class RobotHardware {
 
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        colorSensor.setGain(100);
+        color0.setGain(100);
+        color1.setGain(100);
+        color2.setGain(100);
 
         // SERVO POSITIONS
 
@@ -681,7 +685,7 @@ public class RobotHardware {
     }
 
     public void scanColor(){
-        NormalizedRGBA color = colorSensor.getNormalizedColors();
+        NormalizedRGBA color = color0.getNormalizedColors();
         float[] hsvValues = new float[3];
         Color.colorToHSV(color.toColor(), hsvValues);
 

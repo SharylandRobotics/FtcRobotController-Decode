@@ -11,11 +11,13 @@ import java.time.temporal.Temporal;
 public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(700);
+        Pose2d example = new Pose2d(-20, -40, Math.toRadians(25));
+        /*
 
         double cameraOffset = 5;
         double turretAngle = -45;
 
-        Pose2d example = new Pose2d(0, 0, Math.toRadians(45));
+
 
 
 
@@ -30,6 +32,13 @@ public class MeepMeepTesting {
         // turret axis-bot center offset
         example = example.plus(new Twist2d(new Vector2d(10,0), Math.toRadians(0)));
 
+         */
+
+        Pose2d target = new Pose2d(-70, 56, Math.toRadians(0));
+        double deg = Math.atan2(target.position.y - example.position.y,
+                target.position.x - example.position.x) - example.heading.imag;
+
+
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
@@ -37,8 +46,8 @@ public class MeepMeepTesting {
                 .build();
 
                 myBot.runAction(myBot.getDrive().actionBuilder(example)
-                                        .setTangent(Math.toRadians(90))
-                                        .splineToConstantHeading(new Vector2d(-35, -58), Math.toRadians(-90))
+                                .turn(deg)
+                                .splineToConstantHeading(target.position, deg + example.heading.imag)
                         .build());
 
 
