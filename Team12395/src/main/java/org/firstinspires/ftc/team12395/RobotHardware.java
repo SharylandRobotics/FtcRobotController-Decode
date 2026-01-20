@@ -71,7 +71,7 @@ public class RobotHardware {
     public LLResult result;
     public GoBildaPinpointDriver pinpointDriver;
 
-    public NormalizedColorSensor color0, color1, color2;
+    public NormalizedColorSensor colorSensor0, colorSensor1, colorSensor2;
     public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
     public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
@@ -147,9 +147,9 @@ public class RobotHardware {
 
 
         spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
-        color0 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color0");
-        color1 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color1");
-        color2 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color2");
+        colorSensor0 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color0");
+        colorSensor1 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color1");
+        colorSensor2 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color2");
 
         // --- IMU ORIENTATION ---
         // TODO: UPDATE ALONGSIDE ROADRUNNER
@@ -230,9 +230,9 @@ public class RobotHardware {
 
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        color0.setGain(100);
-        color1.setGain(100);
-        color2.setGain(100);
+        colorSensor0.setGain(100);
+        colorSensor1.setGain(100);
+        colorSensor2.setGain(100);
 
         // SERVO POSITIONS
 
@@ -570,6 +570,11 @@ public class RobotHardware {
         return new Pose2d(Double.NaN, Double.NaN, Math.toRadians(0));
     }
 
+    public double turretAngleToTarget(Pose2d target, Pose2d currentPose){
+        return Math.atan2(target.position.y - currentPose.position.y,
+                target.position.x - currentPose.position.x) - currentPose.heading.imag;
+    }
+
     public boolean processObelisk(){
         if (processLLresult()){
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
@@ -685,18 +690,84 @@ public class RobotHardware {
     }
 
     public void scanColor(){
-        NormalizedRGBA color = color0.getNormalizedColors();
+        NormalizedRGBA color = colorSensor0.getNormalizedColors();
         float[] hsvValues = new float[3];
         Color.colorToHSV(color.toColor(), hsvValues);
 
-        scannedColor = colorTypes.UNKNOWN;
-        if (hsvValues[2] < 0.15){
-            scannedColor = colorTypes.NONE;
-        } else if (hsvValues[0] > 200 && hsvValues[0] <= 240){
-            scannedColor = colorTypes.PURPLE;
-        } else if (hsvValues[1] > 0.6 && hsvValues[1] < 0.75){
-            scannedColor = colorTypes.GREEN;
+        colorTypes color0 = classifyColor(hsvValues);
+
+        color = colorSensor1.getNormalizedColors();
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        colorTypes color1 = classifyColor(hsvValues);
+
+        color = colorSensor2.getNormalizedColors();
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        colorTypes color2 = classifyColor(hsvValues);
+
+        //    (0)
+        // (1)   (2)
+        String colorHolder = "";
+
+        switch (color0) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
         }
+
+        switch (color2) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        switch (color1) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        setMagManualBulk(colorHolder);
+    }
+
+    public colorTypes classifyColor(float[] hsvValues){
+        colorTypes color = colorTypes.UNKNOWN;
+        if (hsvValues[2] < 0.15){
+            color = colorTypes.NONE;
+        } else if (hsvValues[0] > 180 && hsvValues[0] <= 240){
+            color = colorTypes.PURPLE;
+        } else if (hsvValues[1] > 0.5 && hsvValues[1] < 0.8){
+            color = colorTypes.GREEN;
+        }
+        return color;
     }
 
     public String getMagPicture(){
