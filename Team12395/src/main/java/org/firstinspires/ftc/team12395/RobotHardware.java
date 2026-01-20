@@ -47,6 +47,7 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
@@ -71,7 +72,7 @@ public class RobotHardware {
     public LLResult result;
     public GoBildaPinpointDriver pinpointDriver;
 
-    public NormalizedColorSensor colorSensor0, colorSensor1, colorSensor2;
+    public RevColorSensorV3 colorSensor0, colorSensor1, colorSensor2;
     public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
     public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
@@ -147,9 +148,9 @@ public class RobotHardware {
 
 
         spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
-        colorSensor0 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color0");
-        colorSensor1 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color1");
-        colorSensor2 = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color2");
+        colorSensor0 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color0");
+        colorSensor1 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color1");
+        colorSensor2 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color2");
 
         // --- IMU ORIENTATION ---
         // TODO: UPDATE ALONGSIDE ROADRUNNER

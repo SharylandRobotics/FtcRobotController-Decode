@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
@@ -53,8 +54,7 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
-    public static float gain = 100;
-    public static boolean testColor = false;
+    public static float gain = 30;
 
     @Override
     public void runOpMode() {
@@ -87,6 +87,7 @@ public class ColorTest extends LinearOpMode {
 
             colorTypes color0 = robot.classifyColor(hsvValues);
             telemetry.addData("Color0 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color0 Range (IN): ",  robot.colorSensor0.getDistance(DistanceUnit.INCH));
             telemetry.addData("Classified color: ",  color0);
 
             color = robot.colorSensor1.getNormalizedColors();
@@ -94,6 +95,7 @@ public class ColorTest extends LinearOpMode {
 
             colorTypes color1 = robot.classifyColor(hsvValues);
             telemetry.addData("Color1 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color1 Range (IN): ",  robot.colorSensor1.getDistance(DistanceUnit.INCH));
             telemetry.addData("Classified color: ",  color1);
 
             color = robot.colorSensor2.getNormalizedColors();
@@ -101,6 +103,7 @@ public class ColorTest extends LinearOpMode {
 
             colorTypes color2 = robot.classifyColor(hsvValues);
             telemetry.addData("Color2 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color2 Range (IN): ",  robot.colorSensor2.getDistance(DistanceUnit.INCH));
             telemetry.addData("Classified color: ",  color2);
 
             cT = getRuntime();
