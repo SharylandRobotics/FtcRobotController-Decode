@@ -140,64 +140,61 @@ public class RRRedAuto extends LinearOpMode {
         robot.init();
 
         Action path1 = drive.actionBuilder(new Pose2d(-50,50, Math.toRadians(126)))
-                .lineToY(24)
+                .lineToYLinearHeading(24, Math.toRadians(180))
+                .turnTo(Math.toRadians(126))
                 .build();
 
-        Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(0)))
-                .setTangent(Math.atan2(60-24, -28+30))
-                .lineToYLinearHeading(61, Math.toRadians(0))
+        Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
+                .setTangent(Math.atan2(54-24, 24-30))
+                .lineToYLinearHeading(54, Math.toRadians(0))
                 .setTangent(0)
-                .lineToXLinearHeading(-21, Math.toRadians(-12 ))
-                .build();
-
-        Action path3 = drive.actionBuilder(new Pose2d(-22,54, Math.toRadians(0)))
+                .lineToXLinearHeading(-22, Math.toRadians(-6))
                 .setTangent(Math.atan2(36-54, -8+22))
                 .lineToYLinearHeading(36, Math.toRadians(-90))
+                .setTangent(Math.atan2(54-36, -2+8))
+                .lineToYLinearHeading(54, Math.toRadians(-90))//-open gate
                 .build();
 
-        Action path3_opengate = drive.actionBuilder(new Pose2d(-8,36, Math.toRadians(-90)))
-                .splineToConstantHeading(new Vector2d(-2, 53),Math.toRadians(90))
-
-                .setTangent(Math.atan2(24-53, -30+2))
-                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
-                // .setTangent(Math.toRadians(0))
-                //.splineTo(new Vector2d(-4, 36),Math.toRadians(-90), new TranslationalVelConstraint(20))
-                //.splineToConstantHeading(new Vector2d(-4, 62),Math.toRadians(-90))
-                //.splineTo(new Vector2d(-30, 24), Math.toRadians(126))
-                //.waitSeconds(2)
+        Action path3 = drive.actionBuilder(new Pose2d(-2,54, Math.toRadians(-90)))
+                .setTangent(Math.atan2(24-54, -30+2))
+                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
 
         Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-                .setTangent(Math.atan2(30-24, 12+30))
+                .setTangent(Math.atan2(30-24, 8+30))
                 .lineToYLinearHeading(30, Math.toRadians(90))
-                //.splineToConstantHeading(new Vector2d(22, 34),Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(10, 52),Math.toRadians(90))
+                .setTangent(Math.atan2(56-30, 20-8))
+                .lineToYLinearHeading(56, Math.toRadians(90))
                         .build();
 
-        /*
-        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(10,62, Math.toRadians(90)))
-                .setTangent(Math.atan2(24-52, -30-10))
-                .lineToYLinearHeading(24, Math.toRadians(126))
+
+        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(20,56, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-56, -30-20))
+                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
         Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-                .setTangent(Math.atan2(-38+24, -38-30))
-                .lineToYLinearHeading(38, Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(30, 56),Math.toRadians(90))
+                .setTangent(Math.atan2(30-24, 35+30))
+                .lineToYLinearHeading(30, Math.toRadians(90))
+                .setTangent(Math.atan2(32-30, 35-35))
+                .lineToYLinearHeading(33, Math.toRadians(90))
+                .setTangent(Math.atan2(56-33, 40-35))
+                .lineToYLinearHeading(56, Math.toRadians(80))
                         .build();
 
-        Action path7_lastshot = drive.actionBuilder(new Pose2d(30,56, Math.toRadians(90)))
-                .setTangent(Math.atan2(24-56, -30-30))
+        Action path7_lastshot = drive.actionBuilder(new Pose2d(40,56, Math.toRadians(80)))
+                .setTangent(Math.atan2(24-56, -30-40))
                 .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
         Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
                 .setTangent(Math.atan2(24-50, 0))
-                .lineToYLinearHeading(54, Math.toRadians(90))
-                        .build();
+                .lineToYLinearHeading(54, Math.toRadians(90), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+
+                .build();
 
 
-         */
+
 
 
 
@@ -213,6 +210,7 @@ public class RRRedAuto extends LinearOpMode {
                                 path1,
                                 shoot(900)
                         ),
+                        new SleepAction(.5),
                         spinUp(),
                         rightkick(1),
                         leftkick(1),
@@ -220,18 +218,11 @@ public class RRRedAuto extends LinearOpMode {
                         rightkick(0),
                         leftkick(0),
                         new ParallelAction(
-                        path2,
-                        spinUp2(.5)
-                        ),
-                        new ParallelAction(
-                                path3,
-                                shoot(1100),
+                                path2,
                                 spinUp2(.5)
+                                shoot(1150),
                         ),
-                        new ParallelAction(
-                                path3_opengate,
-                                spinUp2(.3)
-                        ),
+                        path3,
                         spinUp2(.5),
                         rightkick(1),
                         leftkick(1),
@@ -241,11 +232,11 @@ public class RRRedAuto extends LinearOpMode {
                         new ParallelAction(
                                 path4_intakemiddle,
                                 spinUp2(.5)
-                        )/*,
+                        ),
                         new ParallelAction(
                                 path5_shoot3rd,
-                                spinUp2(.3),
-                                shoot(1100)
+                                spinUp2(.5),
+                                shoot(1150)
                         ),
                         rightkick(1),
                         leftkick(1),
@@ -259,7 +250,7 @@ public class RRRedAuto extends LinearOpMode {
                         spinUp2(.3),
                         new ParallelAction(
                                 path7_lastshot,
-                                shoot(1100)
+                                shoot(1150)
                         ),
                         rightkick(1),
                         leftkick(1),
@@ -272,7 +263,7 @@ public class RRRedAuto extends LinearOpMode {
                                 spinUp2(0),
                                 shoot(0)
                         )
-                        */
+
                 )
         );
     }
