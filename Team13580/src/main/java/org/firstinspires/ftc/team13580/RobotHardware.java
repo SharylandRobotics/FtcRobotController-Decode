@@ -46,8 +46,6 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 // Student Notes: Hardware wrapper ("robot API") for drive, IMU, and AprilTag vision.
@@ -63,7 +61,7 @@ public class RobotHardware {
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
     private DcMotor intakeDrive;
-    public DcMotorEx outtakeDrive;
+    private DcMotorEx outtakeDrive;
 
     private CRServo kicker;
     private CRServo kickerLeft;
@@ -171,7 +169,10 @@ public class RobotHardware {
         intakeDrive.setDirection(DcMotor.Direction.REVERSE  );
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
 
-
+        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         outtakeDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -183,8 +184,10 @@ public class RobotHardware {
         outtakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         outtakeDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        outtakeDrive.setVelocityPIDFCoefficients(50, 1, 3, 1);
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
@@ -245,7 +248,10 @@ public class RobotHardware {
 
             driveRobotCentric(0, 0, 0);
 
-
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
 
@@ -547,42 +553,18 @@ public class RobotHardware {
 
     public double getGoalRangeIn() { return goalRangeIn; }
 
-    private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
-            new double[]{34, 1110},
-            new double[]{50, 1160},
-            new double[]{85, 1330},
-            new double[]{105, 1470},
-            new double[]{151, 1770}
-    ));
-    public double getCalculatedVelocity(double distance){
-        double returnVal = 500;
-        int maxIndex = velDataPoints.size()-1;
-        double[] slopeList = new double[maxIndex];
-        for (int i=0; i<maxIndex; i++){
-            slopeList[i] = (
-                    (velDataPoints.get(i+1)[1] - velDataPoints.get(i)[1]) /
-                            (velDataPoints.get(i+1)[0] - velDataPoints.get(i)[0])
-            );
-        }
-        double velZeroIntercept = velDataPoints.get(0)[1] - slopeList[0]*velDataPoints.get(0)[0];
+    private double mapDistanceToSpeed(double d) {
+        double minDistance = 24.0;  // closest distance
+        double maxDistance = 105.0; // farthest distance
+        double minSpeed = 1150;     // speed at closest
+        double maxSpeed = 1510;     // speed at farthest
 
-        for (int i=0; i<slopeList.length; i++){
-            if (i == 0){
-                if (distance >= 0 && distance <= velDataPoints.get(0)[0]){
-                    returnVal = velZeroIntercept + distance*slopeList[0];
-                }
-            } else if (distance > velDataPoints.get(i)[0] && distance <= velDataPoints.get(i+1)[0]){
-                myOpMode.telemetry.addData("Bottom Reference: ", velDataPoints.get(i)[0] +", " +velDataPoints.get(i)[1]);
-                myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
-                returnVal = velDataPoints.get(i)[1] + (distance-velDataPoints.get(i)[0])*slopeList[i];
-            }
-        }
+        // clamp distance
+        if (d < minDistance) d = minDistance;
+        if (d > maxDistance) d = maxDistance;
 
-        return returnVal;
-    }
-
-    public double getFloorDistance(){
-        return Math.sqrt(Math.pow(getGoalRangeIn(), 2) - Math.pow(16,2));
+        // linear interpolation
+        return minSpeed + (d - minDistance) * (maxSpeed - minSpeed) / (maxDistance - minDistance);
     }
 
 
@@ -599,6 +581,30 @@ public class RobotHardware {
     public void resetObeliskMotif() {
         obeliskMotif = null;
         obeliskTagId = null;
+    }
+
+    public boolean autoDriveToGoalStep() {
+        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
+            return false;
+        }
+
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+
+        // === NEW: Control OUTTAKE motor based on AprilTag distance ===
+        if (!Double.isNaN(goalRangeIn)) {
+            double speed = mapDistanceToSpeed(goalRangeIn);
+            outtakeDrive.setVelocity(speed);
+        }
+
+        double headingError =  goalBearingDeg;
+        double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
+
+        double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
+        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
+
+        driveRobotCentric(axial, lateral, yaw);
+        return true;
     }
     public void setKickerPower(double speed){
         kicker.setPower(-speed);

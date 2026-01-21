@@ -23,8 +23,6 @@ public class FieldCentricCamara extends LinearOpMode {
         boolean outtakeManual = false;
         boolean xPreviouslyPressed = false;
 
-        boolean autoSetSped = false;
-
         robot.init();
 
         while (opModeInInit()) {
@@ -52,20 +50,17 @@ public class FieldCentricCamara extends LinearOpMode {
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            robot.driveFieldCentric(axial, lateral, yaw);
+            // Auto-drive using camera
+            boolean didAuto = robot.autoDriveToGoalStep();
 
-            if (gamepad1.xWasPressed()){
-                autoSetSped = !autoSetSped;
+            // Drive robot if not auto-driving
+            if (!didAuto) {
+                robot.driveFieldCentric(axial, lateral, yaw);
             }
-
-            if (autoSetSped && !Double.isNaN(robot.getGoalRangeIn())){
-                outtake = robot.getCalculatedVelocity(robot.getFloorDistance());
-            }
-
 
             // Intake control
             if (gamepad1.right_trigger == 1) {
-                intake = 0.5;
+                intake = 0.6;
             } else if (gamepad1.dpad_down) {
                 intake = -1;
             } else if (gamepad1.right_bumper) {
@@ -81,12 +76,16 @@ public class FieldCentricCamara extends LinearOpMode {
             }
             xPreviouslyPressed = gamepad1.x;
 
-           if (gamepad1.y) {
+            // Set outtake speed
+            if (didAuto) {
+                // autoDriveToGoalStep() already sets outtake
+                outtake = 0; // optional, to avoid using uninitialized value
+            } else if (outtakeManual) {
                 outtake = 1300;  // manual toggle speed
-           } else if (!autoSetSped){
+            } else {
                 outtake = gamepad1.left_trigger * 2000;
-           }
-           robot.setOuttakeVelocity((int) outtake);
+            }
+            robot.setOuttakeVelocity((int) outtake);
 
             // Kicker control
             robot.setKickerPower(gamepad1.b ? kickerForwardPos : kickerBackPos);
@@ -94,11 +93,10 @@ public class FieldCentricCamara extends LinearOpMode {
 
             // Telemetry
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Vel : ", outtake);
+            telemetry.addData("Assist", didAuto ? "AUTO→TAG" : "MANUAL");
+            telemetry.addData("Outtake Toggle", outtakeManual ? "ON (1300)" : "OFF");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
-            telemetry.addData("Distnace: ", robot.getFloorDistance());
-            telemetry.addData("nDistance: ", robot.getGoalRangeIn());
             telemetry.update();
 
             sleep(50);
