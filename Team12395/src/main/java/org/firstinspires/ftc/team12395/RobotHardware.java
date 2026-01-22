@@ -88,8 +88,8 @@ public class RobotHardware {
 
     public servoDrivenEncoder turretHandler;
 
-    public static int maxTurnR = 100 ;
-    public static int maxTurnL = 100; // negative
+    public static int maxTurnR = 150 ;
+    public static int maxTurnL = 150; // negative
 
     private final double driveToTurretRatio = 3; // 3.2 rotations to 1, 120/40 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev

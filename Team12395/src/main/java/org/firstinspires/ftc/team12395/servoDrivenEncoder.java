@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.arcrobotics.ftclib.controller.PDController;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.Range;
@@ -21,9 +22,9 @@ public class servoDrivenEncoder {
     int targetPos;
 
 
-    public static double P = 0.00017;
-    public static double I = 0.0000015;
-    public static double D = 0.000005;
+    public static double P = 0.0004;
+    public static double I = 0.00002;
+    public static double D = 0.000055;
 
     PIDController controller = new PIDController(P, I, D);
 

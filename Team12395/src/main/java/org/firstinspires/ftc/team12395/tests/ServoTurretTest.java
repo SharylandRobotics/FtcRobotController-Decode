@@ -98,7 +98,7 @@ public class ServoTurretTest extends LinearOpMode {
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
-            telemetry.addData("Pos: ", robot.turretHandler.getCurrentPosition());
+            telemetry.addData("Pos: ", robot.turretHandler.getCurrentPosition()/robot.turretTicksPerDegree);
             telemetry.addData("Power: ", robot.turretHandler.getServoPower());
             telemetry.addData("Error Deg: ", robot.turretHandler.getCurrentError()/robot.turretTicksPerDegree);
             telemetry.addData("Output: ", robot.turretHandler.getOutput());
