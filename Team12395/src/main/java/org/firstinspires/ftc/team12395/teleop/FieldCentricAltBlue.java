@@ -148,12 +148,12 @@ public class FieldCentricAltBlue extends LinearOpMode {
                 } else if (!runTurnClock && robot.mag.contains("0")) {
 
                     if (scannedColor.equals(colorTypes.PURPLE)){
-                        if (robot.mag.charAt(chamber) == '0') {
+                        if (robot.mag.charAt(robot.chamber) == '0') {
                             robot.setChamberManual('P');
                             runTurnClock = true;
                         }
                     } else if (scannedColor.equals(colorTypes.GREEN)){
-                        if (robot.mag.charAt(chamber) == '0') {
+                        if (robot.mag.charAt(robot.chamber) == '0') {
                             robot.setChamberManual('G');
                             runTurnClock = true;
                         }

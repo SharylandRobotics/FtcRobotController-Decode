@@ -77,7 +77,8 @@ public class RobotHardware {
 
     public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
     public String pattern = "PPG";// a pattern is better than no pattern
-    public static int chamber = 0;
+    public int chamber = 0;
+    public int firingChamber = 1;
 
     // Drivetrain motors for a mecanum chassis
     public DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
@@ -403,6 +404,8 @@ public class RobotHardware {
         } else if (turns > 0){// ccw
             chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
+
+        firingChamber = (chamber+2) % 3;
     }
 
     public void maintainSpindexerHandler(){
