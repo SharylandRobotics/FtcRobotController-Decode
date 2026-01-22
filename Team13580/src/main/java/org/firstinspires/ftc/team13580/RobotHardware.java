@@ -61,7 +61,7 @@ public class RobotHardware {
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
     private DcMotor intakeDrive;
-    private DcMotorEx outtakeDrive;
+    public DcMotorEx outtakeDrive;
 
     private CRServo kicker;
     private CRServo kickerLeft;
@@ -166,13 +166,9 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        intakeDrive.setDirection(DcMotor.Direction.REVERSE  );
+        intakeDrive.setDirection(DcMotor.Direction.REVERSE);
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         outtakeDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -184,142 +180,14 @@ public class RobotHardware {
         outtakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         outtakeDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
         initAprilTag();
-    }
-
-    public void driveStraight(double maxAxialSpeed, double distance, double heading) {
-
-        if (myOpMode.opModeIsActive()) {
-
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
-            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
-
-            frontLeftDrive.setTargetPosition(frontLeftTarget);
-            backLeftDrive.setTargetPosition(backLeftTarget);
-            frontRightDrive.setTargetPosition(frontRightTarget);
-            backRightDrive.setTargetPosition(backRightTarget);
-
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            axialSpeed = Math.abs(maxAxialSpeed);
-            driveRobotCentric(axialSpeed, 0, 0);
-
-            // Student Note: Encoder straight drive with P‑turn correction to hold heading.
-            // TODO(students): Tune P_AXIAL_GAIN if it wiggles or under‑corrects.
-            while (myOpMode.opModeIsActive() &&
-                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
-                    frontRightDrive.isBusy() && backRightDrive.isBusy())) {
-
-                yawSpeed = getSteeringCorrection(heading, AXIAL_GAIN);
-
-                if (distance < 0)
-                    yawSpeed *= -1.0;
-
-                driveRobotCentric(axialSpeed, 0, yawSpeed);
-
-                myOpMode.telemetry.addData("Motion", "Drive Straight");
-                myOpMode.telemetry.addData("Target Pos FL:BL:FR:BR", "%7d:%7d:%7d:%7d",
-                        frontLeftTarget,  backLeftTarget, frontRightTarget, backRightTarget);
-                myOpMode.telemetry.addData("Actual Pos FL:BL:FR:BR","%7d:%7d:%7d:%7d",
-                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
-                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
-                myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                        targetHeading, getHeading());
-                myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                        headingError, yawSpeed);
-                myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                        frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-                //updateAprilTagDetections();
-                myOpMode.telemetry.update();
-            }
-
-            driveRobotCentric(0, 0, 0);
-
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-    }
-
-    public void turnToHeading(double maxYawSpeed, double heading) {
-
-        getSteeringCorrection(heading, YAW_GAIN);
-
-        // Student Note: Turn‑in‑place until heading error is small.
-        // TODO(students): Tune P_YAW_GAIN for snappier or smoother turns.
-        while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
-
-            yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
-
-            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-            driveRobotCentric(0, 0, yawSpeed);
-
-            myOpMode.telemetry.addData("Motion", "Turning");
-            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                    targetHeading, getHeading());
-            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                    headingError, yawSpeed);
-            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            //updateAprilTagDetections();
-            myOpMode.telemetry.update();
-        }
-
-        driveRobotCentric(0, 0, 0);
-    }
-
-    public void holdHeading(double maxYawSpeed, double heading, double holdTime) {
-
-        ElapsedTime holdTimer = new ElapsedTime();
-        holdTimer.reset();
-
-        // Student Note: Briefly hold heading to let the robot settle after a move.
-        while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
-
-            yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
-
-            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-            driveRobotCentric(0, 0, yawSpeed);
-
-            myOpMode.telemetry.addData("Motion", "Hold Heading");
-            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                    targetHeading, getHeading());
-            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                    headingError, yawSpeed);
-            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            //updateAprilTagDetections();
-            myOpMode.telemetry.update();
-        }
-
-        driveRobotCentric(0, 0, 0);
-    }
-
-    public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
-        targetHeading = desiredHeading;
-
-        headingError = -targetHeading + getHeading();
-
-        while (headingError > 180) headingError -= 360;
-        while (headingError <= -180) headingError += 360;
-
-        return Range.clip(headingError * proportionalGain, -1.0, 1.0);
     }
 
     public void driveRobotCentric(double axial, double lateral, double yaw) {
@@ -397,55 +265,6 @@ public class RobotHardware {
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
-    }
-
-    public void driveEncoder(double speed, double leftFrontInches, double leftBackInches, double rightFrontInches, double rightBackInches){
-        // drives only while myOpMode is active
-        if(myOpMode.opModeIsActive()){
-
-
-            //determine new target position
-            int leftFrontTarget = frontLeftDrive.getCurrentPosition() + (int)(leftFrontInches * COUNTS_PER_INCH);
-            int leftBackTarget = backLeftDrive.getCurrentPosition() + (int)(leftBackInches * COUNTS_PER_INCH);
-            int rightFrontTarget = frontRightDrive.getCurrentPosition() + (int)(rightFrontInches * COUNTS_PER_INCH);
-            int rightBackTarget = backRightDrive.getCurrentPosition() + (int)(rightBackInches * COUNTS_PER_INCH);
-
-            frontLeftDrive.setTargetPosition(leftFrontTarget - 1);
-            backLeftDrive.setTargetPosition(leftBackTarget - 1 );
-            frontRightDrive.setTargetPosition(rightFrontTarget - 1);
-            backRightDrive.setTargetPosition(rightBackTarget - 1 );
-
-            //turn on RUN_TO_POSITION
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-            setDrivePower(Math.abs(speed), Math.abs(speed), Math.abs(speed), Math.abs(speed));
-
-            while ((myOpMode.opModeIsActive() &&
-                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
-                            frontRightDrive.isBusy() && backRightDrive.isBusy()))){
-
-                //display it for driver
-
-                myOpMode.telemetry.addData("Running to ", " %7d :%7d :%7d :%7d",
-                        leftFrontTarget, leftBackTarget, rightFrontTarget, rightBackTarget);
-                myOpMode.telemetry.addData("Currently at ", "%7d ;%7d :%7d :%7d",
-                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
-                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
-                myOpMode.telemetry.update();
-            }
-
-            setDrivePower(0, 0, 0, 0 );
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            myOpMode.sleep(200); //optional pause after each move
-        }
     }
 
     private void initAprilTag() {

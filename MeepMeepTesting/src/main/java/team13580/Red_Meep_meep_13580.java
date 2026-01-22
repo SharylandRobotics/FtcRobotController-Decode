@@ -19,10 +19,8 @@ public class Red_Meep_meep_13580 {
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-50, 50, Math.toRadians(126)))
                 //path1
-                .lineToYLinearHeading(24, Math.toRadians(180))
+                .lineToYLinearHeading(24, Math.toRadians(126))
                 //path2
-                .waitSeconds(2)
-                                .turnTo(Math.toRadians(126))
                                 .waitSeconds(2)
                 //.setTangent(Math.toRadians(90))
                 //path 2intake

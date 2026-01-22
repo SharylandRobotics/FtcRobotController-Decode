@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team13580.RobotHardware;
 import org.firstinspires.ftc.team13580.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team13580.roadrunner.TwoDeadWheelLocalizer;;
 
 import java.lang.Math;
 
@@ -140,19 +141,19 @@ public class RRRedAuto extends LinearOpMode {
         robot.init();
 
         Action path1 = drive.actionBuilder(new Pose2d(-50,50, Math.toRadians(126)))
-                .lineToYLinearHeading(24, Math.toRadians(180))
-                .turnTo(Math.toRadians(126))
+                .setTangent(Math.atan2(24-50, -30+50))
+                .lineToY(24)
                 .build();
 
         Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-                .setTangent(Math.atan2(54-24, 24-30))
+//                .setTangent(Math.atan2(54-24, 24+30))
                 .lineToYLinearHeading(54, Math.toRadians(0))
-                .setTangent(0)
-                .lineToXLinearHeading(-22, Math.toRadians(-6))
-                .setTangent(Math.atan2(36-54, -8+22))
-                .lineToYLinearHeading(36, Math.toRadians(-90))
-                .setTangent(Math.atan2(54-36, -2+8))
-                .lineToYLinearHeading(54, Math.toRadians(-90))//-open gate
+//                .setTangent(0)
+//                .lineToXLinearHeading(-22, Math.toRadians(-6))
+//                .setTangent(Math.atan2(36-54, -8+22))
+//                .lineToYLinearHeading(36, Math.toRadians(-90))
+//                .setTangent(Math.atan2(54-36, -2+8))
+//                .lineToYLinearHeading(54, Math.toRadians(-90))//-open gate
                 .build();
 
         Action path3 = drive.actionBuilder(new Pose2d(-2,54, Math.toRadians(-90)))
@@ -210,7 +211,7 @@ public class RRRedAuto extends LinearOpMode {
                                 path1,
                                 shoot(900)
                         ),
-                        new SleepAction(.5),
+                       new SleepAction(.5),
                         spinUp(),
                         rightkick(1),
                         leftkick(1),
@@ -219,9 +220,10 @@ public class RRRedAuto extends LinearOpMode {
                         leftkick(0),
                         new ParallelAction(
                                 path2,
-                                spinUp2(.5)
-                                shoot(1150),
-                        ),
+                              spinUp2(.5),
+                               shoot(1150)
+                        )
+                        /*
                         path3,
                         spinUp2(.5),
                         rightkick(1),
@@ -264,7 +266,13 @@ public class RRRedAuto extends LinearOpMode {
                                 shoot(0)
                         )
 
+                         */
+
+
+
                 )
         );
+
+
     }
 }
