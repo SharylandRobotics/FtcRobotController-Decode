@@ -560,6 +560,8 @@ public class RobotHardware {
                                             rawMT2Position.y,
                                             rawMT2Pose3D.getOrientation().getYaw(AngleUnit.RADIANS));
 
+                myOpMode.telemetry.addData("Raw Pose: ", rawPose.position);
+
                 Pose2d translatedPose = rawPose
                         // camera-turret axis offset
                         .plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))

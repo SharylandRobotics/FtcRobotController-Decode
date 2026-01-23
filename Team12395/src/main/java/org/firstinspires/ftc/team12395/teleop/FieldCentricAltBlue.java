@@ -201,14 +201,18 @@ public class FieldCentricAltBlue extends LinearOpMode {
 
             robot.standardDrive.updatePoseEstimate();
 
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), robot.fetchLocalizedPose());
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+            Pose2d llpose = robot.fetchLocalizedPose();
+
+            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)){
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.fieldOverlay().setStroke("#3F51B5");
+                Drawing.drawRobot(packet.fieldOverlay(), llpose);
+                FtcDashboard.getInstance().sendTelemetryPacket(packet);
+            }
 
             TelemetryPacket packetRed = new TelemetryPacket();
-            packet.fieldOverlay().setStroke("#B53F51");
-            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose());
+            packetRed.fieldOverlay().setStroke("#B53F51");
+            Drawing.drawRobot(packetRed.fieldOverlay(), robot.standardDrive.localizer.getPose());
             FtcDashboard.getInstance().sendTelemetryPacket(packetRed);
 
             if (gamepad2.a){
