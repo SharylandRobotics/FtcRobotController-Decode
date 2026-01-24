@@ -98,9 +98,9 @@ public class FieldCentricAltBlue extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            axial   = -gamepad1.left_stick_y*0.75;
+            lateral =  gamepad1.left_stick_x*0.75;
+            yaw     =  gamepad1.right_stick_x*0.75;
 
             if (gamepad1.right_trigger > 0.05){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
             robot.driveFieldCentric(axial, lateral, yaw);
@@ -121,13 +121,13 @@ public class FieldCentricAltBlue extends LinearOpMode {
                     intakeVel = 0;
 
                 } else if (intakeVel == 0){ intakeVel = 1; }
-                robot.setIntakeSpeed(intakeVel*1400);
+                robot.setIntakeSpeed(intakeVel*1600);
             } else if (gamepad1.dpadDownWasPressed()){
                 if (intakeVel != -1){
                     intakeVel = -1;
 
                 } else  { intakeVel = 0; }
-                robot.setIntakeSpeed(intakeVel*1400);
+                robot.setIntakeSpeed(intakeVel*1600);
             }
 
             robot.scanColor();
@@ -138,14 +138,14 @@ public class FieldCentricAltBlue extends LinearOpMode {
                     robot.spindexerHandler(120);
                 } else if (gamepad1.rightBumperWasPressed()) { // cw
                     if (velocity == preSetVelocityFar){
-                        robot.spindexerHandler(-480, 800);
+                        robot.spindexerHandler(-480, 500);
                     } else {
                         robot.spindexerHandler(-480);
                     }
                     robot.setMagManualBulk("000");
-                } else if (gamepad1.dpadUpWasPressed() && !robot.mag.contains("0")) {
+                } else if (false) {
                     robot.spindexerHandler(120*robot.solvePattern()[0]);
-                } else if (!runTurnClock && robot.mag.contains("0")) {
+                } else if (!runTurnClock && false) {
 
                     if (scannedColor.equals(colorTypes.PURPLE)){
                         if (robot.mag.charAt(robot.chamber) == '0') {
@@ -201,25 +201,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
 
             robot.standardDrive.updatePoseEstimate();
 
-            Pose2d llpose = robot.fetchLocalizedPose();
-
-            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)){
-                TelemetryPacket packet = new TelemetryPacket();
-                packet.fieldOverlay().setStroke("#3F51B5");
-                Drawing.drawRobot(packet.fieldOverlay(), llpose);
-                FtcDashboard.getInstance().sendTelemetryPacket(packet);
-            }
-
-            TelemetryPacket packetRed = new TelemetryPacket();
-            packetRed.fieldOverlay().setStroke("#B53F51");
-            Drawing.drawRobot(packetRed.fieldOverlay(), robot.standardDrive.localizer.getPose());
-            FtcDashboard.getInstance().sendTelemetryPacket(packetRed);
-
-            if (gamepad2.a){
-                robot.setTurretHandlerAbsolute(
-                        robot.turretAngleToTarget(new Pose2d(-70, -56, 0), robot.fetchLocalizedPose())
-                );
-            } else if (turretToggle){
+            if (turretToggle){
                 double[] tData = robot.homeToAprilTagBlue();
                 double errorDeg = tData[0];
 
@@ -266,6 +248,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
             telemetry.addData("spindexerE position? ", (robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree));
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
             telemetry.addData("turret deg: ", robot.getCurrentTurretDegreePos());
+            telemetry.addData("target turret deg: ", lastTargetTurretPos);
             telemetry.addData("apt deg: ", tSkew);
 
 

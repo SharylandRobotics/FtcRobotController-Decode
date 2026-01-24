@@ -90,9 +90,9 @@ public class RRautoRed extends LinearOpMode {
 
                                 driveToPLShoot
                         ),
-                        new SleepAction(2),
+                        //new SleepAction(2),
                         actionLib.shootAllBalls(),
-                        new SleepAction(2),
+                        new SleepAction(1.5),
                         updatePose()
                 )
         );
@@ -110,7 +110,7 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction( // drive to first row & switch spindexer
                                 driveToRow1,
-                                actionLib.setIntakeVel(1400)
+                                actionLib.setIntakeVel(1600)
                                 /*
                                 new SequentialAction(
                                         new RaceAction(
@@ -121,7 +121,7 @@ public class RRautoRed extends LinearOpMode {
                                 )
                                  */
                         ),
-                        new SleepAction(1),
+                        new SleepAction(0.2),
                         /*
                         new RaceAction(
                                 new ParallelAction(
@@ -155,9 +155,9 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         //actionLib.setIntakeVel(0),
                         driveToGate,
-                        new SleepAction(1),
+                        //new SleepAction(1),
                         actionLib.shootAllBalls(),
-                        new SleepAction(2),
+                        new SleepAction(1.5),
                         updatePose()
                 )
         );
@@ -172,9 +172,9 @@ public class RRautoRed extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        actionLib.setIntakeVel(1400),
+                        actionLib.setIntakeVel(1600),
                         driveToRow2,
-                        new SleepAction(1),
+                        new SleepAction(0.2),
                         actionLib.setIntakeVel(0),
                         updatePose()
                 )
@@ -190,7 +190,7 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         driveToShoot2,
                         actionLib.shootAllBalls(),
-                        new SleepAction(2),
+                        new SleepAction(1.5),
                         updatePose()
                 )
         );
@@ -205,9 +205,9 @@ public class RRautoRed extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        actionLib.setIntakeVel(1400),
+                        actionLib.setIntakeVel(1600),
                         driveToRow3,
-                        new SleepAction(1),
+                        new SleepAction(0.2),
                         actionLib.setIntakeVel(0),
                         updatePose()
                 )
@@ -227,8 +227,14 @@ public class RRautoRed extends LinearOpMode {
                 new SequentialAction(
                         driveToShoot3,
                         actionLib.shootAllBalls(),
-                        new SleepAction(2),
-                        driveOff
+                        new SleepAction(1.5),
+                        new ParallelAction(
+                                driveOff,
+                                new RaceAction(
+                                        actionLib.setTurretPos(0),
+                                        new SleepAction(2)
+                                )
+                        )
                 )
         );
     }

@@ -88,8 +88,8 @@ public class RobotHardware {
 
     public servoDrivenEncoder turretHandler;
 
-    public static int maxTurnR = 150 ;
-    public static int maxTurnL = 150; // negative
+    public static int maxTurnR = 140 ;
+    public static int maxTurnL = 140; // negative
 
     private final double driveToTurretRatio = 3; // 3.2 rotations to 1, 120/40 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev
@@ -404,7 +404,7 @@ public class RobotHardware {
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(800);
+        spindexer.setVelocity(600);
     }
 
     public void spindexerHandler(int targetAdd,  int vel){

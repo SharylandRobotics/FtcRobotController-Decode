@@ -49,10 +49,10 @@ public class FieldCentricAltRed extends LinearOpMode {
     public static double velocity = 0;
     public static double angle = 0.1;
 
-    public static double preSetVelocityFar = 1600;
+    public static double preSetVelocityFar = 1900;
     public static double preSetAngleFar = 0.3;
-    public static double preSetAngleClose = 0;
-    public static double preSetVelocityClose = 1120;
+    public static double preSetAngleClose = 0.8;
+    public static double preSetVelocityClose = 1400;
 
     public static int intakeVel = 0;
 
@@ -91,9 +91,9 @@ public class FieldCentricAltRed extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            axial   = -gamepad1.left_stick_y*0.9;
+            lateral =  gamepad1.left_stick_x*0.9;
+            yaw     =  gamepad1.right_stick_x*0.9;
 
             if (gamepad1.right_trigger > 0.05){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
             robot.driveFieldCentric(axial, lateral, yaw);
@@ -114,13 +114,13 @@ public class FieldCentricAltRed extends LinearOpMode {
                     intakeVel = 0;
 
                 } else if (intakeVel == 0){ intakeVel = 1; }
-                robot.setIntakeSpeed(intakeVel);
+                robot.setIntakeSpeed(intakeVel*1600);
             } else if (gamepad1.dpadDownWasPressed()){
                 if (intakeVel != -1){
                     intakeVel = - 1;
 
                 } else  { intakeVel = 0; }
-                robot.setIntakeSpeed(intakeVel);
+                robot.setIntakeSpeed(intakeVel*1600);
             }
 
             robot.scanColor();
@@ -131,14 +131,14 @@ public class FieldCentricAltRed extends LinearOpMode {
                     robot.spindexerHandler(120);
                 } else if (gamepad1.rightBumperWasPressed()) { // cw
                     if (velocity == preSetVelocityFar){
-                        robot.spindexerHandler(-480, 575);
+                        robot.spindexerHandler(-480, 500);
                     } else {
                         robot.spindexerHandler(-480);
                     }
                     robot.setMagManualBulk("000");
-                } else if (gamepad1.dpadUpWasPressed()) {
+                } else if (false) {
                     robot.spindexerHandler(120*robot.solvePattern()[0]);
-                } else if (!runTurnClock && robot.mag.contains("0")) {
+                } else if (!runTurnClock && false) {
 
                     if (scannedColor.equals(colorTypes.PURPLE)){
                         if (robot.mag.charAt(robot.chamber) == '0') {
