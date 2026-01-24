@@ -36,10 +36,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Twist2d;
-import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.ftccommon.SoundPlayer;
@@ -51,11 +48,13 @@ import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
 import org.firstinspires.ftc.team12395.rr.MecanumDrive;
 import org.firstinspires.ftc.team12395.rr.PinpointLocalizer;
 
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -127,6 +126,7 @@ public class RobotHardware {
      * Call once from your OPMode before driving.
      */
     public void init() {
+        standardDrive = new MecanumDrive(myOpMode.hardwareMap, new Pose2d(0, 0, 0));
         appContext = myOpMode.hardwareMap.appContext;
         // --- HARDWARE MAP NAMES ---
         limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
@@ -175,8 +175,8 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        shooter2.setDirection(DcMotorEx.Direction.FORWARD);
-        shooter.setDirection(DcMotorEx.Direction.REVERSE);
+        shooter2.setDirection(DcMotorEx.Direction.REVERSE);
+        shooter.setDirection(DcMotorEx.Direction.FORWARD);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.FORWARD);
 
@@ -190,10 +190,6 @@ public class RobotHardware {
 
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         shooter2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -212,12 +208,6 @@ public class RobotHardware {
         spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         spindexer.setTargetPosition(0);
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -230,7 +220,7 @@ public class RobotHardware {
         shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
-        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         colorSensor0.setGain(100);
         colorSensor1.setGain(100);
@@ -262,13 +252,14 @@ public class RobotHardware {
 
         FtcDashboard.getInstance().startCameraStream(limelight, 20);
 
-        standardDrive = new MecanumDrive(myOpMode.hardwareMap, new Pose2d(0, 0, 0));
+
         pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
     }
 
     public void setLocalizerPosition(Pose2d pose){
         try {
             standardDrive.localizer.setPose(pose);
+            standardDrive.localizer.update();
         } catch (Exception ex) {
 
         }
@@ -347,7 +338,7 @@ public class RobotHardware {
 
 
     public void setIntakeSpeed(double vel){
-        intake.setPower(vel);
+        intake.setVelocity(vel);
     }
 
     public void setTurretHandlerRelative(double deg){
@@ -435,6 +426,8 @@ public class RobotHardware {
         } else if (turns > 0){// ccw
             chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
+
+        firingChamber = (chamber+2) % 3;
     }
 
     private double[] getValuesToTarget(){
@@ -550,7 +543,7 @@ public class RobotHardware {
                 double turretOffset = 55;
 
                 // LL uses meters & deg, RR uses inches & rads
-                limelight.updateRobotOrientation(getHeading() + turretAngle);
+                limelight.updateRobotOrientation(getHeading() - 90 + turretAngle);
 
                 Pose3D rawMT2Pose3D = result.getBotpose_MT2();
                 Position rawMT2Position = rawMT2Pose3D.getPosition().toUnit(DistanceUnit.INCH);
@@ -626,9 +619,9 @@ public class RobotHardware {
             int greenIndex = mag.indexOf("G");
             switch (pattern) {
                 case "GPP":
-                    if (greenIndex == chamber) {// if green is selected
+                    if (greenIndex == firingChamber) {// if green is selected
                         return new int[]{0, -2};// don't move, turn right twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn left, then turn right twice
                         return new int[]{1, -2};
                     } else {
@@ -637,9 +630,9 @@ public class RobotHardware {
                     }
 
                 case "PGP":
-                    if (greenIndex == chamber) { // if green is selected
+                    if (greenIndex == firingChamber) { // if green is selected
                         return new int[]{1, -2}; //  turn left, then turn right twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn right (2x left), then turn right twice
                         return new int[]{2, -2};
                     } else {
@@ -648,9 +641,9 @@ public class RobotHardware {
                     }
 
                 case "PPG":
-                    if (greenIndex == chamber) { // if green is selected
+                    if (greenIndex == firingChamber) { // if green is selected
                         return new int[]{2, 2}; //  turn cw (2x ccw), then turn cw twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, don't move, turn cw twice
                         return new int[]{0, -2};
                     } else {
@@ -672,13 +665,14 @@ public class RobotHardware {
     }
 
     public void setMagManualBulk(String set){
-        //      (chamber on 0)         012
+        //   (firing chamber on 2)
+        //      (chamber on 0)         210
         // set things in a cw manner ( XYZ )
         //    0(X)
         // 1(Z)   2(Y)
         StringBuilder magBuilder = new StringBuilder(mag);
         for (int i=0; i<3; i++) {
-            magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
+            magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
             mag = magBuilder.toString();
         }
     }
@@ -716,21 +710,6 @@ public class RobotHardware {
         // (1)   (2)
         String colorHolder = "";
 
-        switch (color0) {
-            case GREEN:
-                colorHolder += "G";
-                break;
-
-            case PURPLE:
-                colorHolder += "P";
-                break;
-
-            case NONE:
-            case UNKNOWN:
-                colorHolder += "0";
-                break;
-        }
-
         switch (color2) {
             case GREEN:
                 colorHolder += "G";
@@ -761,7 +740,37 @@ public class RobotHardware {
                 break;
         }
 
-        setMagManualBulk(colorHolder);
+        switch (color0) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        setColorMagManualBulk(colorHolder);
+    }
+
+    public void setColorMagManualBulk(String set){
+        //   (firing chamber on 2)
+        //      (chamber on 0)         210
+        // set things in a cw manner ( XYZ )
+        //    0(X)
+        // 1(Z)   2(Y)
+        StringBuilder magBuilder = new StringBuilder(mag);
+        for (int i=0; i<3; i++) {
+            if (set.charAt(i) != '0') {
+                magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
+                mag = magBuilder.toString();
+            }
+        }
     }
 
     public colorTypes classifyColor(float[] hsvValues){
@@ -893,8 +902,33 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(120*solvePattern()[0]);
+                int[] solve = solvePattern();
+                if (solve != null) {
+                    spindexerHandler(120 * solve[0]);
+                }
                 return false;
+            }
+        }
+
+        public class wiggleSpindexer implements Action{
+            private ElapsedTime timer = new ElapsedTime();
+            private int stage = 0;
+            public wiggleSpindexer(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (stage == 0){
+                    spindexerHandler(10, 600);
+                    stage++;
+                }
+
+                if (stage == 1 && timer.seconds() >= 0.5){
+                    spindexerHandler(-10,600);
+                    stage++;
+                }
+                return (stage < 2);
             }
         }
 
@@ -923,6 +957,26 @@ public class RobotHardware {
                 setIntakeSpeed(vel);
                 return false;
             }
+        }
+
+        public class scanColorSensor implements Action{
+
+            public scanColorSensor(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                scanColor();
+                return true;
+            }
+        }
+
+        public Action wiggleSpindexer(){
+            return new wiggleSpindexer();
+        }
+        public Action scanColorToggle(){
+            return new scanColorSensor();
         }
 
         public Action shootAllBalls(){

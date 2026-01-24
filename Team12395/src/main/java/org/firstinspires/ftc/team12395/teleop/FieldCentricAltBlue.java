@@ -127,7 +127,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
                     intakeVel = -1;
 
                 } else  { intakeVel = 0; }
-                robot.setIntakeSpeed(intakeVel);
+                robot.setIntakeSpeed(intakeVel*1200);
             }
 
             robot.scanColor();
@@ -265,6 +265,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
             telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
             telemetry.addData("spindexerE position? ", (robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree));
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
+            telemetry.addData("turret deg: ", robot.getCurrentTurretDegreePos());
             telemetry.addData("apt deg: ", tSkew);
 
 

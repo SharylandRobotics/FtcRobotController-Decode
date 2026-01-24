@@ -32,14 +32,14 @@ public class MeepMeepTesting {
         double deg = Math.atan2(target.position.y - example.position.y,
                 target.position.x - example.position.x) - example.heading.imag;
          */
-        Pose2d startPose = new Pose2d(-61.885, 37, Math.toRadians(90));
+        Pose2d startPose = new Pose2d(-47, 50, Math.toRadians(125));
 
-        Pose2d shoot1 =  new Pose2d(-16, 28, Math.toRadians(90));
+        Pose2d shoot1 =  new Pose2d(-20, 22, Math.toRadians(90));
 
         Pose2d preIntake1 = new Pose2d(-11, 28, Math.toRadians(90));
         Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 55, Math.toRadians(90));
 
-        Pose2d openGate = new Pose2d(-1, 55, Math.toRadians(90));
+        Pose2d openGate = new Pose2d(-1, postIntake1.position.y, Math.toRadians(90));
 
         Pose2d preIntake2 = new Pose2d(12, 28, Math.toRadians(90));
         Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y, Math.toRadians(90));
@@ -55,7 +55,8 @@ public class MeepMeepTesting {
 
                 myBot.runAction(myBot.getDrive().actionBuilder(startPose)
                                 .setTangent(Math.atan2(shoot1.position.y - startPose.position.y, shoot1.position.x - startPose.position.x))
-                                .lineToX(shoot1.position.x)
+                                //.lineToXLinearHeading(-28, Math.toRadians(180))
+                                .lineToXLinearHeading(shoot1.position.x, shoot1.heading)
                         // shoot
                                 .setTangent(0)
                                 .lineToX(preIntake1.position.x)
