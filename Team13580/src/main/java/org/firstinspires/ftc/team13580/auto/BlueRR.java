@@ -37,16 +37,19 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team13580.RobotHardware;
 import org.firstinspires.ftc.team13580.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team13580.roadrunner.TwoDeadWheelLocalizer;;
 
 import java.lang.Math;
+import java.security.cert.CertificateNotYetValidException;
 
 @Autonomous(name = "Blue RR", group = "auto")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public abstract class BlueRR extends LinearOpMode {
+public class BlueRR extends LinearOpMode {
 
     // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
+
 
     class SpinUp implements Action {
         private boolean initialized = false;
@@ -113,31 +116,91 @@ public abstract class BlueRR extends LinearOpMode {
     }
 
     Action spinUp(){
-        return new BlueRR.SpinUp();
+        return new SpinUp();
     }
     Action shoot(int vel) {
-        return new BlueRR.Shoot(vel);
+        return new Shoot(vel);
     }
 
     Action rightkick(double power){
-        return new BlueRR.RightKicker(power);
+        return new RightKicker(power);
     }
     Action leftkick(double power){
-        return new BlueRR.LeftKicker(power);
+        return new LeftKicker(power);
     }
     Action spinUp2(double power){
-        return new BlueRR.spinUp2(power);
+        return new spinUp2(power);
     }
+
+
 
     @Override
     public void runOpMode() {
         MecanumDrive drive = new MecanumDrive(hardwareMap,
-                new Pose2d(-50, 50, Math.toRadians(126)));
+                new Pose2d(-50,-50, Math.toRadians(-126)));
         // Initialize all motors and IMU before start
         robot.init();
-        Action path1 = drive.actionBuilder(new Pose2d(-50, -50, Math.toRadians(-126)))
-                .lineToY(-24)
+
+        Action path1 = drive.actionBuilder(new Pose2d(-50,-50, Math.toRadians(-126)))
+                //.setTangent(Math.atan2(24-50, -30+50))
+                .lineToYLinearHeading(-24, Math.toRadians(-126))
                 .build();
+
+        Action path2 = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-126)))
+                .setTangent(Math.atan2(-20+24, -8+30))
+                .lineToYLinearHeading(-20, Math.toRadians(-90))
+                .setTangent(Math.atan2(-32+20, 0))
+                .lineToYLinearHeading(-32, Math.toRadians(-90))
+                .setTangent(Math.atan2(-32+32, -11+8))
+                .lineToX(-11)
+                .setTangent(Math.atan2(-54+28, 0))
+                .lineToYLinearHeading(-54, Math.toRadians(-90))
+                .build();
+
+        Action path3 = drive.actionBuilder(new Pose2d(-11,-54, Math.toRadians(-90)))
+                .setTangent(Math.atan2(-24+54, -30+11))
+                .lineToYLinearHeading(-24, Math.toRadians(-126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .build();
+
+        Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
+                .setTangent(Math.atan2(30-24, 8+30))
+                .lineToYLinearHeading(30, Math.toRadians(90))
+                .setTangent(Math.atan2(56-30, 20-8))
+                .lineToYLinearHeading(56, Math.toRadians(90))
+                .build();
+
+
+        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(20,56, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-56, -30-20))
+                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .build();
+
+        Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
+                .setTangent(Math.atan2(30-24, 35+30))
+                .lineToYLinearHeading(30, Math.toRadians(90))
+                .setTangent(Math.atan2(32-30, 35-35))
+                .lineToYLinearHeading(33, Math.toRadians(90))
+                .setTangent(Math.atan2(56-33, 40-35))
+                .lineToYLinearHeading(56, Math.toRadians(80))
+                .build();
+
+        Action path7_lastshot = drive.actionBuilder(new Pose2d(40,56, Math.toRadians(80)))
+                .setTangent(Math.atan2(24-56, -30-40))
+                .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .build();
+
+        Action path8_park = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-126)))
+                .setTangent(Math.atan2(-24+54, 0))
+                .lineToYLinearHeading(-54, Math.toRadians(-90), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+
+                .build();
+
+
+
+
+
+
+
 
         waitForStart();
 
@@ -145,13 +208,81 @@ public abstract class BlueRR extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
+                        new ParallelAction(
+                                path1,
+                                shoot(950)
+                        ),
+                        spinUp(),
+                        new ParallelAction(
+                                shoot(950),
+                                rightkick(1),
+                                leftkick(1)
+                        ),
+                        new SleepAction(2),
+                        rightkick(0),
+                        leftkick(0),
+                        new ParallelAction(
+                                path2,
+                                spinUp2(.5),
+                                shoot(1250)
+                        ),
+                        path3,
+                        spinUp2(.5),
+                        rightkick(1),
+                        leftkick(1),
+                        new SleepAction(2),
+                        rightkick(0),
+                        leftkick(0),
+                        new ParallelAction(
+                                path8_park,
+                                rightkick(0),
+                                leftkick(0),
+                                spinUp2(0),
+                                shoot(0)
+                        )
+                        /*
+                        new ParallelAction(
+                                path4_intakemiddle,
+                                spinUp2(.5)
+                        ),
+                        new ParallelAction(
+                                path5_shoot3rd,
+                                spinUp2(.5),
+                                shoot(1150)
+                        ),
+                        rightkick(1),
+                        leftkick(1),
+                        new SleepAction(2),
+                        rightkick(0),
+                        leftkick(0),
+                        new ParallelAction(
+                                path6_intakelast,
+                                spinUp2(.5)
+                        ),
+                        spinUp2(.3),
+                        new ParallelAction(
+                                path7_lastshot,
+                                shoot(1150)
+                        ),
+                        rightkick(1),
+                        leftkick(1),
+                        spinUp2(.5),
+                        new SleepAction(2),
+                        new ParallelAction(
+                                path8_park,
+                                rightkick(0),
+                                leftkick(0),
+                                spinUp2(0),
+                                shoot(0)
+                        )
+                        */
+
+
+
                 )
         );
+
+
     }
-
-
-
-
-
 }
 

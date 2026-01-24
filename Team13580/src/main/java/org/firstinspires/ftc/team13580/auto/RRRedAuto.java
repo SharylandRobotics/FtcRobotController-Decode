@@ -40,6 +40,7 @@ import org.firstinspires.ftc.team13580.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team13580.roadrunner.TwoDeadWheelLocalizer;;
 
 import java.lang.Math;
+import java.security.cert.CertificateNotYetValidException;
 
 @Autonomous(name = "Red RR", group = "auto")
 
@@ -141,23 +142,23 @@ public class RRRedAuto extends LinearOpMode {
         robot.init();
 
         Action path1 = drive.actionBuilder(new Pose2d(-50,50, Math.toRadians(126)))
-                .setTangent(Math.atan2(24-50, -30+50))
-                .lineToY(24)
+             //.setTangent(Math.atan2(24-50, -30+50))
+                .lineToYLinearHeading(24, Math.toRadians(130))
                 .build();
 
-        Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-//                .setTangent(Math.atan2(54-24, 24+30))
-                .lineToYLinearHeading(54, Math.toRadians(0))
-//                .setTangent(0)
-//                .lineToXLinearHeading(-22, Math.toRadians(-6))
-//                .setTangent(Math.atan2(36-54, -8+22))
-//                .lineToYLinearHeading(36, Math.toRadians(-90))
-//                .setTangent(Math.atan2(54-36, -2+8))
-//                .lineToYLinearHeading(54, Math.toRadians(-90))//-open gate
+        Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
+                .setTangent(Math.atan2(20-24, -8+30))
+                .lineToYLinearHeading(20, Math.toRadians(90))
+                .setTangent(Math.atan2(28-20, 0))
+                .lineToYLinearHeading(28, Math.toRadians(90))
+                .setTangent(Math.atan2(28-28, -11+8))
+                .lineToX(-11)
+                .setTangent(Math.atan2(54-28, 0))
+                .lineToYLinearHeading(54, Math.toRadians(90))
                 .build();
 
-        Action path3 = drive.actionBuilder(new Pose2d(-2,54, Math.toRadians(-90)))
-                .setTangent(Math.atan2(24-54, -30+2))
+        Action path3 = drive.actionBuilder(new Pose2d(-11,54, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-54, -30+11))
                 .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
 
@@ -211,19 +212,20 @@ public class RRRedAuto extends LinearOpMode {
                                 path1,
                                 shoot(900)
                         ),
-                       new SleepAction(.5),
                         spinUp(),
-                        rightkick(1),
-                        leftkick(1),
+                        new ParallelAction(
+                                shoot(910),
+                                rightkick(1),
+                                leftkick(1)
+                        ),
                         new SleepAction(2),
                         rightkick(0),
                         leftkick(0),
                         new ParallelAction(
                                 path2,
                               spinUp2(.5),
-                               shoot(1150)
-                        )
-                        /*
+                               shoot(1200)
+                        ),
                         path3,
                         spinUp2(.5),
                         rightkick(1),
@@ -231,6 +233,14 @@ public class RRRedAuto extends LinearOpMode {
                         new SleepAction(2),
                         rightkick(0),
                         leftkick(0),
+                        new ParallelAction(
+                                path8_park,
+                                rightkick(0),
+                                leftkick(0),
+                                spinUp2(0),
+                                shoot(0)
+                        )
+                        /*
                         new ParallelAction(
                                 path4_intakemiddle,
                                 spinUp2(.5)
@@ -265,8 +275,7 @@ public class RRRedAuto extends LinearOpMode {
                                 spinUp2(0),
                                 shoot(0)
                         )
-
-                         */
+                        */
 
 
 
