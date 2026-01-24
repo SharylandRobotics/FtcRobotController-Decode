@@ -877,7 +877,7 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480, 600);
+                spindexerHandler(-480, 800);
                 return false;
             }
         }

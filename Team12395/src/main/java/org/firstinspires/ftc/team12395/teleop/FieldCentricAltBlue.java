@@ -54,10 +54,10 @@ public class FieldCentricAltBlue extends LinearOpMode {
     public static double velocity = 0;
     public static double angle = 0.1;
 
-    public static double preSetVelocityFar = 1600;
-    public static double preSetAngleFar = 0.3;
-    public static double preSetAngleClose = 0;
-    public static double preSetVelocityClose = 1120;
+    public static double preSetVelocityFar = 2000;
+    public static double preSetAngleFar = 0.2;
+    public static double preSetAngleClose = 0.8;
+    public static double preSetVelocityClose = 1400;
 
     public static double intakeVel = 0;
 
@@ -121,13 +121,13 @@ public class FieldCentricAltBlue extends LinearOpMode {
                     intakeVel = 0;
 
                 } else if (intakeVel == 0){ intakeVel = 1; }
-                robot.setIntakeSpeed(intakeVel);
+                robot.setIntakeSpeed(intakeVel*1400);
             } else if (gamepad1.dpadDownWasPressed()){
                 if (intakeVel != -1){
                     intakeVel = -1;
 
                 } else  { intakeVel = 0; }
-                robot.setIntakeSpeed(intakeVel*1200);
+                robot.setIntakeSpeed(intakeVel*1400);
             }
 
             robot.scanColor();
@@ -138,7 +138,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
                     robot.spindexerHandler(120);
                 } else if (gamepad1.rightBumperWasPressed()) { // cw
                     if (velocity == preSetVelocityFar){
-                        robot.spindexerHandler(-480, 575);
+                        robot.spindexerHandler(-480, 800);
                     } else {
                         robot.spindexerHandler(-480);
                     }

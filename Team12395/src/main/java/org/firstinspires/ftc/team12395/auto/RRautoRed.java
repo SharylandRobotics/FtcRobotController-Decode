@@ -39,18 +39,18 @@ public class RRautoRed extends LinearOpMode {
 
         Pose2d startPose = new Pose2d(-47, 50, Math.toRadians(125));
 
-        Pose2d shoot1 =  new Pose2d(-20, 20, Math.toRadians(90));
+        Pose2d shoot1 =  new Pose2d(-22, 16, Math.toRadians(90));
 
-        Pose2d preIntake1 = new Pose2d(-9, 26, Math.toRadians(90));
-        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 51, Math.toRadians(90));
+        Pose2d preIntake1 = new Pose2d(-8, 22, Math.toRadians(90));
+        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 42, Math.toRadians(90));
 
-        Pose2d openGate = new Pose2d(1, postIntake1.position.y, Math.toRadians(90));
+        Pose2d openGate = new Pose2d(4, postIntake1.position.y, Math.toRadians(90));
 
-        Pose2d preIntake2 = new Pose2d(14, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y, Math.toRadians(90));
+        Pose2d preIntake2 = new Pose2d(15, preIntake1.position.y, Math.toRadians(90));
+        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+2, Math.toRadians(90));
 
-        Pose2d preIntake3 = new Pose2d(38, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y, Math.toRadians(90));
+        Pose2d preIntake3 = new Pose2d(39, preIntake1.position.y, Math.toRadians(90));
+        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+2, Math.toRadians(90));
 
         // return to volley pose
 
@@ -78,11 +78,16 @@ public class RRautoRed extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                actionLib.setShooterVel(1120),
-                                new RaceAction(
-                                        actionLib.setTurretPos(-50),
-                                        new SleepAction(2)
+                                actionLib.setHoodAng(0.8),
+                                actionLib.setShooterVel(1500),
+                                new SequentialAction(
+                                        new RaceAction(
+                                                actionLib.setTurretPos(-40),
+                                                new SleepAction(2)
+                                        ),
+                                        actionLib.stopTurretPower()
                                 ),
+
                                 driveToPLShoot
                         ),
                         new SleepAction(2),
@@ -97,7 +102,7 @@ public class RRautoRed extends LinearOpMode {
                 .lineToXConstantHeading(preIntake1.position.x)
                 //start intake
                 .setTangent(Math.toRadians(90))
-                .lineToYConstantHeading(postIntake1.position.y)
+                .lineToYConstantHeading(postIntake1.position.y, new TranslationalVelConstraint(20))
                 .turnTo(postIntake1.heading)
                 .build();
 
@@ -116,6 +121,8 @@ public class RRautoRed extends LinearOpMode {
                                 )
                                  */
                         ),
+                        new SleepAction(1),
+                        /*
                         new RaceAction(
                                 new ParallelAction(
                                         actionLib.scanColorToggle(),
@@ -126,9 +133,11 @@ public class RRautoRed extends LinearOpMode {
                                 ),
                                 new SleepAction(3)
                         ),
+                        actionLib.spindexerTargetAddVel(-20, 800),
+                         */
                         actionLib.setIntakeVel(0),
-                        actionLib.sortCurrentSpindexer(),
-                        new SleepAction(2),
+                        //actionLib.sortCurrentSpindexer(),
+                        //new SleepAction(2),
                         updatePose()
                 )
         );
