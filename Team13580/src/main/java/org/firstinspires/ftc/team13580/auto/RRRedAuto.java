@@ -151,8 +151,8 @@ public class RRRedAuto extends LinearOpMode {
                 .lineToYLinearHeading(20, Math.toRadians(90))
                 .setTangent(Math.atan2(28-20, 0))
                 .lineToYLinearHeading(28, Math.toRadians(90))
-                .setTangent(Math.atan2(28-28, -11+8))
-                .lineToX(-11)
+                .setTangent(Math.atan2(28-28, -12+8))
+                .lineToX(-12)
                 .setTangent(Math.atan2(54-28, 0))
                 .lineToYLinearHeading(54, Math.toRadians(90))
                 .build();
@@ -163,15 +163,21 @@ public class RRRedAuto extends LinearOpMode {
                 .build();
 
         Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-                .setTangent(Math.atan2(30-24, 8+30))
-                .lineToYLinearHeading(30, Math.toRadians(90))
-                .setTangent(Math.atan2(56-30, 20-8))
+                .setTangent(Math.atan2(20-24, 12+30))
+                .lineToYLinearHeading(20, Math.toRadians(90))
+                .setTangent(Math.atan2(28-20, 0))
+                .lineToYLinearHeading(28, Math.toRadians(90))
+                .setTangent(Math.atan2(28-28, 15-10))
+                .lineToX(15)
+                .setTangent(Math.atan2(56-28, 0))
                 .lineToYLinearHeading(56, Math.toRadians(90))
                         .build();
 
 
-        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(20,56, Math.toRadians(90)))
-                .setTangent(Math.atan2(24-56, -30-20))
+        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(15,56, Math.toRadians(90)))
+                .setTangent(Math.atan2(45-28, 0))
+                .lineToYLinearHeading(45, Math.toRadians(90))
+                .setTangent(Math.atan2(24-45, -30-15))
                 .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
@@ -189,8 +195,8 @@ public class RRRedAuto extends LinearOpMode {
                 .lineToYLinearHeading(24, Math.toRadians(126), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
-        Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-                .setTangent(Math.atan2(24-50, 0))
+        Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
+                .setTangent(Math.atan2(24-50, -25+30))
                 .lineToYLinearHeading(54, Math.toRadians(90), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
 
                 .build();
@@ -214,11 +220,12 @@ public class RRRedAuto extends LinearOpMode {
                         ),
                         spinUp(),
                         new ParallelAction(
-                                shoot(910),
+                                shoot(950),
                                 rightkick(1),
-                                leftkick(1)
+                                leftkick(1),
+                                spinUp2(.5)
                         ),
-                        new SleepAction(2),
+                        new SleepAction(3),
                         rightkick(0),
                         leftkick(0),
                         new ParallelAction(
@@ -233,6 +240,19 @@ public class RRRedAuto extends LinearOpMode {
                         new SleepAction(2),
                         rightkick(0),
                         leftkick(0),
+                        new ParallelAction(
+                                path4_intakemiddle,
+                                spinUp2(.5)
+                        ),
+                        new ParallelAction(
+                                path5_shoot3rd,
+                                spinUp2(.5),
+                                shoot(1150)
+                        ),
+                        spinUp2(.5),
+                        rightkick(1),
+                        leftkick(1),
+                        new SleepAction(2),
                         new ParallelAction(
                                 path8_park,
                                 rightkick(0),

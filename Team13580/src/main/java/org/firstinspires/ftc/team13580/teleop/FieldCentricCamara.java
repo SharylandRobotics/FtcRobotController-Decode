@@ -51,7 +51,7 @@ public class FieldCentricCamara extends LinearOpMode {
             yaw = gamepad1.right_stick_x * scale;
 
             // Auto-drive using camera
-            boolean didAuto = robot.autoDriveToGoalStep();
+            boolean didAuto = false;
 
             // Drive robot if not auto-driving
             if (!didAuto) {
