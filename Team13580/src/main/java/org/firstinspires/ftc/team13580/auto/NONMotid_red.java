@@ -40,7 +40,7 @@ import org.firstinspires.ftc.team13580.roadrunner.MecanumDrive;
 
 import java.lang.Math;
 
-@Autonomous(name = "LM3 red", group = "auto")
+@Autonomous(name = "Motid red", group = "auto")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
 public class NONMotid_red extends LinearOpMode {
@@ -140,57 +140,65 @@ public class NONMotid_red extends LinearOpMode {
         robot.init();
 
         Action path1 = drive.actionBuilder(new Pose2d(-50,50, Math.toRadians(126)))
-                .lineToY(24, new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(24-50, -30+50))
+                .lineToY(24)
                 .build();
 
         Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-                .setTangent(0)
-                .splineToLinearHeading(new Pose2d(-6, 56, Math.toRadians(84)),Math.toRadians(90))
+                .setTangent(Math.atan2(26-24, 18+30))
+                .lineToYLinearHeading(26, Math.toRadians(90))
+                .setTangent(Math.atan2(30-26, 0))
+                .lineToYLinearHeading(30, Math.toRadians(90))
+                .setTangent(Math.atan2(0, 11-18))
+                .lineToX(11)
+                .setTangent(Math.atan2(54-34, 0))
+                .lineToYLinearHeading(54, Math.toRadians(90))
                 .build();
 
 
-        Action path3_opengate = drive.actionBuilder(new Pose2d(-6,56, Math.toRadians(84)))
-                .setTangent(Math.atan2(24-56, -30+15))
-                .lineToYLinearHeading(24, Math.toRadians(130), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
-                // .setTangent(Math.toRadians(0))
-                //.splineTo(new Vector2d(-4, 36),Math.toRadians(-90), new TranslationalVelConstraint(20))
-                //.splineToConstantHeading(new Vector2d(-4, 62),Math.toRadians(-90))
-                //.splineTo(new Vector2d(-30, 24), Math.toRadians(126))
-                //.waitSeconds(2)
+        Action path3_opengate = drive.actionBuilder(new Pose2d(11,54, Math.toRadians(90)))
+                .setTangent(Math.atan2(28-54, 0))
+                .lineToYLinearHeading(28, Math.toRadians(90))
+                .setTangent(Math.atan2(24-28, -30-11))
+                .lineToYLinearHeading(24, Math.toRadians(175))
+                .turnTo(Math.toRadians(130))
                 .build();
 
         Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
-                .setTangent(Math.atan2(34-24, 17+30))
-                .lineToYLinearHeading(34, Math.toRadians(80))
-                //.splineToConstantHeading(new Vector2d(22, 34),Math.toRadians(90))
-                .setTangent(Math.atan2(66-34, 28-17))
-                .lineToYLinearHeading(66, Math.toRadians(83))
-                .setTangent(Math.atan2(60-66, 26-28))
-                .lineToYLinearHeading(60, Math.toRadians(98), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
-               // .splineToConstantHeading(new Vector2d(12, 65),Math.toRadians(98),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(28-24, -10+30))
+                .lineToYLinearHeading(28, Math.toRadians(90))
+                .setTangent(Math.atan2(38-28, 0))
+                .lineToYLinearHeading(38, Math.toRadians(90))
+                .setTangent(Math.atan2(0, -10+10))
+                .lineToX(-14)
+                .setTangent(Math.atan2(53-38, 0))
+                .lineToYLinearHeading(53, Math.toRadians(90))
                 .build();
 
-        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(26,60, Math.toRadians(98)))
-                .setTangent(Math.atan2(24-60, -30-26))
-                .lineToYLinearHeading(24, Math.toRadians(130), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
+        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(-14,53, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-53, -30+14))
+                .lineToYLinearHeading(24, Math.toRadians(130))
                         .build();
 
         Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
-                .setTangent(Math.atan2(34-24, 50+30))
-                .lineToYLinearHeading(34, Math.toRadians(98))
-                .setTangent(Math.atan2(64-34, 32-50))
-                .lineToYLinearHeading(64, Math.toRadians(98))
-                //.splineToConstantHeading(new Vector2d(32, 64),Math.toRadians(98))
+                .setTangent(Math.atan2(28-24, 38+30))
+                .lineToYLinearHeading(28, Math.toRadians(90))
+                .setTangent(Math.atan2(34-28, 0))
+                .lineToYLinearHeading(34, Math.toRadians(90))
+                .setTangent(Math.atan2(0, 34-38))
+                .lineToX(34)
+                .setTangent(Math.atan2(56-34, 0))
+                .lineToYLinearHeading(56, Math.toRadians(90))
                         .build();
 
-        Action path7_lastshot = drive.actionBuilder(new Pose2d(32,64, Math.toRadians(98)))
-                .setTangent(Math.atan2(24-64, -30-32))
-                .lineToYLinearHeading(24, Math.toRadians(130), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
+        Action path7_lastshot = drive.actionBuilder(new Pose2d(34,56, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-56, -30-34))
+                .lineToYLinearHeading(24, Math.toRadians(130))
                         .build();
 
         Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
-                .setTangent(Math.atan2(24-54, 0))
-                .lineToYLinearHeading(54, Math.toRadians(90), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(40-24, -10+30))
+                .lineToYLinearHeading(40, Math.toRadians(90), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
                         .build();
 
 
