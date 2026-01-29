@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.team00000.teleop;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team00000.RobotHardware;
@@ -50,6 +52,8 @@ public class RobotCentric extends LinearOpMode {
 
         // Initialize all motors, IMU, and hardware configuration
         robot.init();
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        telemetry.setMsTransmissionInterval(100);
 
         while(opModeInInit()) {
             // Student Note: Pre‑start check — rotate robot by hand; heading should change.

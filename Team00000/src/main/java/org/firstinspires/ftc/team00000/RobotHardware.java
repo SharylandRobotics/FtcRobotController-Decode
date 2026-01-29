@@ -33,9 +33,7 @@ import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -63,8 +61,13 @@ public class RobotHardware {
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
 
-    private DcMotorEx leftShooter;
-    private DcMotorEx rightShooter;
+    private DcMotorEx topShooter;
+    private DcMotorEx bottomShooter;
+
+    private CRServo leftStopper;
+    private CRServo rightStopper;
+    private CRServo frontLeftTransfer;
+    private CRServo frontRightTransfer;
 
     // Student Note: IMU provides yaw (heading) for field‑centric drive and turns.
     // TODO(students): If heading seems rotated, check hub orientation in init().
@@ -85,12 +88,12 @@ public class RobotHardware {
     private int backRightTarget;
 
     // Student Note: Camera pose (robot frame). +X forward, +Y left, +Z up (in).
-    // Pitch +15° = camera looks UP 15°. Update if you remount the camera.
+    // Pitch +8° = camera looks UP 8°. Update if you remount the camera.
     // TODO(students): Measure real offsets when you rely on precise vision assists.
     private final Position cameraPosition = new Position(DistanceUnit.INCH,
-            0, 0, 0, 0);
+            0, -2.34, 16, 0);
     private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, 15, 0, 0);
+            0, 8, 0, 0);
 
     private AprilTagProcessor aprilTag = null;
 
@@ -114,6 +117,8 @@ public class RobotHardware {
     public static final double MAX_AUTO_YAW = 0.70;
     public static final double HEADING_THRESHOLD = 1.0;
     public static final double TOLERANCE_TICKS = 10.0;
+
+    private double shooterTargetTicksPerSec = 0.0;
 
     // Student Note: Calibrated intrinsics for 1280×800. Must match camera resolution.
     // TODO(students): Recalibrate or update values if resolution or lens changes.
@@ -146,13 +151,18 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        leftShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "left_shooter");
-        rightShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "right_shooter");
+        topShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "top_shooter");
+        bottomShooter = myOpMode.hardwareMap.get(DcMotorEx.class, "bottom_shooter");
+
+        leftStopper = myOpMode.hardwareMap.get(CRServo.class, "left_stopper");
+        rightStopper = myOpMode.hardwareMap.get(CRServo.class, "right_stopper");
+        frontLeftTransfer = myOpMode.hardwareMap.get(CRServo.class, "front_left_transfer");
+        frontRightTransfer = myOpMode.hardwareMap.get(CRServo.class, "front_right_transfer");
 
         // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
@@ -163,32 +173,37 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        leftShooter.setDirection(DcMotor.Direction.REVERSE);
-        rightShooter.setDirection(DcMotor.Direction.FORWARD);
+        topShooter.setDirection(DcMotor.Direction.REVERSE);
+        bottomShooter.setDirection(DcMotor.Direction.REVERSE);
+
+        leftStopper.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightStopper.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeftTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRightTransfer.setDirection(DcMotorSimple.Direction.FORWARD);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        leftShooter.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        rightShooter.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        topShooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        bottomShooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        topShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        bottomShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        leftShooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        rightShooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        topShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bottomShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
@@ -407,10 +422,51 @@ public class RobotHardware {
         backRightDrive.setPower(backRightWheel);
     }
 
-    public void setShooterPower(double power) {
-        double max = power * 2520;
-        leftShooter.setVelocity(max);
-        rightShooter.setVelocity(max);
+    public void setShooterVelocityPercent(double power, double maxRpm) {
+        power = Range.clip(power, 0.0, 1.0);
+        final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
+        final double targetRpm = power * maxRpm;
+        shooterTargetTicksPerSec = targetRpm * ticksPerRev / 60.0;
+
+        topShooter.setVelocity(shooterTargetTicksPerSec);
+        bottomShooter.setVelocity(shooterTargetTicksPerSec);
+    }
+
+    public void configureShooterVelocityPidfForMaxRpm(double maxRpm, double kP, double kI, double kD) {
+        final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
+        final double maxTicksPerSec = (maxRpm * ticksPerRev) / 60.0;
+        final double kF = 32767.0 / Math.max(1.0, maxTicksPerSec);
+
+        topShooter.setVelocityPIDFCoefficients(kP, kI, kD, kF);
+        bottomShooter.setVelocityPIDFCoefficients(kP, kI, kD, kF);
+    }
+
+    public double rpmToTicksPerSec(double rpm) {
+        final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
+        return (rpm * ticksPerRev) / 60.0;
+    }
+    public double getShooterTargetTicksPerSec() { return shooterTargetTicksPerSec; }
+    public double getTopShooterTicksPerSec() { return Math.abs(topShooter.getVelocity()); }
+    public double getBottomShooterTicksPerSec() { return Math.abs(bottomShooter.getVelocity()); }
+    public double getTopShooterRpm() {
+        final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
+        return Math.abs(topShooter.getVelocity() * 60.0 / ticksPerRev);
+    }
+    public double getBottomShooterRpm() {
+        final double ticksPerRev = bottomShooter.getMotorType().getTicksPerRev();
+        return Math.abs(bottomShooter.getVelocity() * 60.0 / ticksPerRev);
+    }
+
+    public void setStopperPower(double power) {
+        double p = Range.clip(power, -1.0, 1.0);
+        leftStopper.setPower(p);
+        rightStopper.setPower(p);
+    }
+
+    public void setTransferPower(double power) {
+        double p = Range.clip(power, -1.0, 1.0);
+        frontLeftTransfer.setPower(p);
+        frontRightTransfer.setPower(p);
     }
 
     // Student Note: Convenience — current yaw (degrees) from the IMU.
