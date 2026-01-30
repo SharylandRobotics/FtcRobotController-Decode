@@ -30,12 +30,13 @@
 package org.firstinspires.ftc.team00000.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
 import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_AXIAL;
 import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_YAW;
-
+@Disabled
 @Autonomous(name = "Red Alliance", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers

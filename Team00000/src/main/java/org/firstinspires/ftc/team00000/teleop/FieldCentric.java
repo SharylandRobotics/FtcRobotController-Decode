@@ -44,7 +44,7 @@ import org.firstinspires.ftc.team00000.RobotHardware;
 public class FieldCentric extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
-    public static double shooter = 0.0;
+    public static double shooter = 0.4;
     public static double shooterMaxRpm = 6000.0;
     public static double shooterKp = 0.0;
     public static double shooterKi = 0.0;
@@ -52,6 +52,27 @@ public class FieldCentric extends LinearOpMode {
 
     public static double stopperPower = 0.0;
     public static double transferPower = 0.0;
+
+    private boolean prevUp = false;
+    private boolean prevDown = false;
+    private boolean prevLeft = false;
+    private boolean prevRight = false;
+    private boolean prevA = false;
+    private boolean prevX = false;
+    private boolean prevY = false;
+
+    private boolean shooterEnabled = false;
+    private boolean intakeMode = false;
+    private boolean launchMode = false;
+    private long launchStartMs = 0;
+
+    public static int LAUNCH_SPOOL_MS = 300;
+    public static int LAUNCH_FEED_MS = 6000;
+
+    public static double TRANSFER_FWD = 0.80;
+    public static double TRANSFER_REV = -0.20;
+    public static double STOPPER_OPEN = 0.80;
+    public static double STOPPER_CLOSED = 0.00;
 
     @Override
     public void runOpMode() {
@@ -92,6 +113,117 @@ public class FieldCentric extends LinearOpMode {
             // Keep vision fresh before using pose values each loop
             robot.updateAprilTagDetections();
 
+            boolean up = gamepad1.dpad_up;
+            boolean down = gamepad1.dpad_down;
+            boolean left = gamepad1.dpad_left;
+            boolean right = gamepad1.dpad_right;
+            boolean a = gamepad1.a;
+            boolean b = gamepad1.b;
+            boolean x = gamepad1.x;
+            boolean y = gamepad1.y;
+
+            boolean upEdge = up && !prevUp;
+            boolean downEdge = down && !prevDown;
+            boolean leftEdge = left && !prevLeft;
+            boolean rightEdge = right && !prevRight;
+            boolean aEdge = a && !prevA;
+            boolean xEdge = x && !prevX;
+            boolean yEdge = y && !prevY;
+
+            // Dpad UP/DOWN = set transfer forward/reverse (edge triggered)
+            // No hold required: stays at last commanded power.
+            if (upEdge) {
+                transferPower = TRANSFER_FWD;
+                intakeMode = true;
+                launchMode = false;
+            }
+            if (downEdge) {
+                transferPower = TRANSFER_REV;
+                intakeMode = true;
+                launchMode = false;
+            }
+
+            // Dpad LEFT = hard stop transfer + close stoppers (safe)
+            if (leftEdge) {
+                transferPower = 0.0;
+                stopperPower = STOPPER_CLOSED;
+                intakeMode = false;
+                launchMode = false;
+            }
+
+            // Dpad RIGHT = manual stopper toggle (testing)
+            if (rightEdge) {
+                stopperPower = (stopperPower == STOPPER_OPEN) ? STOPPER_CLOSED : STOPPER_OPEN;
+            }
+
+            // A = toggle intake mode (transfer runs forward; stoppers forced closed)
+            if (aEdge) {
+                intakeMode = !intakeMode;
+                launchMode = false;
+                if (intakeMode) {
+                    transferPower = TRANSFER_FWD;
+                } else {
+                    transferPower = 0.0;
+                }
+                stopperPower = STOPPER_CLOSED;
+            }
+
+            // B = momentary clear: reverse transfer while held (overrides intake/launch)
+            if (b) {
+                transferPower = TRANSFER_REV;
+                intakeMode = false;
+                launchMode = false;
+            }
+
+            // X = toggle shooter enable (spins up but does not feed)
+            if (xEdge) {
+                shooterEnabled = !shooterEnabled;
+                if (!shooterEnabled) {
+                    launchMode = false;
+                    stopperPower = STOPPER_CLOSED;
+                    transferPower = 0.0;
+                    intakeMode = false;
+                }
+            }
+
+            // Y = fire one burst (edge triggered): spool shooter, then open stoppers + feed briefly
+            if (yEdge && shooterEnabled) {
+                launchMode = true;
+                intakeMode = false;
+                launchStartMs = System.currentTimeMillis();
+            }
+
+            if(launchMode && shooterEnabled) {
+                long t = System.currentTimeMillis() - launchStartMs;
+
+                if (t < LAUNCH_SPOOL_MS) {
+                    // Spool only: keeps stoppers closed, no feeding
+                    stopperPower = STOPPER_CLOSED;
+                    transferPower = 0.0;
+                } else if (t < (LAUNCH_SPOOL_MS + LAUNCH_FEED_MS)) {
+                    stopperPower = STOPPER_OPEN;
+                    transferPower = TRANSFER_FWD;
+                } else {
+                    stopperPower = STOPPER_CLOSED;
+                    transferPower = 0.0;
+                    launchMode = false;
+                }
+            } else {
+                // Safety: while intaking, keep stoppers closed so transfer can't feed into shooter
+                if (intakeMode && !b) {
+                    stopperPower = STOPPER_CLOSED;
+                }
+            }
+
+            // Save previous button states
+            prevUp = up;
+            prevDown = down;
+            prevLeft = left;
+            prevRight = right;
+            prevA = a;
+            prevX = x;
+            prevY = y;
+
             // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
@@ -126,7 +258,8 @@ public class FieldCentric extends LinearOpMode {
             }
 
             robot.configureShooterVelocityPidfForMaxRpm(shooterMaxRpm, shooterKp, shooterKi, shooterKd);
-            robot.setShooterVelocityPercent(shooter, shooterMaxRpm);
+            double shooterCmb = shooterEnabled ? shooter : 0.0;
+            robot.setShooterVelocityPercent(shooterCmb, shooterMaxRpm);
             robot.setStopperPower(stopperPower);
             robot.setTransferPower(transferPower);
 
@@ -134,9 +267,13 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
-            telemetry.addData("ShooterCmd", "%.2f", shooter);
+            telemetry.addData("ShooterCmd", "%.2f", shooterEnabled ? shooter : 0.0);
             telemetry.addData("StopperPwr", "%.2f", stopperPower);
             telemetry.addData("TransferPwr", "%.2f", transferPower);
+            telemetry.addData("Op", "shooter=%s intake=%s launch=%s",
+                    shooterEnabled ? "ON" : "OFF",
+                    intakeMode ? "ON" : "OFF",
+                    launchMode ? "ON" : "OFF");
             telemetry.addData("ShooterTgt", "%.0f t/s", robot.getShooterTargetTicksPerSec());
 
             double shooterActL = robot.getTopShooterTicksPerSec();
