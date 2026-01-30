@@ -68,6 +68,8 @@ public class RobotHardware {
     private CRServo rightStopper;
     private CRServo frontLeftTransfer;
     private CRServo frontRightTransfer;
+    private CRServo backLeftTransfer;
+    private CRServo backRightTransfer;
 
     // Student Note: IMU provides yaw (heading) for field‑centric drive and turns.
     // TODO(students): If heading seems rotated, check hub orientation in init().
@@ -108,7 +110,8 @@ public class RobotHardware {
     // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
     private double tagYawDeg = Double.NaN;
 
-    private static final double DESIRED_DISTANCE = 50.0; // camera-to-tag inches
+    private static final double DESIRED_DISTANCE = 120.0; // camera-to-tag inches
+    private static final double DESIRED_BEARING_DEG = 44.37;
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
     private static final double LATERAL_GAIN = 0.015; // tagYawError -> lateral (strafe) speed
     private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
@@ -158,6 +161,8 @@ public class RobotHardware {
         rightStopper = myOpMode.hardwareMap.get(CRServo.class, "right_stopper");
         frontLeftTransfer = myOpMode.hardwareMap.get(CRServo.class, "front_left_transfer");
         frontRightTransfer = myOpMode.hardwareMap.get(CRServo.class, "front_right_transfer");
+        backLeftTransfer = myOpMode.hardwareMap.get(CRServo.class, "back_left_transfer");
+        backRightTransfer = myOpMode.hardwareMap.get(CRServo.class, "back_right_transfer");
 
         // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
@@ -180,6 +185,8 @@ public class RobotHardware {
         rightStopper.setDirection(DcMotorSimple.Direction.REVERSE);
         frontLeftTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRightTransfer.setDirection(DcMotorSimple.Direction.FORWARD);
+        backLeftTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightTransfer.setDirection(DcMotorSimple.Direction.FORWARD);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -467,6 +474,8 @@ public class RobotHardware {
         double p = Range.clip(power, -1.0, 1.0);
         frontLeftTransfer.setPower(p);
         frontRightTransfer.setPower(p);
+        backLeftTransfer.setPower(p);
+        backRightTransfer.setPower(p);
     }
 
     // Student Note: Convenience — current yaw (degrees) from the IMU.
