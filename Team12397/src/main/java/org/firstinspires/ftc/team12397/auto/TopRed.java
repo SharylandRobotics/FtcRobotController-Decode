@@ -71,18 +71,18 @@ TopRed extends LinearOpMode {
 
             while(phase1){
 
-                robot.setHoodPositions(0.8);
-                robot.turretVelocity(150);
+                robot.setHoodPositions(1);
+                robot.turretVelocity(125);
                 //robot.intakePower(-.3);
                 robot.driveStraight(1, -50, 0);
                 robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.turnToHeading(1,10);
+                robot.turnToHeading(1,5);
 
-                robot.holdHeading(1, 10, 5); // inital hold time
+                robot.holdHeading(1, 5, 4);
 
 
                 robot.intakePower(-1);
-                robot.holdHeading(0, 10, 2);
+                robot.holdHeading(0, 5, 2);
 
 
                 // turn off motors
@@ -92,27 +92,30 @@ TopRed extends LinearOpMode {
 
                 robot.turnToHeading(.5,-40);
                 robot.holdHeading(.5, -40, 1);
-                robot.straif(.5,5,-40);
+                robot.straif(.5,8,-40);
                 robot.intakePower(-1);
                 robot.driveStraight(.5, 18, -40);
                 robot.driveStraight(.5,13,-40);
 
                 //extra time
                 robot.holdHeading(robot.YAW_SPEED, -40, 1);
-                robot.turretVelocity(150);
+                robot.intakePower(.3);// unblock motor
+                robot.holdHeading(robot.YAW_SPEED, -40, 1);
+                robot.intakePower(0);
+                robot.turretVelocity(135);
 
-                robot.intakePower(-.1);
+
                 //shooting
 
                 robot.driveStraight(1,-31,-40);
                 robot.holdHeading(robot.YAW_SPEED, -40, 1);
-                robot.turnToHeading(1,10);
-                robot.holdHeading(robot.YAW_SPEED, 10, 1);
+                robot.turnToHeading(1,5);
+                robot.holdHeading(robot.YAW_SPEED, 5, 1);
 
 
-                robot.holdHeading(0, 10, 3); // inital hold time
+                robot.holdHeading(0, 5, 2); // inital hold time
                 robot.intakePower(-1);
-                robot.holdHeading(0, 10, 2);
+                robot.holdHeading(0, 5, 2);
 
                 // move out
                 robot.straif(1,20,0);

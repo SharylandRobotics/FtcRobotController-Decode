@@ -186,7 +186,7 @@ public class RobotCentric extends LinearOpMode {
 
                 }
                 if(servoOn){
-                    robot.setHoodPositions(.8);
+                    robot.setHoodPositions(1);
                 }
                 else {
                     robot.setHoodPositions(.4);
