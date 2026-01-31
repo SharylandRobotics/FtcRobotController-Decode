@@ -71,60 +71,51 @@ TopRed extends LinearOpMode {
 
             while(phase1){
 
-                robot.setHoodPositions(0);
-                robot.turretVelocity(50);
+                robot.setHoodPositions(0.8);
+                robot.turretVelocity(150);
+                //robot.intakePower(-.3);
                 robot.driveStraight(1, -50, 0);
                 robot.holdHeading(robot.YAW_SPEED, 0, 1);
-                robot.turnToHeading(1,5);
-                //robot.intakePower(-.5);
+                robot.turnToHeading(1,10);
 
-                robot.holdHeading(0, 5, 6); // inital hold time
+                robot.holdHeading(1, 10, 5); // inital hold time
 
-                robot.setIntakeServo(0);
-                robot.holdHeading(0, 5, 1);
-                robot.intakePower(- .5);
-                robot.setIntakeServo(1);
-                robot.holdHeading(0, 5, 1);
-                robot.setIntakeServo(0);
-                robot.holdHeading(0, 5, 1);
-                robot.setIntakeServo(1);
+
+                robot.intakePower(-1);
+                robot.holdHeading(0, 10, 2);
+
 
                 // turn off motors
                 robot.turretVelocity(0);
                 robot.intakePower(0);
                 //phase 2
-                robot.turretVelocity(60);
-                robot.turnToHeading(1,-40);
-                robot.holdHeading(robot.YAW_SPEED, -40, 1);
-                robot.straif(1,12,40);
-                robot.intakePower(-.5);
-                robot.driveStraight(1, 20, -40);
+
+                robot.turnToHeading(.5,-40);
+                robot.holdHeading(.5, -40, 1);
+                robot.straif(.5,5,-40);
+                robot.intakePower(-1);
+                robot.driveStraight(.5, 18, -40);
                 robot.driveStraight(.5,13,-40);
 
                 //extra time
                 robot.holdHeading(robot.YAW_SPEED, -40, 1);
-                robot.intakePower(0);
+                robot.turretVelocity(150);
+
+                robot.intakePower(-.1);
                 //shooting
 
                 robot.driveStraight(1,-31,-40);
                 robot.holdHeading(robot.YAW_SPEED, -40, 1);
-                robot.turnToHeading(1,5);
-                robot.holdHeading(robot.YAW_SPEED, 5, 1);
+                robot.turnToHeading(1,10);
+                robot.holdHeading(robot.YAW_SPEED, 10, 1);
 
 
-                robot.holdHeading(0, 5, 3); // inital hold time
-                robot.setIntakeServo(0);
-                robot.holdHeading(0, 5, 1);
-                robot.intakePower(- .5);
-                robot.setIntakeServo(1);
-                robot.holdHeading(0, 5, 1);
-                robot.setIntakeServo(0);
-                robot.holdHeading(0, 5, 1);
-
+                robot.holdHeading(0, 10, 3); // inital hold time
+                robot.intakePower(-1);
+                robot.holdHeading(0, 10, 2);
 
                 // move out
                 robot.straif(1,20,0);
-
                 phase1 = false;
 
 

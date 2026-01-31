@@ -88,6 +88,7 @@ public class RobotHardware {
     private DcMotor intakeMotor;
     //turret motor
     private DcMotorEx turretMotor;
+    private DcMotorEx turretMotor2;
 
 
     // camera
@@ -169,6 +170,12 @@ public class RobotHardware {
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setVelocityPIDFCoefficients(100,1,2,1);
+
+        turretMotor2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor2");
+        turretMotor2.setDirection(DcMotor.Direction.FORWARD);
+        turretMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turretMotor2.setVelocityPIDFCoefficients(100,1,2,1);
 
 
 
@@ -319,6 +326,7 @@ public class RobotHardware {
     //turret
     public void turretVelocity(double velocity){
         turretMotor.setVelocity(velocity);
+        turretMotor2.setVelocity(velocity);
 
     }
     public void turretPower(double power){

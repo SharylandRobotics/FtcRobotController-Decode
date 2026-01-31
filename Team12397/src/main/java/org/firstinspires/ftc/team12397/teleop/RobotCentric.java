@@ -109,7 +109,7 @@ public class RobotCentric extends LinearOpMode {
                         statusMsg = "RUNNING AUTO SHOOTER"; //telementry
 
                         // Set velocity based on hood. 1 = high arch, 0 = low arch
-                        robot.turretVelocity(robot.getHoodPosition() <= .5 ? 100 : 90);
+                        robot.turretVelocity(robot.getHoodPosition() <= .5 ? 150 : 150);
 
                         turretTimer.reset(); // RESET TIMER HERE (Only once!)
                         turretState = TurretState.HoldWait;
@@ -117,31 +117,32 @@ public class RobotCentric extends LinearOpMode {
                     break;
 
                 case HoldWait:
-                    if (isTimeUp(10)) { // Wait 1 second (1000ms)
-                        robot.setIntakeServo(0);
+                    if (isTimeUp(4)) { // Wait 1 second (1000ms)
+                        //robot.setIntakeServo(0);
+                        robot.intakePower(-1);
                         // Timer is auto-reset by your isTimeUp method!
                         turretState = TurretState.Fire;
                     }
                     break;
 
                 case Fire:
-                    if (isTimeUp(1)) {
-                        robot.intakePower(-0.5);
-                        robot.setIntakeServo(1);
-                        turretState = TurretState.ResetIntake;
+                    if (isTimeUp(2)) {
+                        //robot.intakePower(-0.5);
+                        //robot.setIntakeServo(1);
+                        turretState = TurretState.End;
                     }
                     break;
-
+                /*
                 case ResetIntake:
                     if (isTimeUp(2)) {
                         robot.setIntakeServo(0);
                         turretState = TurretState.End;
                     }
                     break;
-
+                   */
                 case End:
                     statusMsg = "";
-                    robot.setIntakeServo(1);
+                    //robot.setIntakeServo(1);
                     robot.turretVelocity(0);
                     robot.intakePower(0);
                     turretState = TurretState.Start; // Go back to start so you can shoot again!
@@ -165,9 +166,9 @@ public class RobotCentric extends LinearOpMode {
 
                 // Manual Intake Power (Trigger/X)
                 if (gamepad1.left_trigger > .5) {
-                    robot.intakePower(-.5);
+                    robot.intakePower(-1);
                 } else if (gamepad1.x) {
-                    robot.intakePower(.5);
+                    robot.intakePower(1);
                 } else {
                     robot.intakePower(0);
                 }
@@ -192,7 +193,7 @@ public class RobotCentric extends LinearOpMode {
                 }
                 // manual turret shooter #note same as slow mode camera
                 if(gamepad1.left_bumper){
-                    robot.turretVelocity(90);
+                    robot.turretVelocity(150);
                 }
                 else{
                     robot.turretVelocity(0);
