@@ -13,9 +13,9 @@ public class RobotCentricShootBlue extends LinearOpMode {
     @Override
     public void runOpMode(){
 
-        final double AXIAL_SPEED       = 0.4;
-        final double LATERAL_SPEED     = 0.4;
-        final double YAW_SPEED         = 0.2;
+        final double AXIAL_SPEED       = 0.5;
+        final double LATERAL_SPEED     = 0.5;
+        final double YAW_SPEED         = 0.3;
         robot.init();
 
         while(opModeInInit()) {
@@ -29,66 +29,64 @@ public class RobotCentricShootBlue extends LinearOpMode {
         if (isStopRequested()) return;
 
         if (opModeIsActive()) {
-            robot.setBackPower(0.7);
-            robot.setAimPos(0.9);
-            robot.setTurretPos(1, 0);
-            robot.turnToHeading(YAW_SPEED, 50);
-            robot.autoRobotCentric(AXIAL_SPEED, -48.0, 50.0);
+            robot.setShootSpeed(1300);
+            robot.setAimPos(0.75);
+            //robot.setTurretPos(0.5);
+            sleep(1000);
+            robot.turnToHeading(YAW_SPEED, 0);
+            robot.autoRobotCentric(AXIAL_SPEED, -33.0, 0.0);
             sleep(100);
             robot.setIntake1(1);
-            robot.setAimPos(0.8);
-            sleep(200);
+            robot.setIntake2(.7);
+            sleep(2500);
             robot.setIntake1(0);
+            robot.setIntake2(0);
+            robot.setShootSpeed(0);
             sleep(1000);
+            robot.turnToHeading(YAW_SPEED, -50.0);
+            robot.holdHeading(YAW_SPEED, -50.0, 0.5);
+            robot.autoRobotCentric(AXIAL_SPEED, -19.5, -50.0);// move more back
+            robot.turnToHeading(YAW_SPEED, 40-2.5);
+            robot.holdHeading(YAW_SPEED, 40-2.5, 0.5);
+
             robot.setIntake1(1);
-            robot.setAimPos(0.7);
-            sleep(1000);
-
-            sleep(1000);
-
+            robot.setIntake2(.5);
+            robot.autoRobotCentric((AXIAL_SPEED-0.25), 15, 40);// move to balls
+            sleep(300);
+            robot.setIntake2(0);
+            robot.autoRobotCentric((AXIAL_SPEED-0.25), 9, 40);// move to balls
+            //robot.autoRobotCentric((AXIAL_SPEED-0.25), 35.0, -46);// move to balls
             robot.setIntake1(0);
-            robot.setBackPower(0);
-            robot.setAimPos(0.2);
+            robot.autoRobotCentric(AXIAL_SPEED, -35.0, 40);// move back from balls
+
+
+            robot.setShootSpeed(1500);
             sleep(1000);
-            robot.turnToHeading(YAW_SPEED, 0.0);
-            robot.holdHeading(YAW_SPEED, 0.0, 0.5);
-            robot.autoRobotCentric(AXIAL_SPEED, -8.0, 0.0);
-            //robot.turnToHeading(YAW_SPEED,90.0);
-            //robot.holdHeading(YAW_SPEED, 90.0, 0.5);
-/*
-            robot.setIntake1(1);
-            robot.setBackPower(-0.5);
-            robot.autoRobotCentric(AXIAL_SPEED-0.25, 35.0, 90.0);
-            robot.setIntake1(0);
-            robot.setBackPower(0);
-            robot.autoRobotCentric(AXIAL_SPEED, -35.0, 90.0);
-
-
-            robot.setBackPower(0.75);
-            robot.setAimPos(0.9);
-            robot.turnToHeading(YAW_SPEED, 50);
-            robot.holdHeading(YAW_SPEED, 50, 0.5);
+            robot.setAimPos(0.45);
+            robot.turnToHeading(YAW_SPEED, 0); // turn to shoot
+            robot.holdHeading(YAW_SPEED, 0, 0.5);
             robot.setIntake1(-0.2);
             sleep(200);
             robot.setIntake1(1);
-            robot.setAimPos(0.8);
+            robot.setIntake2(.7);
             sleep(200);
             robot.setIntake1(0);
+            robot.setIntake2(0);
             sleep(1000);
             robot.setIntake1(1);
-            robot.setAimPos(0.7);
-            sleep(1000);
-            robot.setLeverPos(0.43);
-            sleep(1000);
-            robot.setLeverPos(0.17);
+            robot.setIntake2(.7);
+            sleep(1200);
             robot.setIntake1(0);
+            robot.setIntake2(0);
             robot.setBackPower(0);
-            robot.setAimPos(0.2);
-            sleep(2000);
-            robot.turnToHeading(YAW_SPEED, 0.0);
-            robot.holdHeading(YAW_SPEED, 0.0, 0.2);
- */
-            robot.autoRobotCentric(AXIAL_SPEED+0.2, -24.0, 0.0);
+            sleep(1000);
+            robot.turnToHeading(YAW_SPEED, -50.0);
+            robot.holdHeading(YAW_SPEED, -50.0, 0.5);
+
+            robot.autoRobotCentric(AXIAL_SPEED+2, -24.0, -50.0);
+
+            robot.turnToHeading(YAW_SPEED, -130.0);
+            robot.holdHeading(YAW_SPEED, -130.0, 0.5);
 
             sleep(1000);
 

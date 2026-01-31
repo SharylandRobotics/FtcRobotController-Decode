@@ -4,9 +4,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team13581.RobotHardware;
 
-@Autonomous(name="Robot Centric No Shoot", group="Autonomous")
+@Autonomous(name="Robot Centric No Shoot Blue Team", group="Autonomous")
 
-public class RobotCentricNoShoot extends LinearOpMode {
+public class RobotCentricNoShootB extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -33,9 +33,9 @@ public class RobotCentricNoShoot extends LinearOpMode {
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
             // Drive 24" forward, then turn and hold headings as defined
-            robot.autoRobotCentric(AXIAL_SPEED, -48.0, 0.0);
-            robot.turnToHeading(YAW_SPEED, 45);
-            robot.holdHeading(YAW_SPEED, 45, 0.5);
+            robot.autoRobotCentric(AXIAL_SPEED, 24.0, 0.0);
+            robot.turnToHeading(YAW_SPEED, 90);
+            robot.holdHeading(YAW_SPEED, 90, 0.5);
 
             // Indicate completion and pause for display
             telemetry.addData("Path", "Complete");
