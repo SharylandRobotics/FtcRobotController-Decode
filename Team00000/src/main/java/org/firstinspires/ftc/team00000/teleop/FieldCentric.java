@@ -44,7 +44,7 @@ import org.firstinspires.ftc.team00000.RobotHardware;
 public class FieldCentric extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
-    public static double shooter = 0.4;
+    public static double shooter = 0.475;
     public static double shooterMaxRpm = 6000.0;
     public static double shooterKp = 0.0;
     public static double shooterKi = 0.0;
@@ -66,8 +66,8 @@ public class FieldCentric extends LinearOpMode {
     private boolean launchMode = false;
     private long launchStartMs = 0;
 
-    public static int LAUNCH_SPOOL_MS = 300;
-    public static int LAUNCH_FEED_MS = 6000;
+    public static int LAUNCH_SPOOL_MS = 0;
+    public static int LAUNCH_FEED_MS = 1200;
 
     public static double TRANSFER_FWD = 0.80;
     public static double TRANSFER_REV = -0.20;
@@ -300,7 +300,7 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
-            sleep(100);
+            sleep(20);
         }
     }
 }

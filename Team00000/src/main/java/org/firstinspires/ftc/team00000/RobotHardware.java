@@ -110,8 +110,8 @@ public class RobotHardware {
     // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
     private double tagYawDeg = Double.NaN;
 
-    private static final double DESIRED_DISTANCE = 120.0; // camera-to-tag inches
-    private static final double DESIRED_BEARING_DEG = 44.37;
+    private static final double DESIRED_DISTANCE = 140.0; // camera-to-tag inches
+    private static double DESIRED_BEARING_DEG = 0;
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
     private static final double LATERAL_GAIN = 0.015; // tagYawError -> lateral (strafe) speed
     private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
@@ -560,6 +560,12 @@ public class RobotHardware {
         if (chosen != null) {
             goalTagId = chosen.id;
             if (chosen.ftcPose != null) {
+                if (goalTagId == 20) {
+                    DESIRED_BEARING_DEG = 23;
+                }
+                if (goalTagId == 24) {
+                    DESIRED_BEARING_DEG = -23;
+                }
                 goalRangeIn = chosen.ftcPose.range;
                 goalBearingDeg = chosen.ftcPose.bearing;
                 goalElevationDeg = chosen.ftcPose.elevation;
@@ -606,7 +612,7 @@ public class RobotHardware {
         }
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
         double headingError =  goalBearingDeg;
-        double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
+        double yawError = tagYawDeg - DESIRED_BEARING_DEG;
 
         double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
         double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);

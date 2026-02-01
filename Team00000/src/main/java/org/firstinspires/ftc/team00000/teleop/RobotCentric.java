@@ -61,8 +61,8 @@ public class RobotCentric extends LinearOpMode {
     private boolean launchMode = false;
     private long launchStartMs = 0;
 
-    public static int LAUNCH_SPOOL_MS = 300;
-    public static int LAUNCH_FEED_MS = 6000;
+    public static int LAUNCH_SPOOL_MS = 0;
+    public static int LAUNCH_FEED_MS = 1200;
 
     public static double TRANSFER_FWD = 0.80;
     public static double TRANSFER_REV = -0.20;
@@ -299,8 +299,7 @@ public class RobotCentric extends LinearOpMode {
             telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
-            // Small delay to prevent telemetry flooding
-            sleep(50);
+            sleep(20);
         }
     }
 }
