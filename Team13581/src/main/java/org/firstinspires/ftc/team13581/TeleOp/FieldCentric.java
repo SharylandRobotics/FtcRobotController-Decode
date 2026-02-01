@@ -194,7 +194,7 @@ public class FieldCentric extends LinearOpMode {
                 double pos = 0.0;
                 if (!Double.isNaN(scan)) {
                     deg = scan + robot.getTurretDegree();
-                    pos = robot.hAimRPos() + (scan * 1/300);
+                    pos = robot.hAimRPos() + (scan / 600.0);
                     robot.setTurretPos(pos);
                     //robot.setTurretDegree(scan);
                     telemetry.addData("Correcting by :", scan);
