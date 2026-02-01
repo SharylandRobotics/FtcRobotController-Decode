@@ -48,22 +48,24 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
 
-// Student Notes: Hardware wrapper ("robot API") for drive, IMU, and AprilTag vision.
-// Keep comments concise; use TODOs to guide improvements.
+// Hardware wrapper for drive, shooter, and AprilTag vision.
+// Exposes simple, high-level methods used by TeleOp and Auto.
 public class RobotHardware {
 
+    // OpMode context (hardwareMap, telemetry, active state).
     private final LinearOpMode myOpMode;
 
-    // Student Note: Mecanum drive motors. If motion is reversed, fix motor directions or wiring.
-    // TODO(students): Verify these names match your RC configuration.
+    // Drive motors (mecanum). Verify directions in init().
     private DcMotor frontLeftDrive;
     private DcMotor backLeftDrive;
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
 
+    // Shooter motors (velocity controlled via setVelocity()).
     private DcMotorEx topShooter;
     private DcMotorEx bottomShooter;
 
+    // CRServos for transfer and stoppers.
     private CRServo leftStopper;
     private CRServo rightStopper;
     private CRServo frontLeftTransfer;
@@ -71,14 +73,12 @@ public class RobotHardware {
     private CRServo backLeftTransfer;
     private CRServo backRightTransfer;
 
-    // Student Note: IMU provides yaw (heading) for field‑centric drive and turns.
-    // TODO(students): If heading seems rotated, check hub orientation in init().
+    // IMU provides robot heading (yaw) for field-centric drive and turns.
     private IMU imu = null;
 
+    // Cached state for motion helpers (telemetry + control).
     private double headingError;
-
     private double targetHeading;
-
     private double yawSpeed;
     private double frontLeftSpeed;
     private double backLeftSpeed;
@@ -89,27 +89,26 @@ public class RobotHardware {
     private int frontRightTarget;
     private int backRightTarget;
 
-    // Student Note: Camera pose (robot frame). +X forward, +Y left, +Z up (in).
-    // Pitch +8° = camera looks UP 8°. Update if you remount the camera.
-    // TODO(students): Measure real offsets when you rely on precise vision assists.
+    // Camera pose in robot frame (+X forward, +Y left, +Z up). Update if camera mount changes.
     private final Position cameraPosition = new Position(DistanceUnit.INCH,
             0, -2.34, 16, 0);
     private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
             0, 8, 0, 0);
 
+    // AprilTag state (latest detections + chosen target).
     private AprilTagProcessor aprilTag = null;
-
     private Integer obeliskTagId = null;
     private String obeliskMotif = null;
-
     private Integer goalTagId = null;
     private double goalRangeIn = Double.NaN;
     private double goalBearingDeg = Double.NaN;
     private double goalElevationDeg = Double.NaN;
 
-    // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
+    // Tag yaw is the tag's image rotation (degrees).
+    // We use it as a lateral error to align the robot square to the goal face.
     private double tagYawDeg = Double.NaN;
 
+    // Auto-assist tuning (AprilTag -> drive commands). Units: inches, degrees.
     private static final double DESIRED_DISTANCE = 140.0; // camera-to-tag inches
     private static double DESIRED_BEARING_DEG = 0;
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
@@ -121,22 +120,23 @@ public class RobotHardware {
     public static final double HEADING_THRESHOLD = 1.0;
     public static final double TOLERANCE_TICKS = 10.0;
 
+    // Shooter target (for telemetry).
     private double shooterTargetTicksPerSec = 0.0;
 
-    // Student Note: Calibrated intrinsics for 1280×800. Must match camera resolution.
-    // TODO(students): Recalibrate or update values if resolution or lens changes.
+    // Camera intrinsics (pixels). Calibrate per-camera/resolution.
     private static final double LENS_FX = 921.31;
     private static final double LENS_FY = 917.70;
     private static final double LENS_CX = 689.03;
     private static final double LENS_CY = 372.06;
 
+    // Identifies non-goal tags (Obelisks) that must never be used for navigation.
     private boolean isObelisk(AprilTagDetection d) {
         String name = (d != null && d.metadata != null) ? d.metadata.name : "";
         return name != null && name.toLowerCase().contains("obelisk");
     }
 
-    // Student Note: Encoder model. COUNTS_PER_INCH converts inches to encoder ticks.
-    // TODO(students): Update if wheel size/gearing/encoders change.
+    // Encoder model for drive distance. Update if wheel size/gearing/encoders change
+    // All drive distances in the class are expressed in inches.
     static final double COUNTS_PER_MOTOR_REV = 537.7;
     static final double DRIVE_GEAR_REDUCTION = 1.0;
     static final double WHEEL_DIAMETER_INCHES = 4.094;
@@ -164,8 +164,7 @@ public class RobotHardware {
         backLeftTransfer = myOpMode.hardwareMap.get(CRServo.class, "back_left_transfer");
         backRightTransfer = myOpMode.hardwareMap.get(CRServo.class, "back_right_transfer");
 
-        // Student Note: Control Hub mounting directions for correct IMU yaw.
-        // TODO(students): If yaw sign/drift looks wrong, verify these settings.
+        // IMU mounting orientation (must match Control Hub installation).
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));
@@ -212,11 +211,13 @@ public class RobotHardware {
         topShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         bottomShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Student Note: Zero heading at init so 0° is the starting direction.
+        // Zero yaw so heading starts at 0°.
         imu.resetYaw();
         initAprilTag();
     }
 
+    // Drives a fixed distance at a specified field-relative travel heading,
+    // while holding the robot at robotHeading (degrees).
     public void driveOmni(double maxSpeed, double distance, double travelHeading, double robotHeading) {
 
         if (myOpMode.opModeIsActive()) {
@@ -254,8 +255,6 @@ public class RobotHardware {
 
             driveFieldCentric(axialFraction * maxSpeed, lateralFraction * maxSpeed, 0);
 
-            // Student Note: Encoder straight drive with P‑turn correction to hold heading.
-            // TODO(students): Tune P_AXIAL_GAIN if it wiggles or under‑corrects.
             while (myOpMode.opModeIsActive() &&
                     (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
                     frontRightDrive.isBusy() && backRightDrive.isBusy())) {
@@ -265,7 +264,7 @@ public class RobotHardware {
                 double rightFrontError = Math.abs(frontRightTarget - frontRightDrive.getCurrentPosition());
                 double rightBackError = Math.abs(backRightTarget - backRightDrive.getCurrentPosition());
 
-                // Find the max distance among the four wheels
+                // Run to position with heading correction.
                 double maxError =
                         Math.max(Math.max(leftFrontError, leftBackError),
                                 Math.max(rightFrontError, rightBackError));
@@ -309,8 +308,7 @@ public class RobotHardware {
 
         getSteeringCorrection(heading, YAW_GAIN);
 
-        // Student Note: Turn‑in‑place until heading error is small.
-        // TODO(students): Tune P_YAW_GAIN for snappier or smoother turns.
+        // Turn in place until within heading tolerance.
         while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
 
             yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
@@ -338,7 +336,7 @@ public class RobotHardware {
         ElapsedTime holdTimer = new ElapsedTime();
         holdTimer.reset();
 
-        // Student Note: Briefly hold heading to let the robot settle after a move.
+        // Hold heading for a fixed duration (e.g., to settle after a move).
         while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
 
             yawSpeed = getSteeringCorrection(heading, YAW_GAIN);
@@ -361,6 +359,7 @@ public class RobotHardware {
         driveFieldCentric(0, 0, 0);
     }
 
+    // Positive output commands CCW rotation. Error wrapped to [-180, 180).
     public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
         targetHeading = desiredHeading;
 
@@ -373,8 +372,7 @@ public class RobotHardware {
     }
 
     public void driveRobotCentric(double axial, double lateral, double yaw) {
-        // Student Note: Robot‑centric (relative to robot). No heading compensation here.
-        // TODO(students): Add input deadbands or expo curves if sticks feel too touchy.
+        // Robot-centric mecanum mix (no heading compensation).
         double frontLeftPower = axial + lateral + yaw;
         double frontRightPower = axial - lateral - yaw;
         double backLeftPower = axial - lateral + yaw;
@@ -393,8 +391,7 @@ public class RobotHardware {
     }
 
     public void driveFieldCentric(double axial, double lateral, double yaw) {
-        // Student Note: Field‑centric (relative to field). Rotate sticks by IMU yaw.
-        // TODO(students): If "up" isn't downfield, check IMU orientation & motor directions.
+        // Field-centric mecanum mix (rotate input by current IMU yaw).
         double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
         double lateralRotation = lateral * Math.cos(-botHeading) - axial * Math.sin(-botHeading);
@@ -442,6 +439,8 @@ public class RobotHardware {
     public void configureShooterVelocityPidfForMaxRpm(double maxRpm, double kP, double kI, double kD) {
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         final double maxTicksPerSec = (maxRpm * ticksPerRev) / 60.0;
+
+        // Feedforward scaled so full power corresponds to max achievable velocity.
         final double kF = 32767.0 / Math.max(1.0, maxTicksPerSec);
 
         topShooter.setVelocityPIDFCoefficients(kP, kI, kD, kF);
@@ -478,15 +477,14 @@ public class RobotHardware {
         backRightTransfer.setPower(p);
     }
 
-    // Student Note: Convenience — current yaw (degrees) from the IMU.
+    // Current yaw heading (degrees)
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
     }
 
     private void initAprilTag() {
-        // Student Note: Build AprilTag processor with camera pose + intrinsics; start Dashboard stream.
-        // TODO(students): If Dashboard video looks flipped, add a display‑only flip in a processor.
+        // Build AprilTag processor with camera pose + intrinsics; stream to Dashboard.
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder()
                 .setDrawAxes(false)
                 .setDrawCubeProjection(false)
@@ -511,10 +509,9 @@ public class RobotHardware {
         visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
-    // Student Note: Never navigate on Obelisk tags—only latch which one we saw.
-    // Goal targeting: keep current goal if visible; else take first non‑Obelisk.
-    // Clears pose when no goal is visible to avoid stale data.
-    // TODO(students): Add a "target lock" button if drivers want sticky targeting.
+    // Updates AprilTag detections and selects a goal tag (non-Obelisk).
+    // Clears pose values when no valid goal is visible to avoid stale data.
+    // Clearing values forces callers to explicitly handle "no tag" cases.
     public void updateAprilTagDetections() {
         if (aprilTag == null) return;
 
@@ -560,6 +557,8 @@ public class RobotHardware {
         if (chosen != null) {
             goalTagId = chosen.id;
             if (chosen.ftcPose != null) {
+
+                // Tag-specific offset: align to the goal face based on asymmetric tag placement.
                 if (goalTagId == 20) {
                     DESIRED_BEARING_DEG = 23;
                 }
@@ -606,6 +605,8 @@ public class RobotHardware {
         obeliskTagId = null;
     }
 
+    // One closed-loop step toward the goal tag:
+    // range -> axial, tag yaw -> lateral, bearing -> robot yaw.
     public boolean autoDriveToGoalStep() {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
@@ -614,6 +615,10 @@ public class RobotHardware {
         double headingError =  goalBearingDeg;
         double yawError = tagYawDeg - DESIRED_BEARING_DEG;
 
+        // Sign conventions:
+        //  +axial   -> drive forward
+        //  +lateral -> strafe left
+        //  +yaw     -> CCW rotation
         double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
         double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
         double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
