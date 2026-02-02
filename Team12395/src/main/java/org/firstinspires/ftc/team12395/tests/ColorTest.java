@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
@@ -53,10 +54,7 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
-    public static float gain = 100;
-    public static boolean testColor = false;
-    public static boolean shoot = false;
-    public static boolean sort = false;
+    public static float gain = 30;
 
     @Override
     public void runOpMode() {
@@ -79,58 +77,38 @@ public class ColorTest extends LinearOpMode {
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            NormalizedRGBA color = robot.colorSensor.getNormalizedColors();
+            robot.colorSensor0.setGain(gain);
+            robot.colorSensor1.setGain(gain);
+            robot.colorSensor2.setGain(gain);
+
+            NormalizedRGBA color = robot.colorSensor0.getNormalizedColors();
+            float[] hsvValues = new float[3];
             Color.colorToHSV(color.toColor(), hsvValues);
-            if (testColor){
-                robot.setIntakeSpeed(-800);
-            }
 
-            String colorS = "UNKNOWN/ROTATING";
-            if (shoot && !robot.mag.contains("0") && !robot.spindexer.isBusy()){
-                robot.setShooterVelocity(400);
-                robot.spindexerHandler(-480);
-                robot.setMagManualBulk("000");
-            } else if (testColor && !robot.spindexer.isBusy() && !runClock && robot.mag.contains("0")){
-                if (hsvValues[2] < 0.15){
-                    colorS = "NONE";
-                } else if (hsvValues[0] > 200 && hsvValues[0] <= 240){
-                    colorS = "PURPLE";
-                    if (robot.mag.charAt(chamber) == '0') {
-                        robot.setChamberManual('P');
-                    }
-                    runClock = true;
-                } else if (hsvValues[1] > 0.6 && hsvValues[1] < 0.75){
-                    colorS = "GREEN";
-                    if (robot.mag.charAt(chamber) == '0') {
-                        robot.setChamberManual('G');
-                    }
-                    runClock = true;
-                }
-            }
+            colorTypes color0 = robot.classifyColor(hsvValues);
+            telemetry.addData("Color0 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color0 Range (IN): ",  robot.colorSensor0.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Classified color: ",  color0);
 
-            if (sort && !robot.mag.contains("0") && !robot.spindexer.isBusy()){
-                robot.spindexerHandler(120*robot.solvePattern()[0]);
-            }
+            color = robot.colorSensor1.getNormalizedColors();
+            Color.colorToHSV(color.toColor(), hsvValues);
 
-            if (runClock && clock < 5){
-                clock++;
-            }
+            colorTypes color1 = robot.classifyColor(hsvValues);
+            telemetry.addData("Color1 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color1 Range (IN): ",  robot.colorSensor1.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Classified color: ",  color1);
 
-            if (clock == 4){
-                robot.spindexerHandler(120);
-                clock = 0;
-                runClock = false;
-            }
+            color = robot.colorSensor2.getNormalizedColors();
+            Color.colorToHSV(color.toColor(), hsvValues);
 
-            telemetry.addData("Color is: ", colorS);
-
-            robot.colorSensor.setGain(gain);
+            colorTypes color2 = robot.classifyColor(hsvValues);
+            telemetry.addData("Color2 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color2 Range (IN): ",  robot.colorSensor2.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Classified color: ",  color2);
 
             cT = getRuntime();
             telemetry.addData("Delay from previous update (s): ", cT - prT);
             prT = cT;
-            telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
-            telemetry.addData("float Colors (RGB): ",  "R=%.3f G=%.3f B=%.3f ", color.red, color.green, color.blue);
             telemetry.addData(robot.getMagPicture(),"");
             telemetry.update();
 

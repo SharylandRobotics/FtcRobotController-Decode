@@ -36,21 +36,25 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.ftccommon.SoundPlayer;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.navigation.*;
+import org.firstinspires.ftc.team12395.rr.MecanumDrive;
+import org.firstinspires.ftc.team12395.rr.PinpointLocalizer;
 
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,17 +67,20 @@ public class RobotHardware {
     private LinearOpMode myOpMode = null;
 
     public Limelight3A limelight;
+    public MecanumDrive standardDrive;
     public LLResult result;
+    public GoBildaPinpointDriver pinpointDriver;
 
-    public NormalizedColorSensor colorSensor;
+    public RevColorSensorV3 colorSensor0, colorSensor1, colorSensor2;
     public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
     public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
     public String pattern = "PPG";// a pattern is better than no pattern
-    public static int chamber = 0;
+    public int chamber = 0;
+    public int firingChamber = 1;
 
     // Drivetrain motors for a mecanum chassis
-    private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
+    public DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
 
     public DcMotorEx shooter2, shooter, spindexer, intake;
     public CRServo turretR, turretL;
@@ -81,13 +88,12 @@ public class RobotHardware {
 
     public servoDrivenEncoder turretHandler;
 
-    public static int maxTurnR = 100 ;
-    public static int maxTurnL = 100; // negative
+    public static int maxTurnR = 140 ;
+    public static int maxTurnL = 140; // negative
 
-    private final double driveToTurretRatio = 3.2; // 3.2 rotations to 1, 80/25 teeth
+    private final double driveToTurretRatio = 3; // 3.2 rotations to 1, 120/40 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev
     public final double turretTicksPerDegree = turretTicksPerRevolution/360;
-    private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
     private final int shooterMaxTPM = 2800;
 
     private final static double spoolToSpindexerRatio = 1;
@@ -95,8 +101,6 @@ public class RobotHardware {
     public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
     public final double spindexerETicksPerRevolution = 8192;
     public final double spindexerETicksPerDegree = spindexerETicksPerRevolution/360;
-    private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
-
     public double spindexerFudge = 0;
     public int spindexerTarget = 0;
 
@@ -104,9 +108,6 @@ public class RobotHardware {
     private Servo hoodAngle;
 
     // physics
-
-    private final double g = 9.81;
-    private final double xOffset = 5.5; //cm
     private final double yOffset = 16.5*2.54; //cm
     private final double verticalTargetDistance = 70-yOffset;
 
@@ -115,16 +116,9 @@ public class RobotHardware {
     private IMU imu;
 
     // COLOR SENSOR
-
-    public int[] prevColor = null;
-    public int[] currentColor;
-
-    boolean orbPreload;
-    boolean orbDeepPreload;
     private Context appContext;
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
-        //appContext = opmode.hardwareMap.appContext;
     }
 
     /**
@@ -132,6 +126,7 @@ public class RobotHardware {
      * Call once from your OPMode before driving.
      */
     public void init() {
+        standardDrive = new MecanumDrive(myOpMode.hardwareMap, new Pose2d(0, 0, 0));
         appContext = myOpMode.hardwareMap.appContext;
         // --- HARDWARE MAP NAMES ---
         limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
@@ -141,30 +136,29 @@ public class RobotHardware {
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        shooter2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
-
-        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "turret")));
-        turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
-        turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
-        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
-
-
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
+        shooter2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "turret")));
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
-        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "intake")));
-
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
 
+        hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
+        turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
+        turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
 
-        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
+
+        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
+        colorSensor0 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color0");
+        colorSensor1 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color1");
+        colorSensor2 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color2");
 
         // --- IMU ORIENTATION ---
         // TODO: UPDATE ALONGSIDE ROADRUNNER
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,        // e.g., logo pointing up
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards right
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
@@ -176,15 +170,15 @@ public class RobotHardware {
 
         // --- MOTOR DIRECTIONS ---
         // NOTE: these reversals are common for mecanum so "axial + lateral" maps correctly.
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        shooter2.setDirection(DcMotorEx.Direction.FORWARD);
-        shooter.setDirection(DcMotorEx.Direction.REVERSE);
+        shooter2.setDirection(DcMotorEx.Direction.REVERSE);
+        shooter.setDirection(DcMotorEx.Direction.FORWARD);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
-        intake.setDirection(DcMotorEx.Direction.REVERSE);
+        intake.setDirection(DcMotorEx.Direction.FORWARD);
 
         turretR.setDirection(DcMotorSimple.Direction.REVERSE);
         turretL.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -196,10 +190,6 @@ public class RobotHardware {
 
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         shooter2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -218,12 +208,6 @@ public class RobotHardware {
         spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         spindexer.setTargetPosition(0);
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -236,9 +220,11 @@ public class RobotHardware {
         shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
-        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        colorSensor.setGain(100);
+        colorSensor0.setGain(100);
+        colorSensor1.setGain(100);
+        colorSensor2.setGain(100);
 
         // SERVO POSITIONS
 
@@ -255,6 +241,8 @@ public class RobotHardware {
         int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
 
+
+
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
         myOpMode.telemetry.addData("Sound Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb));
         myOpMode.telemetry.addData("Sound2 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep));
@@ -264,6 +252,21 @@ public class RobotHardware {
 
         FtcDashboard.getInstance().startCameraStream(limelight, 20);
 
+
+        pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
+    }
+
+    public void setLocalizerPosition(Pose2d pose){
+        try {
+            standardDrive.localizer.setPose(pose);
+            standardDrive.localizer.update();
+        } catch (Exception ex) {
+
+        }
+    }
+
+    public double getPinPointHeading(){
+        return pinpointDriver.getHeading(AngleUnit.DEGREES);
     }
 
 
@@ -279,33 +282,6 @@ public class RobotHardware {
             SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break);
         }
 
-    }
-
-
-    /**
-     * Robot-Centric drive (driver-relative): no IMU rotation applied.
-     * @param axial     forward/backward (+forward)
-     * @param lateral   left/right (+ right)
-     * @param yaw       rotate CCW (+ left turn)
-     */
-    public void driveRobotCentric(double axial, double lateral, double yaw) {
-        // WHY: Standard mecanum mixing (A + L + Y. etc.). Values may exceed |1|; we normalize below.
-        double frontLeftPower  = axial + lateral + yaw;
-        double frontRightPower = axial - lateral - yaw;
-        double backLeftPower   = axial - lateral + yaw;
-        double backRightPower  = axial + lateral - yaw;
-
-        // Normalize so that the highest magnitude is 1.0, preserving ratios
-        double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
-                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-        if (max > 1.0) {
-            frontLeftPower  /= max;
-            frontRightPower /= max;
-            backLeftPower   /= max;
-            backRightPower  /= max;
-        }
-
-        setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
 
     /**
@@ -362,7 +338,7 @@ public class RobotHardware {
 
 
     public void setIntakeSpeed(double vel){
-        intake.setPower(vel);
+        intake.setVelocity(vel);
     }
 
     public void setTurretHandlerRelative(double deg){
@@ -383,54 +359,12 @@ public class RobotHardware {
         shooter2.setPower(shooter.getPower());
     }
 
-    /**
-     *
-     * @return rpm in rps, not tps
-     * max rpm is 100. (6000 mRPM / 60 sec = 100 mRPS * 28 TPR = 2800 mTPS)
-     */
-
     public void setHoodAngle(double angle){
         hoodAngle.setPosition(angle);
     }
 
     public double getCurrentTurretDegreePos(){
         return turretHandler.getCurrentPosition()/ turretTicksPerDegree;
-    }
-
-    /**
-     * angle solver
-     * @param xT x which the curve will fall on (distance)
-     * @param v given velocity
-     * @return (0) the low arc, (1) the high arc)
-     */
-    public double[] findTurretAngles(double xT, double v){
-        double yT = 38.75;
-        double discriminant = Math.sqrt( Math.pow(v,4) - g*((g*xT*xT) + (2*yT*v*v)));
-
-        return new double[] {Math.atan((v * v - discriminant) / g * xT), Math.atan((v * v + discriminant) / g * xT)};
-    }
-
-    /**
-     * graph function
-     * @param x distance to check
-     * @param v given velocity
-     * @param z given angle
-     * @return distance from floor + offset the projectile will be at
-     */
-    public double trajectoryOf(double x, double v, double z){
-        return ( x*Math.tan(z) -( (g*x*x)/(2*v*v*Math.cos(z)*Math.cos(z) ) ) );
-    }
-
-    /**
-     * checks if a given velocity can reach a given coordinate
-     * @param x target x
-     * @param y target y
-     * @param v given velocity
-     * @return boolean response
-     */
-    public boolean shotPossible(double x, double y, double v){
-
-        return Math.sqrt( (x*2*g)/(Math.sin(2*(Math.atan(2*y/x)))) ) == v;
     }
 
     public double getCurrentSpindexerDegreesPos(){
@@ -461,6 +395,8 @@ public class RobotHardware {
         } else if (turns > 0){// ccw
             chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
+
+        firingChamber = (chamber+2) % 3;
     }
 
     public void maintainSpindexerHandler(){
@@ -468,7 +404,7 @@ public class RobotHardware {
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(800);
+        spindexer.setVelocity(600);
     }
 
     public void spindexerHandler(int targetAdd,  int vel){
@@ -490,12 +426,8 @@ public class RobotHardware {
         } else if (turns > 0){// ccw
             chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
-    }
 
-    public void setSpindexerRelativeAngle(double angle){
-        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
-
-        spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        firingChamber = (chamber+2) % 3;
     }
 
     private double[] getValuesToTarget(){
@@ -588,6 +520,60 @@ public class RobotHardware {
         return new double[]{Double.NaN, Double.NaN};
     }
 
+    public Pose2d fetchLocalizedPose(){
+        boolean check  = processLLresult();
+        if (check){
+            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
+
+            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Tags: ", fresult.size());
+
+            //TODO check if filtering of tags can be done thru LL config instead
+            for (LLResultTypes.FiducialResult fiducial : fresultCC){
+                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23){
+                    fresult.remove(fiducial);
+                }
+            }
+
+            if (!fresult.isEmpty()) {
+                // placeholder values
+                double cameraOffset = -77.9953;
+                double turretAngle = getCurrentTurretDegreePos();
+                double turretOffset = 55;
+
+                // LL uses meters & deg, RR uses inches & rads
+                limelight.updateRobotOrientation(getHeading() - 90 + turretAngle);
+
+                Pose3D rawMT2Pose3D = result.getBotpose_MT2();
+                Position rawMT2Position = rawMT2Pose3D.getPosition().toUnit(DistanceUnit.INCH);
+
+                //TODO translate LL grid into RR grid before finalizing (including yaw & units)
+                Pose2d rawPose = new Pose2d(rawMT2Position.x,
+                                            rawMT2Position.y,
+                                            rawMT2Pose3D.getOrientation().getYaw(AngleUnit.RADIANS));
+
+                myOpMode.telemetry.addData("Raw Pose: ", rawPose.position);
+
+                Pose2d translatedPose = rawPose
+                        // camera-turret axis offset
+                        .plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))
+                        // turret rotation
+                        .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)))
+                        // turret axis-bot center offset
+                        .plus(new Twist2d(new Vector2d(turretOffset,0), Math.toRadians(0)));
+                
+                return translatedPose;
+            }
+        }
+        return new Pose2d(Double.NaN, Double.NaN, Math.toRadians(0));
+    }
+
+    public double turretAngleToTarget(Pose2d target, Pose2d currentPose){
+        return Math.atan2(target.position.y - currentPose.position.y,
+                target.position.x - currentPose.position.x) - currentPose.heading.imag;
+    }
+
     public boolean processObelisk(){
         if (processLLresult()){
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
@@ -633,9 +619,9 @@ public class RobotHardware {
             int greenIndex = mag.indexOf("G");
             switch (pattern) {
                 case "GPP":
-                    if (greenIndex == chamber) {// if green is selected
+                    if (greenIndex == firingChamber) {// if green is selected
                         return new int[]{0, -2};// don't move, turn right twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn left, then turn right twice
                         return new int[]{1, -2};
                     } else {
@@ -644,9 +630,9 @@ public class RobotHardware {
                     }
 
                 case "PGP":
-                    if (greenIndex == chamber) { // if green is selected
+                    if (greenIndex == firingChamber) { // if green is selected
                         return new int[]{1, -2}; //  turn left, then turn right twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn right (2x left), then turn right twice
                         return new int[]{2, -2};
                     } else {
@@ -655,9 +641,9 @@ public class RobotHardware {
                     }
 
                 case "PPG":
-                    if (greenIndex == chamber) { // if green is selected
+                    if (greenIndex == firingChamber) { // if green is selected
                         return new int[]{2, 2}; //  turn cw (2x ccw), then turn cw twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, don't move, turn cw twice
                         return new int[]{0, -2};
                     } else {
@@ -679,13 +665,14 @@ public class RobotHardware {
     }
 
     public void setMagManualBulk(String set){
-        //      (chamber on 0)         012
+        //   (firing chamber on 2)
+        //      (chamber on 0)         210
         // set things in a cw manner ( XYZ )
         //    0(X)
         // 1(Z)   2(Y)
         StringBuilder magBuilder = new StringBuilder(mag);
         for (int i=0; i<3; i++) {
-            magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
+            magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
             mag = magBuilder.toString();
         }
     }
@@ -703,18 +690,99 @@ public class RobotHardware {
     }
 
     public void scanColor(){
-        NormalizedRGBA color = colorSensor.getNormalizedColors();
+        NormalizedRGBA color = colorSensor0.getNormalizedColors();
         float[] hsvValues = new float[3];
         Color.colorToHSV(color.toColor(), hsvValues);
 
-        scannedColor = colorTypes.UNKNOWN;
-        if (hsvValues[2] < 0.15){
-            scannedColor = colorTypes.NONE;
-        } else if (hsvValues[0] > 200 && hsvValues[0] <= 240){
-            scannedColor = colorTypes.PURPLE;
-        } else if (hsvValues[1] > 0.6 && hsvValues[1] < 0.75){
-            scannedColor = colorTypes.GREEN;
+        colorTypes color0 = classifyColor(hsvValues);
+
+        color = colorSensor1.getNormalizedColors();
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        colorTypes color1 = classifyColor(hsvValues);
+
+        color = colorSensor2.getNormalizedColors();
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        colorTypes color2 = classifyColor(hsvValues);
+
+        //    (0)
+        // (1)   (2)
+        String colorHolder = "";
+
+        switch (color2) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
         }
+
+        switch (color1) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        switch (color0) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        setColorMagManualBulk(colorHolder);
+    }
+
+    public void setColorMagManualBulk(String set){
+        //   (firing chamber on 2)
+        //      (chamber on 0)         210
+        // set things in a cw manner ( XYZ )
+        //    0(X)
+        // 1(Z)   2(Y)
+        StringBuilder magBuilder = new StringBuilder(mag);
+        for (int i=0; i<3; i++) {
+            if (set.charAt(i) != '0') {
+                magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
+                mag = magBuilder.toString();
+            }
+        }
+    }
+
+    public colorTypes classifyColor(float[] hsvValues){
+        colorTypes color = colorTypes.UNKNOWN;
+        if (hsvValues[2] < 0.15){
+            color = colorTypes.NONE;
+        } else if (hsvValues[0] > 180 && hsvValues[0] <= 240){
+            color = colorTypes.PURPLE;
+        } else if (hsvValues[1] > 0.5 && hsvValues[1] < 0.8){
+            color = colorTypes.GREEN;
+        }
+        return color;
     }
 
     public String getMagPicture(){
@@ -802,35 +870,6 @@ public class RobotHardware {
             }
         }
 
-        public class automaticIntakeBalls implements Action{
-            public automaticIntakeBalls(){
-
-            }
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                // run until spindexer is full
-                scanColor();
-                boolean rerun = true;
-                if (!spindexer.isBusy() && mag.contains("0")){
-                    if (scannedColor.equals(colorTypes.PURPLE)){
-                        if (mag.charAt(chamber) == '0') {
-                            setChamberManual('P');
-                            spindexerHandler(120);
-                        }
-                    } else if (scannedColor.equals(colorTypes.GREEN)){
-                        if (mag.charAt(chamber) == '0') {
-                            setChamberManual('G');
-                            spindexerHandler(120);
-                        }
-                    }
-                } else if (!mag.contains("0")){
-                    rerun = false;
-                }
-                return rerun;
-            }
-        }
-
         public class shootBalls implements Action{
             public shootBalls(){
 
@@ -838,14 +877,12 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480, 600);
+                spindexerHandler(-480, 800);
                 return false;
             }
         }
 
         public class setTurretPowerZero implements Action{
-            private double deg;
-
             public setTurretPowerZero(){
 
             }
@@ -865,8 +902,33 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(120*solvePattern()[0]);
+                int[] solve = solvePattern();
+                if (solve != null) {
+                    spindexerHandler(120 * solve[0]);
+                }
                 return false;
+            }
+        }
+
+        public class wiggleSpindexer implements Action{
+            private ElapsedTime timer = new ElapsedTime();
+            private int stage = 0;
+            public wiggleSpindexer(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (stage == 0){
+                    spindexerHandler(10, 600);
+                    stage++;
+                }
+
+                if (stage == 1 && timer.seconds() >= 0.5){
+                    spindexerHandler(-10,600);
+                    stage++;
+                }
+                return (stage < 2);
             }
         }
 
@@ -891,18 +953,34 @@ public class RobotHardware {
             }
 
             @Override
-            public boolean run(TelemetryPacket packet){
+            public boolean run(@NonNull TelemetryPacket packet){
                 setIntakeSpeed(vel);
                 return false;
             }
         }
 
-        public Action shootAllBalls(){
-            return new shootBalls();
+        public class scanColorSensor implements Action{
+
+            public scanColorSensor(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                scanColor();
+                return true;
+            }
         }
 
-        public Action automaticallyIntakeBalls(){
-            return new automaticIntakeBalls();
+        public Action wiggleSpindexer(){
+            return new wiggleSpindexer();
+        }
+        public Action scanColorToggle(){
+            return new scanColorSensor();
+        }
+
+        public Action shootAllBalls(){
+            return new shootBalls();
         }
 
         public Action setIntakeVel(double vel){

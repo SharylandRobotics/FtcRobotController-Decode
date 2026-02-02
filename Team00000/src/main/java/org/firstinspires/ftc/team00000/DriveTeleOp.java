@@ -27,32 +27,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team00000.teleop;
+package org.firstinspires.ftc.team00000;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.team00000.RobotHardware;
 
-// Student Notes: Field‑centric TeleOp. Left stick = drive/strafe, Right stick = turn, LB = slow mode.
-// TODO(students): Adjust slow‑mode scale if you want finer aiming.
+// Unified TeleOp with a drive-mode toggle.
+// Drive: LS=translate, RS=rotate, LB=slow mode.
+// Assist: hold RB for AprilTag assist.
+// Shooter: X=spin-up toggle, Y=burst feed.
+// Transfer: D-pad UP/DOWN sticky fwd/rev, LEFT safe stop, RIGHT stopper toggle, A intake toggle, B hold quick reverse.
+// Toggle drive mode (FIELD/ROBOT): press LS (left stick button).
 @Config
-@TeleOp(name = "Field Centric", group = "opMode")
+@TeleOp(name = "Drive TeleOp", group = "opMode")
 
-public class FieldCentric extends LinearOpMode {
+public class DriveTeleOp extends LinearOpMode {
 
+    // Hardware abstraction (motors, IMU, AprilTag vision).
     RobotHardware robot = new RobotHardware(this);
-    public static double shooter = 0.4;
+
+    // Shooter tuning (Dashboard-configurable).
+    public static double shooter = 0.475;
     public static double shooterMaxRpm = 6000.0;
     public static double shooterKp = 0.0;
     public static double shooterKi = 0.0;
     public static double shooterKd = 0.0;
 
+    // Mechanism outputs (Dashboard-visible for tuning).
     public static double stopperPower = 0.0;
     public static double transferPower = 0.0;
 
+    // Edge-detect state for buttons.
     private boolean prevUp = false;
     private boolean prevDown = false;
     private boolean prevLeft = false;
@@ -60,15 +68,23 @@ public class FieldCentric extends LinearOpMode {
     private boolean prevA = false;
     private boolean prevX = false;
     private boolean prevY = false;
+    private boolean prevLsBtn = false;
 
+    // Driver modes/state.
     private boolean shooterEnabled = false;
     private boolean intakeMode = false;
     private boolean launchMode = false;
     private long launchStartMs = 0;
 
-    public static int LAUNCH_SPOOL_MS = 300;
-    public static int LAUNCH_FEED_MS = 6000;
+    // Drive mode selection (field-centric vs robot-centric).
+    private enum DriveMode { FIELD, ROBOT }
+    private DriveMode driveMode = DriveMode.FIELD;
 
+    // Burst timing (milliseconds).
+    public static int LAUNCH_SPOOL_MS = 0;
+    public static int LAUNCH_FEED_MS = 1200;
+
+    // Mechanism power presets.
     public static double TRANSFER_FWD = 0.80;
     public static double TRANSFER_REV = -0.20;
     public static double STOPPER_OPEN = 0.80;
@@ -81,14 +97,13 @@ public class FieldCentric extends LinearOpMode {
         double lateral;
         double yaw;
 
-        // Student Note: Initialize hardware (motors, IMU, vision).
+        // Initialize hardware and dashboard telemetry.
         robot.init();
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.setMsTransmissionInterval(100);
 
         while(opModeInInit()) {
-            // Student Note: Pre‑start check — rotate robot by hand; heading should change.
-            // "Vision: Ready (AprilTag)" means camera + processor initialized.
+            // Pre-start checks: verify heading updates and vision is initialized.
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Vision", "Ready (AprilTag)");
             telemetry.addData("Mode", "INIT");
@@ -101,16 +116,16 @@ public class FieldCentric extends LinearOpMode {
         waitForStart();
         if (isStopRequested()) return;
 
-        // Shooter telemetry smoothing (exponential moving average)
+        // Shooter telemetry smoothing (exponential moving average).
         double shooterActL_f = 0.0;
         double shooterActR_f = 0.0;
         double shooterRpmL_f = 0.0;
         double shooterRpmR_f = 0.0;
-        final double shooterAlpha = 0.20; // higher = more responsive, lower = smoother
+        final double shooterAlpha = 0.20; // Higher = more responsive, lower = smoother.
 
         while (opModeIsActive()) {
 
-            // Keep vision fresh before using pose values each loop
+            // Refresh AprilTag detections (used for assist + telemetry).
             robot.updateAprilTagDetections();
 
             boolean up = gamepad1.dpad_up;
@@ -121,6 +136,7 @@ public class FieldCentric extends LinearOpMode {
             boolean b = gamepad1.b;
             boolean x = gamepad1.x;
             boolean y = gamepad1.y;
+            boolean lsBtn = gamepad1.left_stick_button;
 
             boolean upEdge = up && !prevUp;
             boolean downEdge = down && !prevDown;
@@ -129,9 +145,13 @@ public class FieldCentric extends LinearOpMode {
             boolean aEdge = a && !prevA;
             boolean xEdge = x && !prevX;
             boolean yEdge = y && !prevY;
+            boolean lsBtnEdge = lsBtn && !prevLsBtn;
 
-            // Dpad UP/DOWN = set transfer forward/reverse (edge triggered)
-            // No hold required: stays at last commanded power.
+            if (lsBtnEdge) {
+                driveMode = (driveMode == DriveMode.FIELD) ? DriveMode.ROBOT : DriveMode.FIELD;
+            }
+
+            // D-pad UP/DOWN: transfer control (edge-triggered; no hold required).
             if (upEdge) {
                 transferPower = TRANSFER_FWD;
                 intakeMode = true;
@@ -143,7 +163,7 @@ public class FieldCentric extends LinearOpMode {
                 launchMode = false;
             }
 
-            // Dpad LEFT = hard stop transfer + close stoppers (safe)
+            // D-pad LEFT: safe stop (transfer off, stoppers closed).
             if (leftEdge) {
                 transferPower = 0.0;
                 stopperPower = STOPPER_CLOSED;
@@ -151,12 +171,12 @@ public class FieldCentric extends LinearOpMode {
                 launchMode = false;
             }
 
-            // Dpad RIGHT = manual stopper toggle (testing)
+            // D-pad RIGHT: toggle stoppers (manual override).
             if (rightEdge) {
                 stopperPower = (stopperPower == STOPPER_OPEN) ? STOPPER_CLOSED : STOPPER_OPEN;
             }
 
-            // A = toggle intake mode (transfer runs forward; stoppers forced closed)
+            // A: toggle intake mode (runs transfer forward; stoppers forced closed).
             if (aEdge) {
                 intakeMode = !intakeMode;
                 launchMode = false;
@@ -168,14 +188,14 @@ public class FieldCentric extends LinearOpMode {
                 stopperPower = STOPPER_CLOSED;
             }
 
-            // B = momentary clear: reverse transfer while held (overrides intake/launch)
+            // B (hold): quick reverse to clear jams (overrides other modes).
             if (b) {
                 transferPower = TRANSFER_REV;
                 intakeMode = false;
                 launchMode = false;
             }
 
-            // X = toggle shooter enable (spins up but does not feed)
+            // X: toggle shooter spin-up (no feeding).
             if (xEdge) {
                 shooterEnabled = !shooterEnabled;
                 if (!shooterEnabled) {
@@ -186,7 +206,7 @@ public class FieldCentric extends LinearOpMode {
                 }
             }
 
-            // Y = fire one burst (edge triggered): spool shooter, then open stoppers + feed briefly
+            // Y: burst feed for a fixed time window; requires shooter enabled.
             if (yEdge && shooterEnabled) {
                 launchMode = true;
                 intakeMode = false;
@@ -197,7 +217,7 @@ public class FieldCentric extends LinearOpMode {
                 long t = System.currentTimeMillis() - launchStartMs;
 
                 if (t < LAUNCH_SPOOL_MS) {
-                    // Spool only: keeps stoppers closed, no feeding
+                    // Spool phase: keep stoppers closed and do not feed.
                     stopperPower = STOPPER_CLOSED;
                     transferPower = 0.0;
                 } else if (t < (LAUNCH_SPOOL_MS + LAUNCH_FEED_MS)) {
@@ -209,13 +229,12 @@ public class FieldCentric extends LinearOpMode {
                     launchMode = false;
                 }
             } else {
-                // Safety: while intaking, keep stoppers closed so transfer can't feed into shooter
+                // Safety: keep stoppers closed while intaking.
                 if (intakeMode && !b) {
                     stopperPower = STOPPER_CLOSED;
                 }
             }
 
-            // Save previous button states
             prevUp = up;
             prevDown = down;
             prevLeft = left;
@@ -223,8 +242,9 @@ public class FieldCentric extends LinearOpMode {
             prevA = a;
             prevX = x;
             prevY = y;
+            prevLsBtn = lsBtn;
 
-            // Student Note: Hold LB for precision (slow) mode.
+            // Slow mode scales driver inputs for precision.
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
 
@@ -232,29 +252,34 @@ public class FieldCentric extends LinearOpMode {
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            // --- Vision helpers for concise telemetry ---
+            // Vision values (for telemetry and driver assist).
             Integer goalId = robot.getGoalTagId();
             double range = robot.getGoalRangeIn();
             double bearing = robot.getGoalBearingDeg();
             double elevation = robot.getGoalElevationDeg();
 
-            // Approx horizontal distance and aim-above-horizontal (camera pitched up 15°)
+            // Derived aim helpers (assumes camera pitched up 8°).
             double horiz = (Double.isNaN(range) || Double.isNaN(bearing))
                     ? Double.NaN
                     : range * Math.cos(Math.toRadians(bearing));
-            double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (15.0 + elevation));
+            double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (8.0 + elevation));
 
-            // Driver Assist: hold RB to auto-drive toward the visible goal tag (range->drive, yaw->strafe, bearing->turn).
+            // RB (hold): AprilTag assist (range->drive, tagYaw->strafe, bearing->turn).
             boolean autoAssist = gamepad1.right_bumper;
             boolean didAuto = false;
             if (autoAssist) {
+                // Refresh again right before assist step for best recency.
                 robot.updateAprilTagDetections();
                 didAuto = robot.autoDriveToGoalStep();
             }
 
-            // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
+            // Manual drive (routes to FIELD- or ROBOT-centric based on driveMode).
             if (!didAuto) {
-                robot.driveFieldCentric(axial, lateral, yaw);
+                if (driveMode == DriveMode.FIELD) {
+                    robot.driveFieldCentric(axial, lateral, yaw);
+                } else {
+                    robot.driveRobotCentric(axial, lateral, yaw);
+                }
             }
 
             robot.configureShooterVelocityPidfForMaxRpm(shooterMaxRpm, shooterKp, shooterKi, shooterKd);
@@ -264,6 +289,7 @@ public class FieldCentric extends LinearOpMode {
             robot.setTransferPower(transferPower);
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+            telemetry.addData("DriveMode", driveMode == DriveMode.FIELD ? "FIELD" : "ROBOT");
             telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
@@ -300,8 +326,8 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
-            sleep(100);
+            // Loop timing (ms): keep small for responsiveness and timing accuracy.
+            sleep(20);
         }
     }
 }
-

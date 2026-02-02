@@ -15,8 +15,8 @@ import java.util.Objects;
 @Config
 public final class PinpointLocalizer implements Localizer {
     public static class Params {
-        public double parYTicks = -72*( 2000/ (Math.PI*32) ); // y position of the parallel encoder (in tick units)
-        public double perpXTicks = -156*( 2000/ (Math.PI*32) ); // x position of the perpendicular encoder (in tick units)
+        public double parYTicks = 120*( 2000/ (Math.PI*32) ); // y position of the parallel encoder (in tick units)
+        public double perpXTicks = -78.5*( 2000/ (Math.PI*32) ); // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -25,7 +25,7 @@ public final class PinpointLocalizer implements Localizer {
     public final GoBildaPinpointDriver.EncoderDirection initialParDirection, initialPerpDirection;
 
     private Pose2d txWorldPinpoint;
-    private Pose2d txPinpointRobot = new Pose2d(108/25.4, -168/25.4, 0);
+    private Pose2d txPinpointRobot = new Pose2d(174.92/25.4, -87/25.4, 0);
 
     public PinpointLocalizer(HardwareMap hardwareMap, double inPerTick, Pose2d initialPose) {
         // TODO: make sure your config has a Pinpoint device with this name
@@ -37,7 +37,7 @@ public final class PinpointLocalizer implements Localizer {
         driver.setOffsets(mmPerTick * PARAMS.parYTicks, mmPerTick * PARAMS.perpXTicks, DistanceUnit.MM);
 
         // TODO: reverse encoder directions if needed
-        initialParDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+        initialParDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
         initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 
         driver.setEncoderDirections(initialParDirection, initialPerpDirection);
@@ -57,6 +57,10 @@ public final class PinpointLocalizer implements Localizer {
         return txWorldPinpoint.times(txPinpointRobot);
     }
 
+    public GoBildaPinpointDriver getDriver(){
+        return driver;
+    }
+
     @Override
     public PoseVelocity2d update() {
         driver.update();
@@ -68,5 +72,15 @@ public final class PinpointLocalizer implements Localizer {
             return new PoseVelocity2d(robotVelocity, driver.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS));
         }
         return new PoseVelocity2d(new Vector2d(0, 0), 0);
+    }
+
+    /**
+     *
+     * @return pose formatted in x, y: h deg
+     */
+    @Override
+    public String toString(){
+        Pose2d pose = getPose();
+        return pose.position.x + ", " + pose.position.y + ": " + pose.heading + " deg";
     }
 }
