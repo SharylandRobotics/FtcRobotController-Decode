@@ -26,7 +26,7 @@ public class servoDrivenEncoder {
     public static double I = 0.00002;
     public static double D = 0.00004;
 
-    PIDController controller = new PIDController(P, I, D);
+    PIDFCustomLoop controller = new PIDFCustomLoop(P, I, D, 0);
 
     public servoDrivenEncoder(OverflowEncoder encoder, CRServo servo1, CRServo servo2){
         controller.reset();
@@ -43,19 +43,6 @@ public class servoDrivenEncoder {
         targetPos = 0;
     }
 
-    public boolean runToPosition(int targetTicks){
-        currentPos = getCurrentPosition();
-        controller.setSetPoint(targetTicks);
-        if (!controller.atSetPoint()){
-            output = controller.calculate(currentPos);
-            setServoPowers(output);
-            return false;
-        } else {
-            stopServos();
-            return true;
-        }
-    }
-
     public void setTargetPos(int target){
         controller.setSetPoint(target);
         targetPos = target;
@@ -63,7 +50,7 @@ public class servoDrivenEncoder {
 
     public boolean runToTarget(){
         currentPos = getCurrentPosition();
-        output = controller.calculate(currentPos, targetPos);
+        output = controller.calculate(currentPos, targetPos, getCurrentPosition());
         if (!controller.atSetPoint()){
             setServoPowers(output);
             return false;
@@ -95,6 +82,10 @@ public class servoDrivenEncoder {
     public void stopServos(){
         servo1.setPower(0);
         servo2.setPower(0);
+    }
+
+    private double getCurrentVelocity(){
+        return encoder.getPositionAndVelocity().velocity;
     }
 
     public double getServoPower(){
