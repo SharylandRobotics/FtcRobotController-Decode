@@ -194,7 +194,7 @@ public class FieldCentric extends LinearOpMode {
                 double pos = 0.0;
                 if (!Double.isNaN(scan)) {
                     deg = scan + robot.getTurretDegree();
-                    pos = robot.hAimRPos() + (scan * 1/300);
+                    pos = robot.hAimRPos() + (scan / 300.0)/1.2;
                     robot.setTurretPos(pos);
                     //robot.setTurretDegree(scan);
                     telemetry.addData("Correcting by :", scan);
@@ -204,7 +204,7 @@ public class FieldCentric extends LinearOpMode {
                 }
             }
             if (gamepad2.right_stick_button) {
-                velocity = 1600;
+                velocity = 1500;
             }
             if (gamepad2.left_stick_button) {
                 velocity = 1300;
