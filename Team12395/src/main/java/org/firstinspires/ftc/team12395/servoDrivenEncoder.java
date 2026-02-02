@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.arcrobotics.ftclib.controller.PDController;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.Range;
@@ -21,11 +22,11 @@ public class servoDrivenEncoder {
     int targetPos;
 
 
-    public static double P = 0.00017;
-    public static double I = 0.0000015;
-    public static double D = 0.000005;
+    public static double P = 0.00035;
+    public static double I = 0.00002;
+    public static double D = 0.00004;
 
-    PIDController controller = new PIDController(P, I, D);
+    PIDFCustomLoop controller = new PIDFCustomLoop(P, I, D, 0);
 
     public servoDrivenEncoder(OverflowEncoder encoder, CRServo servo1, CRServo servo2){
         controller.reset();
@@ -42,19 +43,6 @@ public class servoDrivenEncoder {
         targetPos = 0;
     }
 
-    public boolean runToPosition(int targetTicks){
-        currentPos = getCurrentPosition();
-        controller.setSetPoint(targetTicks);
-        if (!controller.atSetPoint()){
-            output = controller.calculate(currentPos);
-            setServoPowers(output);
-            return false;
-        } else {
-            stopServos();
-            return true;
-        }
-    }
-
     public void setTargetPos(int target){
         controller.setSetPoint(target);
         targetPos = target;
@@ -62,7 +50,7 @@ public class servoDrivenEncoder {
 
     public boolean runToTarget(){
         currentPos = getCurrentPosition();
-        output = controller.calculate(currentPos, targetPos);
+        output = controller.calculate(currentPos, targetPos, getCurrentPosition());
         if (!controller.atSetPoint()){
             setServoPowers(output);
             return false;
@@ -94,6 +82,10 @@ public class servoDrivenEncoder {
     public void stopServos(){
         servo1.setPower(0);
         servo2.setPower(0);
+    }
+
+    private double getCurrentVelocity(){
+        return encoder.getPositionAndVelocity().velocity;
     }
 
     public double getServoPower(){

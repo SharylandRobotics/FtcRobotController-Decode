@@ -2,6 +2,7 @@ package org.firstinspires.ftc.team12395.rr;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface for localization methods.
@@ -22,4 +23,6 @@ public interface Localizer {
      * @return the Localizer's current velocity estimate
      */
     PoseVelocity2d update();
+
+    String toString();
 }

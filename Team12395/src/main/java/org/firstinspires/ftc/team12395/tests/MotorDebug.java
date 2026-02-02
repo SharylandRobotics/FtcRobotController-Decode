@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team12395.tests;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -35,56 +35,80 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team12395.RobotHardware;
+import org.firstinspires.ftc.team12395.rr.Localizer;
 
-import static org.firstinspires.ftc.team12395.RobotHardware.*;
-
-@TeleOp(name="Sort Test", group="TeleOp")
+@TeleOp(name="Motor Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class SpindexerSortTest extends LinearOpMode {
+public class MotorDebug extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
-    public static boolean trigger = false;
-    public static boolean solve = false;
 
     @Override
     public void runOpMode() {
-        int[] solution;
 
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
+        Localizer localizer = robot.standardDrive.localizer;
+
         waitForStart();
+
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            solution = robot.solvePattern();
 
-            if (solution != null && solve){
-                robot.spindexerHandler(120 * solution[0]);
-                solve = false;
+            if (gamepad1.x){
+                robot.frontLeftDrive.setPower(1);
+            } else {
+                robot.frontLeftDrive.setPower(0);
+            }
+            if (gamepad1.y){
+                robot.frontRightDrive.setPower(1);
+            } else {
+                robot.frontRightDrive.setPower(0);
             }
 
-            if (!robot.spindexer.isBusy()) {
-
-                if (!solve && trigger) {
-                    robot.spindexerHandler(-480);
-                    trigger = false;
-                }
+            if (gamepad1.a){
+                robot.backLeftDrive.setPower(1);
+            } else {
+                robot.backLeftDrive.setPower(0);
+            }
+            if (gamepad1.b){
+                robot.backRightDrive.setPower(1);
+            } else {
+                robot.backRightDrive.setPower(0);
             }
 
-            telemetry.addData("solve?: ", solve);
-            telemetry.addData("performing shooting action?: ", trigger);
-            telemetry.addData("busy?: ", robot.spindexer.isBusy());
-            telemetry.addData("current Pattern: ", robot.pattern);
-            telemetry.addData(robot.getMagPicture(), "");
-           telemetry.update();
+            if (gamepad1.left_bumper){
+                robot.spindexer.setPower(0.4);
+            } else {
+                robot.spindexer.setPower(0);
+            }
 
-            // Pace loop-helps with readability and prevents spamming the DS
-            sleep(50); // ~20 Hz;
+            if (gamepad1.right_bumper){
+                robot.intake.setPower(1);
+            } else {
+                robot.spindexer.setPower(0);
+            }
+
+            if (gamepad1.left_trigger > 0){
+                robot.shooter.setPower(1);
+            }
+
+            robot.standardDrive.updatePoseEstimate();
+
+            telemetry.addData("Pose:", localizer.toString());
+            telemetry.addData("PP heading: ", robot.getPinPointHeading());
+            telemetry.addData("Standard heading: ", robot.getHeading());
+            telemetry.addData("U spindexer: ", robot.getCurrentSpindexerDegreesPos());
+            telemetry.addData("E spindexer: ", robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree);
+            telemetry.update();
+
+            sleep(50);
         }
     }
 }
