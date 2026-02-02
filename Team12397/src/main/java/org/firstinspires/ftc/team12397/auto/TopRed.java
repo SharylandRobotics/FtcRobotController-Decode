@@ -72,7 +72,7 @@ TopRed extends LinearOpMode {
             while(phase1){
 
                 robot.setHoodPositions(1);
-                robot.turretVelocity(125);
+                robot.turretVelocity(105);
                 //robot.intakePower(-.3);
                 robot.driveStraight(1, -50, 0);
                 robot.holdHeading(robot.YAW_SPEED, 0, 1);
@@ -82,7 +82,7 @@ TopRed extends LinearOpMode {
 
 
                 robot.intakePower(-1);
-                robot.holdHeading(0, 5, 2);
+                robot.holdHeading(0, 5, 3);
 
 
                 // turn off motors
@@ -99,23 +99,23 @@ TopRed extends LinearOpMode {
 
                 //extra time
                 robot.holdHeading(robot.YAW_SPEED, -40, 1);
-                robot.intakePower(.3);// unblock motor
+                robot.intakePower(.1);// unblock motor
                 robot.holdHeading(robot.YAW_SPEED, -40, 1);
                 robot.intakePower(0);
-                robot.turretVelocity(135);
+                robot.turretVelocity(120);
 
 
                 //shooting
 
                 robot.driveStraight(1,-31,-40);
                 robot.holdHeading(robot.YAW_SPEED, -40, 1);
-                robot.turnToHeading(1,5);
-                robot.holdHeading(robot.YAW_SPEED, 5, 1);
+                robot.turnToHeading(1,3);
+                robot.holdHeading(robot.YAW_SPEED, 3, 1);
 
 
-                robot.holdHeading(0, 5, 2); // inital hold time
+                robot.holdHeading(0, 3, 2); // inital hold time
                 robot.intakePower(-1);
-                robot.holdHeading(0, 5, 2);
+                robot.holdHeading(0, 3, 3);
 
                 // move out
                 robot.straif(1,20,0);
