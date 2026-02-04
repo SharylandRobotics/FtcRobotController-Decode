@@ -139,8 +139,8 @@ public class NONMotid_red extends LinearOpMode {
         // Initialize all motors and IMU before start
         robot.init();
 
-        Action path1 = drive.actionBuilder(new Pose2d(-50,50, Math.toRadians(126)))
-                .setTangent(Math.atan2(24-50, -30+50))
+        Action path1 = drive.actionBuilder(new Pose2d(-49,51, Math.toRadians(126)))
+                .setTangent(Math.atan2(24-51, -30+51))
                 .lineToY(24)
                 .build();
 

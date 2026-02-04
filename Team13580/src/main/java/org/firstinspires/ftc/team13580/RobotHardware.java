@@ -46,6 +46,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 // Student Notes: Hardware wrapper ("robot API") for drive, IMU, and AprilTag vision.
@@ -62,6 +64,8 @@ public class RobotHardware {
     private DcMotor backRightDrive;
     private DcMotor intakeDrive;
     public DcMotorEx outtakeDrive;
+
+    public DcMotorEx outtakeDrive2;
 
     private CRServo kicker;
     private CRServo kickerLeft;
@@ -94,7 +98,7 @@ public class RobotHardware {
     // Pitch +15° = camera looks UP 15°. Update if you remount the camera.
     // TODO(students): Measure real offsets when you rely on precise vision assists.
    private final Position cameraPosition = new Position(DistanceUnit.INCH, 0, 0, 0, 0);
-   private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 0, 15, 0, 0);
+   private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 0, 20, 0, 0);
     private AprilTagProcessor aprilTag = null;
     private Integer obeliskTagId = null;
     private String obeliskMotif = null;
@@ -148,6 +152,7 @@ public class RobotHardware {
 
         intakeDrive = myOpMode.hardwareMap.get(DcMotor.class, "intake_drive");
         outtakeDrive = myOpMode.hardwareMap.get(DcMotorEx.class, "outtake_drive");
+        outtakeDrive2 = myOpMode.hardwareMap.get(DcMotorEx.class, "outtake_drive2");
 
         kicker = myOpMode.hardwareMap.get(CRServo.class, "kicker");
         kickerLeft = myOpMode.hardwareMap.get(CRServo.class, "kicker_left");
@@ -155,7 +160,7 @@ public class RobotHardware {
                 // Student Note: Control Hub mounting directions for correct IMU yaw.
         // TODO(students): If yaw sign/drift looks wrong, verify these settings.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
@@ -166,10 +171,12 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        intakeDrive.setDirection(DcMotor.Direction.REVERSE);
+        intakeDrive.setDirection(DcMotor.Direction.FORWARD);
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
+        outtakeDrive2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         outtakeDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        outtakeDrive2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -178,8 +185,10 @@ public class RobotHardware {
 
         intakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         outtakeDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        outtakeDrive2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         outtakeDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        outtakeDrive2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -255,10 +264,12 @@ public class RobotHardware {
     public void setOuttakePower(double outtakeWheel) {
         outtakeSpeed = outtakeWheel;
         outtakeDrive.setPower(outtakeWheel);
+        outtakeDrive2.setPower(outtakeWheel);
     }
 
-    public void setOuttakeVelocity(int ticks){
+    public void setOuttakeVelocity(int ticks) {
         outtakeDrive.setVelocity(ticks);
+        outtakeDrive2.setVelocity(ticks);
     }
 
     // Student Note: Convenience — current yaw (degrees) from the IMU.
@@ -372,23 +383,56 @@ public class RobotHardware {
 
     public double getGoalRangeIn() { return goalRangeIn; }
 
-    private double mapDistanceToSpeed(double d) {
-        double minDistance = 24.0;  // closest distance
-        double maxDistance = 105.0; // farthest distance
-        double minSpeed = 1150;     // speed at closest
-        double maxSpeed = 1510;     // speed at farthest
+    private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
+            new double[]{37, 1070},
+            new double[]{50, 1140},
+            new double[]{62, 1220},
+            new double[]{87, 1290},
+            new double[]{91, 1190},
+            new double[]{98, 1340}
+    ));
+    private final double[] slopeList = initializeSlopeList();
 
-        // clamp distance
-        if (d < minDistance) d = minDistance;
-        if (d > maxDistance) d = maxDistance;
+    private double[] initializeSlopeList(){
+        int maxIndex = velDataPoints.size();
+        double[] list = new double[maxIndex];
+        for (int i=0; i<maxIndex-1; i++){
+            list[i] = (
+                    (velDataPoints.get(i+1)[1] - velDataPoints.get(i)[1]) /
+                            (velDataPoints.get(i+1)[0] - velDataPoints.get(i)[0])
+            );
+        }
 
-        // linear interpolation
-        return minSpeed + (d - minDistance) * (maxSpeed - minSpeed) / (maxDistance - minDistance);
+        return list;
     }
 
+    public double getCalculatedVelocity(double distance){
+        double returnVal = 500;
 
+        double velZeroIntercept = velDataPoints.get(0)[1] - slopeList[0]*velDataPoints.get(0)[0];
 
-    ;
+        for (int i=0; i<slopeList.length; i++){
+            if (i == 0){
+                if (distance >= 0 && distance <= velDataPoints.get(0)[0]){
+                    myOpMode.telemetry.addData("Top Reference: ", velDataPoints.get(i)[0] +", " +velDataPoints.get(i)[1]);
+                    myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                    returnVal = velZeroIntercept + distance*slopeList[0];
+                }
+            } else if ((i == slopeList.length-1 && distance >= velDataPoints.get(i)[0]) ||
+                    distance > velDataPoints.get(i)[0] && distance <= velDataPoints.get(i+1)[0]){
+                myOpMode.telemetry.addData("Bottom Reference: ", velDataPoints.get(i)[0] +", " +velDataPoints.get(i)[1]);
+                myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                returnVal = velDataPoints.get(i)[1] + (distance-velDataPoints.get(i)[0])*slopeList[i];
+            }
+        }
+
+        return returnVal;
+    }
+
+    public double getFloorDistance(){
+        // Math.pow(height from camera to center AprilTag, 2)
+        return Math.sqrt(Math.pow(getGoalRangeIn(), 2) - Math.pow(16,2));
+    }
 
 
     public double getGoalBearingDeg() { return goalBearingDeg; }
@@ -400,30 +444,6 @@ public class RobotHardware {
     public void resetObeliskMotif() {
         obeliskMotif = null;
         obeliskTagId = null;
-    }
-
-    public boolean autoDriveToGoalStep() {
-        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
-            return false;
-        }
-
-        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
-
-        // === NEW: Control OUTTAKE motor based on AprilTag distance ===
-        if (!Double.isNaN(goalRangeIn)) {
-            double speed = mapDistanceToSpeed(goalRangeIn);
-            outtakeDrive.setVelocity(speed);
-        }
-
-        double headingError =  goalBearingDeg;
-        double yawError = (Double.isNaN(tagYawDeg) ? 0.0 : tagYawDeg);
-
-        double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
-        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
-        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
-
-        driveRobotCentric(axial, lateral, yaw);
-        return true;
     }
     public void setKickerPower(double speed){
         kicker.setPower(-speed);

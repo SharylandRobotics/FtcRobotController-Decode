@@ -4,16 +4,16 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name = "Field Centric Camara Toggle Outtake", group = "opMode")
+@TeleOp(name = "Field Centric Camara", group = "opMode")
 public class FieldCentricCamara extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
-        double kickerBackPos = 0;
+        double kickerBackPos = -1;
         double kickerForwardPos = 1;
-        double kickerLeftBackPos = 0;
+        double kickerLeftBackPos = -1;
         double kickerLeftForwardPos = 1;
 
         double axial, lateral, yaw;
@@ -21,7 +21,6 @@ public class FieldCentricCamara extends LinearOpMode {
 
         // Toggle variables
         boolean outtakeManual = false;
-        boolean xPreviouslyPressed = false;
 
         robot.init();
 
@@ -71,29 +70,51 @@ public class FieldCentricCamara extends LinearOpMode {
             robot.setIntakePower(intake);
 
             // Outtake toggle with X button
-            if (gamepad1.x && !xPreviouslyPressed) {
+            if (gamepad1.xWasPressed()) {
                 outtakeManual = !outtakeManual;  // toggle on button press
             }
-            xPreviouslyPressed = gamepad1.x;
 
             // Set outtake speed
-            if (didAuto) {
-                // autoDriveToGoalStep() already sets outtake
-                outtake = 0; // optional, to avoid using uninitialized value
-            } else if (outtakeManual) {
-                outtake = 1300;  // manual toggle speed
+            if (outtakeManual) {
+                if (!Double.isNaN(robot.getGoalRangeIn())) {
+                    outtake = robot.getCalculatedVelocity(robot.getFloorDistance());  // manual toggle speed
+                }
             } else {
                 outtake = gamepad1.left_trigger * 2000;
             }
             robot.setOuttakeVelocity((int) outtake);
 
             // Kicker control
-            robot.setKickerPower(gamepad1.b ? kickerForwardPos : kickerBackPos);
-            robot.setKickerLeftPower(gamepad1.a ? kickerLeftForwardPos : kickerLeftBackPos);
+            if (gamepad1.a) {
+                robot.setKickerPower(kickerBackPos);
+            } else {
+                robot.setKickerPower(kickerForwardPos);
+            }
+
+            if (gamepad1.b) {
+                robot.setKickerLeftPower(kickerLeftBackPos);
+            } else {
+                robot.setKickerLeftPower(kickerLeftForwardPos);
+            }
+
+            if (gamepad2.a) {
+                robot.setKickerPower(kickerBackPos);
+            } else {
+                robot.setKickerPower(kickerForwardPos);
+            }
+
+            if (gamepad2.b) {
+                robot.setKickerLeftPower(kickerLeftBackPos);
+            } else {
+                robot.setKickerLeftPower(kickerLeftForwardPos);
+            }
+
+            if (gamepad2.yWasPressed()){
+                robot.setOuttakeVelocity(1700);
+            }
 
             // Telemetry
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("Assist", didAuto ? "AUTO→TAG" : "MANUAL");
             telemetry.addData("Outtake Toggle", outtakeManual ? "ON (1300)" : "OFF");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
