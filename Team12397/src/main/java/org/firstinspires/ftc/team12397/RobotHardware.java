@@ -116,7 +116,7 @@ public class RobotHardware {
     // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
     private double tagYawDeg = Double.NaN;
 
-    private static final double DESIRED_DISTANCE = 70.4; // camera-to-tag inches
+    private static final double DESIRED_DISTANCE = 50; // camera-to-tag inches
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
     private static final double LATERAL_GAIN = 0.02; // tagYawError -> lateral (strafe) speed
     private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
@@ -715,7 +715,7 @@ public class RobotHardware {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
         }
-        double rangeError = (goalRangeIn - DESIRED_DISTANCE)*0;
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
 
 
         double headingError =  goalBearingDeg;

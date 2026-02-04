@@ -186,10 +186,10 @@ public class RobotCentric extends LinearOpMode {
 
                 }
                 if(servoOn){
-                    robot.setHoodPositions(1);
+                    robot.setHoodPositions(.4);
                 }
                 else {
-                    robot.setHoodPositions(.4);
+                    robot.setHoodPositions(1);
                 }
                 // manual turret shooter #note same as slow mode camera
                 if(gamepad1.left_bumper){
