@@ -50,7 +50,7 @@ public class servoDrivenEncoder {
 
     public boolean runToTarget(){
         currentPos = getCurrentPosition();
-        output = controller.calculate(currentPos, targetPos, getCurrentPosition());
+        output = controller.calculate(currentPos, targetPos, getCurrentVelocity());
         if (!controller.atSetPoint()){
             setServoPowers(output);
             return false;

@@ -121,16 +121,15 @@ public class FieldCentricAltBlue extends LinearOpMode {
                     intakeVel = 0;
 
                 } else if (intakeVel == 0){ intakeVel = 1; }
-                robot.setIntakeSpeed(intakeVel*1600);
+                robot.setIntakeSpeed(intakeVel*1800);
             } else if (gamepad1.dpadDownWasPressed()){
                 if (intakeVel != -1){
                     intakeVel = -1;
 
                 } else  { intakeVel = 0; }
-                robot.setIntakeSpeed(intakeVel*1600);
+                robot.setIntakeSpeed(intakeVel*1800);
             }
 
-            robot.scanColor();
 
             // gamepad 2 (g1 cuz solo)--
             if (!robot.spindexer.isBusy()) {
@@ -143,21 +142,6 @@ public class FieldCentricAltBlue extends LinearOpMode {
                         robot.spindexerHandler(-480);
                     }
                     robot.setMagManualBulk("000");
-                } else if (false) {
-                    robot.spindexerHandler(120*robot.solvePattern()[0]);
-                } else if (!runTurnClock && false) {
-
-                    if (scannedColor.equals(colorTypes.PURPLE)){
-                        if (robot.mag.charAt(robot.chamber) == '0') {
-                            robot.setChamberManual('P');
-                            runTurnClock = true;
-                        }
-                    } else if (scannedColor.equals(colorTypes.GREEN)){
-                        if (robot.mag.charAt(robot.chamber) == '0') {
-                            robot.setChamberManual('G');
-                            runTurnClock = true;
-                        }
-                    }
                 }
             } else if (gamepad1.dpadLeftWasPressed()){
                 robot.spindexer.setVelocity(0);
@@ -201,7 +185,26 @@ public class FieldCentricAltBlue extends LinearOpMode {
 
             robot.standardDrive.updatePoseEstimate();
 
-            if (turretToggle){
+            Pose2d llpose = robot.fetchLocalizedPose();
+
+            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)){
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.fieldOverlay().setStroke("#3F51B5");
+                Drawing.drawRobot(packet.fieldOverlay(), llpose);
+                FtcDashboard.getInstance().sendTelemetryPacket(packet);
+                telemetry.addData("Sending Position...", "");
+            }
+
+            TelemetryPacket packetRed = new TelemetryPacket();
+            packetRed.fieldOverlay().setStroke("#B53F51");
+            Drawing.drawRobot(packetRed.fieldOverlay(), robot.standardDrive.localizer.getPose());
+            FtcDashboard.getInstance().sendTelemetryPacket(packetRed);
+
+            if (gamepad2.a){
+                robot.setTurretHandlerAbsolute(
+                        robot.turretAngleToTarget(new Pose2d(-70, -56, 0), robot.fetchLocalizedPose())
+                );
+            } else if (turretToggle){
                 double[] tData = robot.homeToAprilTagBlue();
                 double errorDeg = tData[0];
 

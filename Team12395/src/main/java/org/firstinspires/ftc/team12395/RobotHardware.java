@@ -384,7 +384,7 @@ public class RobotHardware {
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(900);
+        spindexer.setVelocity(1000);
         //  -intake-
         //    (0)
         // (1)   (2)
@@ -538,12 +538,12 @@ public class RobotHardware {
 
             if (!fresult.isEmpty()) {
                 // placeholder values
-                double cameraOffset = -77.9953;
+                double cameraOffset = -77.9953 / 25.4 ;
                 double turretAngle = getCurrentTurretDegreePos();
-                double turretOffset = 55;
+                double turretOffset = 55 / 25.4;
 
                 // LL uses meters & deg, RR uses inches & rads
-                limelight.updateRobotOrientation(getHeading() - 90 + turretAngle);
+                limelight.updateRobotOrientation(getHeading() + turretAngle);
 
                 Pose3D rawMT2Pose3D = result.getBotpose_MT2();
                 Position rawMT2Position = rawMT2Pose3D.getPosition().toUnit(DistanceUnit.INCH);
@@ -562,6 +562,8 @@ public class RobotHardware {
                         .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)))
                         // turret axis-bot center offset
                         .plus(new Twist2d(new Vector2d(turretOffset,0), Math.toRadians(0)));
+
+                myOpMode.telemetry.addData("Translated Pose: ", translatedPose.position);
                 
                 return translatedPose;
             }
