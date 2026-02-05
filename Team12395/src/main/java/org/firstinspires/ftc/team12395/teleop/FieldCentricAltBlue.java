@@ -185,20 +185,21 @@ public class FieldCentricAltBlue extends LinearOpMode {
 
             robot.standardDrive.updatePoseEstimate();
 
-            Pose2d llpose = robot.fetchLocalizedPose();
+            TelemetryPacket packet = new TelemetryPacket();
 
-            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)){
-                TelemetryPacket packet = new TelemetryPacket();
+            // Limelight pose (blue) if valid
+            Pose2d llpose = robot.fetchLocalizedPose();
+            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)) {
                 packet.fieldOverlay().setStroke("#3F51B5");
                 Drawing.drawRobot(packet.fieldOverlay(), llpose);
-                FtcDashboard.getInstance().sendTelemetryPacket(packet);
-                telemetry.addData("Sending Position...", "");
             }
 
-            TelemetryPacket packetRed = new TelemetryPacket();
-            packetRed.fieldOverlay().setStroke("#B53F51");
-            Drawing.drawRobot(packetRed.fieldOverlay(), robot.standardDrive.localizer.getPose());
-            FtcDashboard.getInstance().sendTelemetryPacket(packetRed);
+            // Odometry pose (red) always
+            packet.fieldOverlay().setStroke("#B53F51");
+            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose());
+
+            // Send once
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
             if (gamepad2.a){
                 robot.setTurretHandlerAbsolute(
