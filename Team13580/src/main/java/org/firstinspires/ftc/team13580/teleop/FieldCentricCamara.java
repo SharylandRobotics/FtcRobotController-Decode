@@ -109,6 +109,14 @@ public class FieldCentricCamara extends LinearOpMode {
                 robot.setKickerLeftPower(kickerLeftForwardPos);
             }
 
+            if(gamepad1.y){
+                robot.setKickerLeftPower(kickerLeftBackPos);
+                robot.setKickerPower(kickerBackPos);
+            } else {
+                robot.setKickerLeftPower(kickerLeftForwardPos);
+                robot.setKickerPower(kickerForwardPos);
+            }
+
             if (gamepad2.yWasPressed()){
                 robot.setOuttakeVelocity(1700);
             }
