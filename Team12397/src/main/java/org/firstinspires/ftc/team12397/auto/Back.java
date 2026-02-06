@@ -27,20 +27,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team00000.auto;
+package org.firstinspires.ftc.team12397.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.team00000.RobotHardware;
+import org.firstinspires.ftc.team12397.RobotHardware;
 
-import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_AXIAL;
-import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_YAW;
-@Disabled
-@Autonomous(name = "Red Alliance", group = "opMode")
+@Autonomous(name = "Back", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class RedAlliance extends LinearOpMode {
+public class
+Back extends LinearOpMode {
+
 
     // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
@@ -51,7 +49,7 @@ public class RedAlliance extends LinearOpMode {
         // Initialize all motors and IMU before start
         robot.init();
 
-        while(opModeInInit()) {
+        while (opModeInInit()) {
             // Display heading and status continuously during init loop
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
@@ -64,15 +62,16 @@ public class RedAlliance extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
-            // Drive 24" forward, then turn and hold headings as defined
-            robot.driveOmni(MAX_AUTO_AXIAL, 48.0, 0.0, 0.0);
-            robot.turnToHeading(MAX_AUTO_YAW, -90.0);
-            robot.holdHeading(MAX_AUTO_YAW, -90.0, 0.5);
+            robot.driveStraight(1,36,0);
 
-            // Indicate completion and pause for display
-            telemetry.addData("Path", "Complete");
-            telemetry.update();
-            sleep(1000);  // Pause to display last telemetry message.
+        }
+
+
+
         }
     }
-}
+
+
+
+
+

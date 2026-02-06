@@ -27,71 +27,88 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team12395.tests;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.team12395.RobotHardware;
+import org.firstinspires.ftc.team12395.rr.Localizer;
 
-@TeleOp(name="Spindexer Test", group="TeleOp")
+@TeleOp(name="Motor Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class SpindexerTEst extends LinearOpMode {
+public class MotorDebug extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static int targetPos = 360;
-    public static double currentPos;
-    public static double P;
-    //public static double I;
-    //public static double D;
-    //public static double F;
-
-
     @Override
     public void runOpMode() {
+
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
-        P = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).p;
-        //I = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
-        //D = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
-        //F = robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
+        Localizer localizer = robot.standardDrive.localizer;
 
         waitForStart();
 
-        robot.spindexer.setTargetPosition(targetPos);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            if (!robot.spindexer.isBusy()) {
-                robot.spindexer.setTargetPosition(targetPos);
-                robot.spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                if (targetPos == 360){
-                    targetPos = 0;
-                } else if (targetPos == 0){
-                    targetPos = 360;
-                }
+            if (gamepad1.x){
+                robot.frontLeftDrive.setPower(1);
+            } else {
+                robot.frontLeftDrive.setPower(0);
             }
-            currentPos = robot.spindexer.getCurrentPosition();
+            if (gamepad1.y){
+                robot.frontRightDrive.setPower(1);
+            } else {
+                robot.frontRightDrive.setPower(0);
+            }
 
-            robot.spindexer.setPositionPIDFCoefficients(P);
+            if (gamepad1.a){
+                robot.backLeftDrive.setPower(1);
+            } else {
+                robot.backLeftDrive.setPower(0);
+            }
+            if (gamepad1.b){
+                robot.backRightDrive.setPower(1);
+            } else {
+                robot.backRightDrive.setPower(0);
+            }
 
-            telemetry.addData("target Position: ", targetPos);
-            telemetry.addData("current Position: ", currentPos);
-            telemetry.addData("PIDF: ", robot.spindexer.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
+            if (gamepad1.left_bumper){
+                robot.spindexer.setPower(0.4);
+            } else {
+                robot.spindexer.setPower(0);
+            }
+
+            if (gamepad1.right_bumper){
+                robot.intake.setPower(1);
+            } else {
+                robot.spindexer.setPower(0);
+            }
+
+            if (gamepad1.left_trigger > 0){
+                robot.shooter.setPower(1);
+            }
+
+            robot.standardDrive.updatePoseEstimate();
+
+            telemetry.addData("Pose:", localizer.toString());
+            telemetry.addData("PP heading: ", robot.getPinPointHeading());
+            telemetry.addData("Standard heading: ", robot.getHeading());
+            telemetry.addData("U spindexer: ", robot.getCurrentSpindexerDegreesPos());
+            telemetry.addData("E spindexer: ", robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree);
             telemetry.update();
 
-            // Pace loop-helps with readability and prevents spamming the DS
-            sleep(50); // ~20 Hz;
+            sleep(50);
         }
     }
 }

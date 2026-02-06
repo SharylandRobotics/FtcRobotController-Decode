@@ -39,13 +39,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team12395.RobotHardware;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Color Test", group="TeleOp")
 @Config
-@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class ColorTest extends LinearOpMode {
 
@@ -54,72 +54,62 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
+    public static float gain = 30;
+
     @Override
     public void runOpMode() {
-        char scannedColor;
-        int[] solution = null;
-        int spinAngle;
-        String chamberString = "_  ";
-        NormalizedRGBA colors;
+
+        double cT = 0;
+        double prT = 0;
+
+        boolean runClock = false;
+        int clock = 0;
 
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
+        robot.mag = "000";
+
         waitForStart();
+
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            colors = robot.colorSensor.getNormalizedColors();
-            Color.colorToHSV(colors.toColor(), hsvValues);
-            if (gamepad2.a){
-                spinAngle = 60;
-            } else {
-                spinAngle = 120;
-            }
-            if (!robot.spindexer.isBusy()) {
-                if (gamepad2.leftBumperWasPressed()) { // ccw
-                    robot.spindexerHandler( spinAngle);
-                } else if (gamepad2.rightBumperWasPressed()) { // cw
-                    robot.spindexerHandler( -spinAngle);
-                }
+            robot.colorSensor0.setGain(gain);
+            robot.colorSensor1.setGain(gain);
+            robot.colorSensor2.setGain(gain);
 
-                chamberString = "UUU";
-                StringBuilder chamberBuilder = new StringBuilder(chamberString);
-                chamberBuilder.setCharAt(robot.chamber, 'V');
-                chamberString = chamberBuilder.toString();
+            NormalizedRGBA color = robot.colorSensor0.getNormalizedColors();
+            float[] hsvValues = new float[3];
+            Color.colorToHSV(color.toColor(), hsvValues);
 
-                if (gamepad1.xWasPressed()){
-                    scannedColor = robot.scanColor();
+            colorTypes color0 = robot.classifyColor(hsvValues);
+            telemetry.addData("Color0 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color0 Range (IN): ",  robot.colorSensor0.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Classified color: ",  color0);
 
-                    if (scannedColor != '0'){
-                        StringBuilder magBuilder = new StringBuilder(mag);
-                        magBuilder.setCharAt(robot.chamber, scannedColor);
-                        mag = magBuilder.toString();
+            color = robot.colorSensor1.getNormalizedColors();
+            Color.colorToHSV(color.toColor(), hsvValues);
 
-                        //
+            colorTypes color1 = robot.classifyColor(hsvValues);
+            telemetry.addData("Color1 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color1 Range (IN): ",  robot.colorSensor1.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Classified color: ",  color1);
 
-                    }
-                }
+            color = robot.colorSensor2.getNormalizedColors();
+            Color.colorToHSV(color.toColor(), hsvValues);
 
-                if (gamepad1.yWasPressed()){
-                    solution = robot.solvePattern();
-                }
-            }
+            colorTypes color2 = robot.classifyColor(hsvValues);
+            telemetry.addData("Color2 (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
+            telemetry.addData("Color2 Range (IN): ",  robot.colorSensor2.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Classified color: ",  color2);
 
-
-            telemetry.addData("current Chamber: ", robot.chamber);
-            telemetry.addData("chamber pic: ", chamberString);
-            telemetry.addData("current Mag: ", mag);
-            telemetry.addData("current Pattern: ", pattern);
-            if (solution != null) {
-                telemetry.addData("current solution: ", solution[0] + "120 deg, then " + solution[1] + " 120 deg");
-            } else {
-                telemetry.addData("current solution: ", "no solution");
-            }
-            telemetry.addData("Colors (HSV): ",  "H=%.3f S=%.3f V=%.3f ", hsvValues[0], hsvValues[1], hsvValues[2]);
-            telemetry.addData("Colors (HSV): ",  "R=%d%n G=%d%n B=%d%n ", colors.red, colors.green, colors.blue);
+            cT = getRuntime();
+            telemetry.addData("Delay from previous update (s): ", cT - prT);
+            prT = cT;
+            telemetry.addData(robot.getMagPicture(),"");
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS

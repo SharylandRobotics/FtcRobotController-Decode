@@ -30,11 +30,12 @@
 package org.firstinspires.ftc.team00000.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.team00000.RobotHardware;
 
 import static org.firstinspires.ftc.team00000.RobotHardware.*;
-
+@Disabled
 @Autonomous(name = "Blue Alliance", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
@@ -63,7 +64,7 @@ public class BlueAlliance extends LinearOpMode {
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
             // Drive 24" forward, then turn and hold headings as defined
-            robot.driveStraight(MAX_AUTO_AXIAL, 48.0, 0.0);
+            robot.driveOmni(MAX_AUTO_AXIAL, 48.0, 0.0, 0.0);
             robot.turnToHeading(MAX_AUTO_YAW, 90.0);
             robot.holdHeading(MAX_AUTO_YAW, 90.0, 0.5);
 

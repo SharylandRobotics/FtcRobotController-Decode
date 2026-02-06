@@ -33,13 +33,10 @@ import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import com.qualcomm.robotcore.hardware.Servo;
 //april tag
 
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
@@ -50,18 +47,11 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import java.util.List;
 
 import static java.lang.Thread.sleep;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.*;
 //lamoin code
-import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
 /**
  * RobotHardware
  *
@@ -97,7 +87,10 @@ public class RobotHardware {
     // intake motor
     private DcMotor intakeMotor;
     //turret motor
-    private DcMotor turretMotor;
+    private DcMotorEx turretMotor;
+    private DcMotorEx turretMotor2;
+
+
     // camera
     //private AprilTagProcessor aprilTag;
     //private VisionPortal visionPortal;
@@ -160,10 +153,10 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
         //servo
         hood = myOpMode.hardwareMap.get(Servo.class, "hood_servo");
-        hood.setPosition(MID_SERVO);
+        //hood.setPosition(MID_SERVO);
         // second servo
         intakeServo = myOpMode.hardwareMap.get(Servo.class, "intake_servo");
-        intakeServo.setPosition(1);
+        //intakeServo.setPosition(1);
         //intake motor
         intakeMotor = myOpMode.hardwareMap.get(DcMotor.class, "intake_motor");
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -172,15 +165,17 @@ public class RobotHardware {
 
 
         //turret motor reverse?
-        turretMotor = myOpMode.hardwareMap.get(DcMotor.class, "turret_motor");
+        turretMotor = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor");
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //april tag
-        //aprilTag = new AprilTagProcessor.Builder().setDrawTagID(true).setDrawAxes(true).build();
+        turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turretMotor.setVelocityPIDFCoefficients(100,1,2,1);
 
-        // Step 2: Create the VisionPortal, and add the processor to it.
-        //visionPortal = new VisionPortal.Builder().setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1")).addProcessor(aprilTag).build();
+        turretMotor2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor2");
+        turretMotor2.setDirection(DcMotor.Direction.FORWARD);
+        turretMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turretMotor2.setVelocityPIDFCoefficients(100,1,2,1);
 
 
 
@@ -191,7 +186,7 @@ public class RobotHardware {
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,        // e.g., logo pointing up
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards front
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu"); // TODO(STUDENTS): confirm IMU name
@@ -206,7 +201,7 @@ public class RobotHardware {
         // TODO(STUDENTS): If the robot strafes opposite or spins wrong, swap these directions.
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         // --- ENCODER MODES ---
@@ -317,6 +312,10 @@ public class RobotHardware {
     public void setHoodPositions(double position) {
         hood.setPosition(position);
     }
+    public double getHoodPosition(){
+        double x = hood.getPosition();
+        return x;
+    }
     public void setIntakeServo(double position){
         intakeServo.setPosition(position);
     }
@@ -325,8 +324,17 @@ public class RobotHardware {
 
 
     //turret
+    public void turretVelocity(double velocity){
+        turretMotor.setVelocity(velocity);
+        turretMotor2.setVelocity(velocity);
+
+    }
     public void turretPower(double power){
         turretMotor.setPower(power);
+    }
+
+    public double getVelocity(){
+        return turretMotor.getVelocity();
     }
     // intake motor
     public void intakePower(double power){
@@ -364,7 +372,7 @@ public class RobotHardware {
     // Default speeds and proportional gains; HEADING_THRESHOLD in degrees
     public static final double AXIAL_SPEED = 0.4;
     public static final double LATERAL_SPEED = 0.4;
-    public static final double YAW_SPEED = 0.2;
+    public static final double YAW_SPEED = 1;
     //static final double HEADING_THRESHOLD = 1.0;
 
     static final double P_AXIAL_GAIN = 0.03;
@@ -707,7 +715,7 @@ public class RobotHardware {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
         }
-        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE)*0;
 
 
         double headingError =  goalBearingDeg;
@@ -715,7 +723,7 @@ public class RobotHardware {
 
         double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
         //changed yaw error to range error lateral
-        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL)*0;
         double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
 
         driveRobotCentric(axial, lateral, yaw);

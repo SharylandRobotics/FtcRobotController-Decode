@@ -29,74 +29,85 @@
 
 package org.firstinspires.ftc.team12395;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.media.AudioManager;
-import android.media.SoundPool;
+import androidx.annotation.NonNull;
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.*;
+import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
+import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.ftccommon.SoundPlayer;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.navigation.*;
+import org.firstinspires.ftc.team12395.rr.MecanumDrive;
+import org.firstinspires.ftc.team12395.rr.PinpointLocalizer;
 
+import java.lang.Math;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+
 @Config
 public class RobotHardware {
 
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
 
-    public SoundPool lightBeep, darkBeep;
-    public int lightBeepID, darkBeepID;
     public Limelight3A limelight;
+    public MecanumDrive standardDrive;
     public LLResult result;
+    public GoBildaPinpointDriver pinpointDriver;
 
-    public NormalizedColorSensor colorSensor;
+    public RevColorSensorV3 colorSensor0, colorSensor1, colorSensor2;
+    public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
-    public static String mag = "GPP";
-    public static String pattern = "PPG";// a pattern is better than no pattern
+    public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
+    public String pattern = "PPG";// a pattern is better than no pattern
     public int chamber = 0;
+    public int firingChamber = 1;
 
     // Drivetrain motors for a mecanum chassis
-    private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
-    private final double wheelDiameterInches = 3.77953;
-    private final double wheelsTicksPerRev = ((((1+(46./17))) * (1+(46./11))) * 28);
-    private final double wheelsTicksPerInch = wheelsTicksPerRev/(wheelDiameterInches*Math.PI);
+    public DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
 
+    public DcMotorEx shooter2, shooter, spindexer, intake;
+    public CRServo turretR, turretL;
+    public OverflowEncoder turretE, spindexerE;
 
+    public servoDrivenEncoder turretHandler;
 
-    public DcMotorEx turret, shooter, spindexer, intake;
+    public static int maxTurnR = 140 ;
+    public static int maxTurnL = 140; // negative
 
-    public static int maxTurnR = 100 ;
-    public static int maxTurnL = 100; // negative
-
-    private final double spoolToTurretRatio = 4; // 4 rotations to 1
-    private final double turretTicksPerRevolution = spoolToTurretRatio*((((1+(46./17))) * (1+(46./11))) * 28);
-    private final double turretTicksPerDegree = turretTicksPerRevolution/360;
-    private final double turretMaxTPS = (312./60) * turretTicksPerRevolution;
+    private final double driveToTurretRatio = 3; // 3.2 rotations to 1, 120/40 teeth
+    private final double turretTicksPerRevolution = driveToTurretRatio *8192;// RevCoder CPR * ratio per 1 turret rev
+    public final double turretTicksPerDegree = turretTicksPerRevolution/360;
     private final int shooterMaxTPM = 2800;
 
     private final static double spoolToSpindexerRatio = 1;
     private final static double spindexerTicksPerRevolution = spoolToSpindexerRatio*((((1+(46./17))) * (1+(46./11))) * 28);
     public final static double spindexerTicksPerDegree = spindexerTicksPerRevolution/360;
-    private final double spindexerMaxTPS = (312./60) * spindexerTicksPerRevolution;
-
+    public final double spindexerETicksPerRevolution = 8192;
+    public final double spindexerETicksPerDegree = spindexerETicksPerRevolution/360;
+    public double spindexerFudge = 0;
     public int spindexerTarget = 0;
 
     // Servos
-    private Servo xArm, hoodAngle, hoodAngle2;
+    private Servo hoodAngle;
 
     // physics
-
-    private final double g = 9.81;
-    private final double xOffset = 5.5; //cm
     private final double yOffset = 16.5*2.54; //cm
     private final double verticalTargetDistance = 70-yOffset;
 
@@ -104,44 +115,8 @@ public class RobotHardware {
     // IMU is used for field-centric heading
     private IMU imu;
 
-    // lemoine stuff
-
-    private double headingError;
-
-    private double targetHeading;
-
-    private double axialSpeed;
-    private double lateralSpeed;
-    private double yawSpeed;
-    private double frontLeftSpeed;
-    private double backLeftSpeed;
-    private double frontRightSpeed;
-    private double backRightSpeed;
-    private int frontLeftTarget;
-    private int backLeftTarget;
-    private int frontRightTarget;
-    private int backRightTarget;
-
-    // Drive geometry and encoder model (update if wheels/gearing change)
-    static final double COUNTS_PER_MOTOR_REV = 537.7;
-    static final double DRIVE_GEAR_REDUCTION = 1.0;
-    static final double WHEEL_DIAMETER_INCHES = 4.094;
-    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * Math.PI);
-
-    // Default speeds and proportional gains; HEADING_THRESHOLD in degrees
-    public static final double AXIAL_SPEED = 0.6;
-    public static final double LATERAL_SPEED = 0.4;
-    public static final double YAW_SPEED = 0.2;
-    static final double HEADING_THRESHOLD = 0.25;
-
-    static final double P_AXIAL_GAIN = 0.03;
-    static final double P_LATERAL_GAIN = 0.03;
-    static final double P_YAW_GAIN = 0.04;
-
-    public int[] prevColor = null;
-    public int[] currentColor;
-
+    // COLOR SENSOR
+    private Context appContext;
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
     }
@@ -151,32 +126,39 @@ public class RobotHardware {
      * Call once from your OPMode before driving.
      */
     public void init() {
+        standardDrive = new MecanumDrive(myOpMode.hardwareMap, new Pose2d(0, 0, 0));
+        appContext = myOpMode.hardwareMap.appContext;
         // --- HARDWARE MAP NAMES ---
         limelight = myOpMode.hardwareMap.get(Limelight3A.class, "limelight-rfc");
-        limelight.pipelineSwitch(1);
 
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        turret = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
         shooter = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
+        shooter2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret");
+        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "turret")));
         spindexer = myOpMode.hardwareMap.get(DcMotorEx.class, "spindexer");
         intake = myOpMode.hardwareMap.get(DcMotorEx.class, "intake");
 
-        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
 
-        xArm = myOpMode.hardwareMap.get(Servo.class, "xArm");
         hoodAngle = myOpMode.hardwareMap.get(Servo.class, "hood_angle");
-        hoodAngle2 = myOpMode.hardwareMap.get(Servo.class, "hood_angle2");
+        turretR = myOpMode.hardwareMap.get(CRServo.class, "turretR");
+        turretL = myOpMode.hardwareMap.get(CRServo.class, "turretL");
+
+
+        spindexerE = new OverflowEncoder(new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive")));
+        colorSensor0 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color0");
+        colorSensor1 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color1");
+        colorSensor2 = myOpMode.hardwareMap.get(RevColorSensorV3.class, "color2");
 
         // --- IMU ORIENTATION ---
         // TODO: UPDATE ALONGSIDE ROADRUNNER
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,        // e.g., logo pointing up
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards right
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
@@ -188,24 +170,28 @@ public class RobotHardware {
 
         // --- MOTOR DIRECTIONS ---
         // NOTE: these reversals are common for mecanum so "axial + lateral" maps correctly.
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        turret.setDirection(DcMotorEx.Direction.FORWARD);
-        shooter.setDirection(DcMotorEx.Direction.REVERSE);
+        shooter2.setDirection(DcMotorEx.Direction.REVERSE);
+        shooter.setDirection(DcMotorEx.Direction.FORWARD);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.FORWARD);
 
+        turretR.setDirection(DcMotorSimple.Direction.REVERSE);
+        turretL.setDirection(DcMotorSimple.Direction.REVERSE);
+        turretE.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        spindexerE.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        turretHandler = new servoDrivenEncoder(turretE, turretR, turretL);
+
         // --- ENCODER MODES ---
         // WHY: Reset once at init for a clean baseline; then RUN_USING_ENCODER for closed-loop speed control if needed.
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -217,20 +203,10 @@ public class RobotHardware {
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         spindexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        turret.setTargetPosition(0);
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         spindexer.setTargetPosition(0);
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -240,56 +216,72 @@ public class RobotHardware {
         spindexer.setPower(0.3);
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooter.setVelocityPIDFCoefficients(100, 3, 3, 0);
+        shooter.setVelocityPIDFCoefficients(100, 5, 1, 5);
+        shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        colorSensor0.setGain(100);
+        colorSensor1.setGain(100);
+        colorSensor2.setGain(100);
+
         // SERVO POSITIONS
 
-        hoodAngle.setPosition(1);
+        hoodAngle.setPosition(0.3);
 
-        xArm.setPosition(1);
+        limelight.start();
+        limelight.pipelineSwitch(1);
 
-        colorSensor.setGain(2);
+        //pattern = "PPG";
+        mag = "GPP";
 
-        // SOUND
+        SoundPlayer.getInstance().setMasterVolume(1.0f);
+        AudioManager am = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
+        int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
 
-        lightBeep = new SoundPool.Builder().build();
-        lightBeepID = lightBeep.load(myOpMode.hardwareMap.appContext, R.raw.orb, 1);
 
-        darkBeep = new SoundPool(1, AudioManager.STREAM_MUSIC, 0); // PSM
-        darkBeepID = darkBeep.load(myOpMode.hardwareMap.appContext, R.raw.orbDeep, 1); // PSM
 
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
-        myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
+        myOpMode.telemetry.addData("Sound Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb));
+        myOpMode.telemetry.addData("Sound2 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep));
+        myOpMode.telemetry.addData("Sound3 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break));
+        //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
+        FtcDashboard.getInstance().startCameraStream(limelight, 20);
+
+
+        pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
     }
 
-    /**
-     * Robot-Centric drive (driver-relative): no IMU rotation applied.
-     * @param axial     forward/backward (+forward)
-     * @param lateral   left/right (+ right)
-     * @param yaw       rotate CCW (+ left turn)
-     */
-    public void driveRobotCentric(double axial, double lateral, double yaw) {
-        // WHY: Standard mecanum mixing (A + L + Y. etc.). Values may exceed |1|; we normalize below.
-        double frontLeftPower  = axial + lateral + yaw;
-        double frontRightPower = axial - lateral - yaw;
-        double backLeftPower   = axial - lateral + yaw;
-        double backRightPower  = axial + lateral - yaw;
+    public void setLocalizerPosition(Pose2d pose){
+        try {
+            standardDrive.localizer.setPose(pose);
+            standardDrive.localizer.update();
+        } catch (Exception ex) {
 
-        // Normalize so that the highest magnitude is 1.0, preserving ratios
-        double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
-                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-        if (max > 1.0) {
-            frontLeftPower  /= max;
-            frontRightPower /= max;
-            backLeftPower   /= max;
-            backRightPower  /= max;
+        }
+    }
+
+    public double getPinPointHeading(){
+        return pinpointDriver.getHeading(AngleUnit.DEGREES);
+    }
+
+
+    public void playBeep(String file) {
+        if (Objects.equals(file, "orb")) {
+            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb);
+            SoundPlayer.getInstance().preload(appContext, R.raw.orb);
+        } else if (Objects.equals(file, "orbDeep")){
+            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb_deep);
+            SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep);
+        } else if (Objects.equals(file, "break")){
+            SoundPlayer.getInstance().startPlaying(appContext, R.raw.anvil_break);
+            SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break);
         }
 
-        setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
 
     /**
@@ -337,251 +329,105 @@ public class RobotHardware {
 
     }
 
-    public void resetDriveEncoder(){
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    }
-
-    public void driveToEncoderRobotCentric(double distance, double directionAngle, double power){
-        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
-        directionAngle = Math.toRadians(directionAngle);
-
-        double lateralTicks = directionAngle/Math.abs(directionAngle)*
-                distance*Math.cos((Math.abs(directionAngle)));
-
-        double axialTicks = directionAngle/Math.abs(directionAngle)*
-                distance*Math.sin((Math.abs(directionAngle)));
-
-
-        // Input rotation for field frame
-        double lateralRotation =  (Math.cos(directionAngle) -  Math.sin(directionAngle));
-        double axialRotation =  (Math.sin(directionAngle) +  Math.cos(directionAngle));
-
-        // WHY: Standard mecanum mixing (A + L + Y. etc.). Values may exceed |1|; we normalize below.
-        double frontLeftPower  = axialRotation + lateralRotation ;
-        double frontRightPower = axialRotation - lateralRotation ;
-        double backLeftPower   = axialRotation - lateralRotation ;
-        double backRightPower  = axialRotation + lateralRotation ;
-
-        // Normalize so that the highest magnitude is 1.0, preserving ratios
-        double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
-                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-
-        max *= Range.clip(power,0,1);
-        if (max > 1.0) {
-            frontLeftPower  /= max;
-            frontRightPower /= max;
-            backLeftPower   /= max;
-            backRightPower  /= max;
-        }
-
-
-
-        setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
-    }
-
-    public void driveEncoder(double speed, double leftFrontInches, double leftBackInches, double rightFrontInches, double rightBackInches){
-        // drives only while myOpMode is active
-        if(myOpMode.opModeIsActive()){
-
-
-            //determine new target position
-            int leftFrontTarget = frontLeftDrive.getCurrentPosition() + (int)(leftFrontInches * wheelsTicksPerInch);
-            int leftBackTarget = backLeftDrive.getCurrentPosition() + (int)(leftBackInches * wheelsTicksPerInch);
-            int rightFrontTarget = frontRightDrive.getCurrentPosition() + (int)(rightFrontInches * wheelsTicksPerInch);
-            int rightBackTarget = backRightDrive.getCurrentPosition() + (int)(rightBackInches * wheelsTicksPerInch);
-
-            frontLeftDrive.setTargetPosition(leftFrontTarget - 1);
-            backLeftDrive.setTargetPosition(leftBackTarget - 1 );
-            frontRightDrive.setTargetPosition(rightFrontTarget - 1);
-            backRightDrive.setTargetPosition(rightBackTarget - 1 );
-
-            //turn on RUN_TO_POSITION
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-            setDrivePower(Math.abs(speed), Math.abs(speed), Math.abs(speed), Math.abs(speed));
-
-            while ((myOpMode.opModeIsActive() &&
-                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
-                            frontRightDrive.isBusy() && backRightDrive.isBusy()))){
-
-                //display it for driver
-
-                myOpMode.telemetry.addData("Running to ", " %7d :%7d :%7d :%7d",
-                        leftFrontTarget, leftBackTarget, rightFrontTarget, rightBackTarget);
-                myOpMode.telemetry.addData("Currently at ", "%7d ;%7d :%7d :%7d",
-                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
-                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
-                myOpMode.telemetry.update();
-            }
-
-            setDrivePower(0, 0, 0, 0 );
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            myOpMode.sleep(200); //optional pause after each move
-        }
+    public void disableDriveEncoders(){
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
 
-    public void setIntakeSpeed(int vel){
+    public void setIntakeSpeed(double vel){
         intake.setVelocity(vel);
     }
 
-    public void setTurretPositionAbsolute(double deg){
+    public void setTurretHandlerRelative(double deg){
+        deg += turretHandler.getCurrentPosition()/turretTicksPerDegree;
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
 
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(turretMaxTPS);
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
     }
 
-    public void setTurretPositionAbsolute(double deg, double tps){
-        deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
-
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
-    }
-
-    public void setTurretPositionRelative(double deg, double tps){
-        deg += getCurrentTurretDegreePos();
-        deg = Range.clip(deg, -maxTurnL, maxTurnR);
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
-
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(Range.clip(tps, 0, 1)*turretMaxTPS);
-    }
-
-    public void setTurretPositionRelative(double deg){
-        deg += getCurrentTurretDegreePos();
+    public void setTurretHandlerAbsolute(double deg){
         deg = Range.clip(deg, -maxTurnL, maxTurnR);
 
-        turret.setTargetPosition((int) (deg*turretTicksPerDegree));
-
-        turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        turret.setVelocity(turretMaxTPS);
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
     }
 
     public void setShooterVelocity(double tPs){
         shooter.setVelocity(Range.clip(tPs, 0, shooterMaxTPM));
-    }
-
-    /**
-     *
-     * @return rpm in rps, not tps
-     * max rpm is 100. (6000 mRPM / 60 sec = 100 mRPS * 28 TPR = 2800 mTPS)
-     */
-    public double getShooterVelocity(){
-        return shooter.getVelocity()/28;
+        shooter2.setPower(shooter.getPower());
     }
 
     public void setHoodAngle(double angle){
         hoodAngle.setPosition(angle);
-        hoodAngle2.setPosition(1-angle);
-
-    }
-
-
-    private int encoderToDegTurret(double deg){
-        return (int) (deg* turretTicksPerDegree);
-    }
-
-    public double[] getTurretAzimuth(){
-        double tDeg = turret.getCurrentPosition()/ turretTicksPerDegree;
-        double deg = (tDeg) % 360;
-        return new double[]{ (tDeg-deg)/360, tDeg % 360};
     }
 
     public double getCurrentTurretDegreePos(){
-        return turret.getCurrentPosition()/ turretTicksPerDegree;
-    }
-
-    /**
-     * angle solver
-     * @param xT x which the curve will fall on (distance)
-     * @param v given velocity
-     * @return (0) the low arc, (1) the high arc)
-     */
-    public double[] findTurretAngles(double xT, double v){
-        double yT = 38.75;
-        double discriminant = Math.sqrt( Math.pow(v,4) - g*((g*xT*xT) + (2*yT*v*v)));
-
-        return new double[] {Math.atan((v * v - discriminant) / g * xT), Math.atan((v * v + discriminant) / g * xT)};
-    }
-
-    /**
-     * graph function
-     * @param x distance to check
-     * @param v given velocity
-     * @param z given angle
-     * @return distance from floor + offset the projectile will be at
-     */
-    public double trajectoryOf(double x, double v, double z){
-        return ( x*Math.tan(z) -( (g*x*x)/(2*v*v*Math.cos(z)*Math.cos(z) ) ) );
-    }
-
-    /**
-     * checks if a given velocity can reach a given coordinate
-     * @param x target x
-     * @param y target y
-     * @param v given velocity
-     * @return boolean response
-     */
-    public boolean shotPossible(double x, double y, double v){
-
-        return Math.sqrt( (x*2*g)/(Math.sin(2*(Math.atan(2*y/x)))) ) == v;
+        return turretHandler.getCurrentPosition()/ turretTicksPerDegree;
     }
 
     public double getCurrentSpindexerDegreesPos(){
         return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
     }
 
+    // 8192
+    public void getSpindexerOffset(){
+        spindexerFudge = (spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) - (spindexer.getCurrentPosition()/spindexerTicksPerDegree);
+    }
+
     public void spindexerHandler(int targetAdd){
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd) * spindexerTicksPerDegree) );
+        getSpindexerOffset();
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexerTarget += targetAdd;
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(800);
+        spindexer.setVelocity(900);
+        //  -intake-
+        //    (0)
+        // (1)   (2)
+        int turns = targetAdd / 120;
 
-        if (targetAdd == -120 || targetAdd == 60){// cw & half ccw
-            chamber = (chamber + 1) % 3;
-        } else if (targetAdd == 120 || targetAdd == -60){// ccw & half cw
-            chamber = (chamber + 2) % 3;
+        if (turns < 0){// cw
+            chamber = (chamber + Math.abs(turns)) % 3;
+        } else if (turns > 0){// ccw
+            chamber = (chamber + 2*Math.abs(turns)) % 3;
         }
+
+        firingChamber = (chamber+2) % 3;
     }
 
-    public void setSpindexerRelativeAngle(double angle){
-        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (angle*spindexerTicksPerDegree));
+    public void maintainSpindexerHandler(){
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        spindexer.setVelocity(600);
     }
 
-    public void turnSpindexerRight(double angle){
+    public void spindexerHandler(int targetAdd,  int vel){
+        getSpindexerOffset();
+        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
 
-        spindexer.setTargetPosition( spindexer.getCurrentPosition() + (int) (-angle*spindexerTicksPerDegree));
+        spindexerTarget += targetAdd;
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    }
 
+        spindexer.setVelocity(vel);
+        //  -intake-
+        //    (0)
+        // (1)   (2)
+        int turns = targetAdd / 120;
 
-    public void setArmPos(double pos){
-        xArm.setPosition(Range.clip(pos, 0, 1));
+        if (turns < 0){// cw
+            chamber = (chamber + Math.abs(turns)) % 3;
+        } else if (turns > 0){// ccw
+            chamber = (chamber + 2*Math.abs(turns)) % 3;
+        }
+
+        firingChamber = (chamber+2) % 3;
     }
 
     private double[] getValuesToTarget(){
@@ -597,142 +443,6 @@ public class RobotHardware {
         return new double[]{ xDistance, yDistance, groundDistance};
     }
 
-    public void driveStraight(double maxAxialSpeed, double distance, double heading, boolean scan) {
-
-        if (myOpMode.opModeIsActive()) {
-
-            // Convert inches to encoder counts for straight motion
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
-            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
-
-            // Same target on all wheels → straight move
-            frontLeftDrive.setTargetPosition(frontLeftTarget);
-            backLeftDrive.setTargetPosition(backLeftTarget);
-            frontRightDrive.setTargetPosition(frontRightTarget);
-            backRightDrive.setTargetPosition(backRightTarget);
-
-            // Use built-in position control to reach targets
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // RUN_TO_POSITION requires positive power magnitude
-            axialSpeed = Math.abs(maxAxialSpeed);
-            driveRobotCentric(axialSpeed, 0, 0);
-
-            while (myOpMode.opModeIsActive() &&
-                    (frontLeftDrive.isBusy() && backLeftDrive.isBusy() &&
-                            frontRightDrive.isBusy() && backRightDrive.isBusy())) {
-
-                // Proportional yaw correction to stay on heading while driving
-                yawSpeed = getSteeringCorrection(heading, P_AXIAL_GAIN);
-
-                // Invert correction when backing up
-                if (distance < 0)
-                    yawSpeed *= -1.0;
-
-                if (scan){
-                    processObelisk();
-                }
-
-                driveRobotCentric(axialSpeed, 0, yawSpeed);
-
-                myOpMode.telemetry.addData("Motion", "Drive Straight");
-                myOpMode.telemetry.addData("Target Pos FL:BL:FR:BR", "%7d:%7d:%7d:%7d",
-                        frontLeftTarget,  backLeftTarget, frontRightTarget, backRightTarget);
-                myOpMode.telemetry.addData("Actual Pos FL:BL:FR:BR","%7d:%7d:%7d:%7d",
-                        frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
-                        frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
-                myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                        targetHeading, getHeading());
-                myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                        headingError, yawSpeed);
-                myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                        frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-                myOpMode.telemetry.update();
-            }
-
-            driveRobotCentric(0, 0, 0);
-
-            // Restore TeleOp run mode after completing the move
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-    }
-
-    // Turn in place to target heading using proportional control
-    public void turnToHeading(double maxYawSpeed, double heading) {
-
-        getSteeringCorrection(heading, P_YAW_GAIN);
-
-        while (myOpMode.opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
-
-            // Limit turn power to requested maximum
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
-
-            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-            driveRobotCentric(0, 0, yawSpeed);
-
-            myOpMode.telemetry.addData("Motion", "Turning");
-            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                    targetHeading, getHeading());
-            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                    headingError, yawSpeed);
-            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            myOpMode.telemetry.update();
-        }
-
-        // Stop turning and recenter outputs
-        driveRobotCentric(0, 0, 0);
-    }
-
-    // Maintain heading for a fixed time (sec) to let the robot settle
-    public void holdHeading(double maxYawSpeed, double heading, double holdTime) {
-
-        ElapsedTime holdTimer = new ElapsedTime();
-        holdTimer.reset();
-
-        while (myOpMode.opModeIsActive() && (holdTimer.time() < holdTime)) {
-
-            yawSpeed = getSteeringCorrection(heading, P_YAW_GAIN);
-
-            yawSpeed = Range.clip(yawSpeed, -maxYawSpeed, maxYawSpeed);
-
-            driveRobotCentric(0, 0, yawSpeed);
-
-            myOpMode.telemetry.addData("Motion", "Hold Heading");
-            myOpMode.telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f",
-                    targetHeading, getHeading());
-            myOpMode.telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f",
-                    headingError, yawSpeed);
-            myOpMode.telemetry.addData("Wheel Speeds FL:BL:FR:BR", "%5.2f : %5.2f : %5.2f : %5.2f",
-                    frontLeftSpeed, backLeftSpeed, frontRightSpeed, backRightSpeed);
-            myOpMode.telemetry.update();
-        }
-
-        driveRobotCentric(0, 0, 0);
-    }
-
-    // Return clipped turn command from normalized heading error (-180, 180]
-    public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
-        targetHeading = desiredHeading;
-
-        headingError = -targetHeading + getHeading();
-
-        while (headingError > 180) headingError -= 360;
-        while (headingError <= -180) headingError += 360;
-
-        return Range.clip(headingError * proportionalGain, -1.0, 1.0);
-    }
-
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
@@ -744,12 +454,12 @@ public class RobotHardware {
                 (result.getFiducialResults() != null && !result.getFiducialResults().isEmpty()));
     }
 
-    public double homeToAprilTagBlue(){
+    public double[] homeToAprilTagBlue(){
         boolean check = processLLresult();
         if (check){
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
 
             myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
             myOpMode.telemetry.addData("Tags: ", fresult.size());
@@ -765,22 +475,24 @@ public class RobotHardware {
 
 
                 double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
+                double skew  = fresult.get(0).getCameraPoseTargetSpace().getOrientation().getYaw();
 
                 myOpMode.telemetry.addData("turning deg: ", tx);
-                return tx;
+                myOpMode.telemetry.addData("skew deg: ", skew);
+                return new double[]{tx, skew};
 
             }
 
         }
-        return Double.NaN;
+        return new double[]{Double.NaN, Double.NaN};
     }
 
-    public double homeToAprilTagRed(){
+    public double[] homeToAprilTagRed(){
         boolean check = processLLresult();
         if (check){
 
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
 
             myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
             myOpMode.telemetry.addData("Tags: ", fresult.size());
@@ -796,20 +508,76 @@ public class RobotHardware {
 
 
                 double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
+                double skew  = fresult.get(0).getCameraPoseTargetSpace().getOrientation().getYaw();
 
                 myOpMode.telemetry.addData("turning deg: ", tx);
-                return tx;
+                myOpMode.telemetry.addData("skew deg: ", skew);
+                return new double[]{tx, skew};
 
             }
 
         }
-        return Double.NaN;
+        return new double[]{Double.NaN, Double.NaN};
     }
 
-    public void processObelisk(){
+    public Pose2d fetchLocalizedPose(){
+        boolean check  = processLLresult();
+        if (check){
+            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
+
+            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
+            myOpMode.telemetry.addData("Tags: ", fresult.size());
+
+            //TODO check if filtering of tags can be done thru LL config instead
+            for (LLResultTypes.FiducialResult fiducial : fresultCC){
+                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23){
+                    fresult.remove(fiducial);
+                }
+            }
+
+            if (!fresult.isEmpty()) {
+                // placeholder values
+                double cameraOffset = -77.9953;
+                double turretAngle = getCurrentTurretDegreePos();
+                double turretOffset = 55;
+
+                // LL uses meters & deg, RR uses inches & rads
+                limelight.updateRobotOrientation(getHeading() - 90 + turretAngle);
+
+                Pose3D rawMT2Pose3D = result.getBotpose_MT2();
+                Position rawMT2Position = rawMT2Pose3D.getPosition().toUnit(DistanceUnit.INCH);
+
+                //TODO translate LL grid into RR grid before finalizing (including yaw & units)
+                Pose2d rawPose = new Pose2d(rawMT2Position.x,
+                                            rawMT2Position.y,
+                                            rawMT2Pose3D.getOrientation().getYaw(AngleUnit.RADIANS));
+
+                myOpMode.telemetry.addData("Raw Pose: ", rawPose.position);
+
+                Pose2d translatedPose = rawPose
+                        // camera-turret axis offset
+                        .plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))
+                        // turret rotation
+                        .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)))
+                        // turret axis-bot center offset
+                        .plus(new Twist2d(new Vector2d(turretOffset,0), Math.toRadians(0)));
+                
+                return translatedPose;
+            }
+        }
+        return new Pose2d(Double.NaN, Double.NaN, Math.toRadians(0));
+    }
+
+    public double turretAngleToTarget(Pose2d target, Pose2d currentPose){
+        return Math.atan2(target.position.y - currentPose.position.y,
+                target.position.x - currentPose.position.x) - currentPose.heading.imag;
+    }
+
+    public boolean processObelisk(){
         if (processLLresult()){
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = fresult;
+            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
 
             myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
             myOpMode.telemetry.addData("Tags: ", fresult.size());
@@ -826,77 +594,66 @@ public class RobotHardware {
                 if (closestObelisk == 21){
                     pattern = "GPP";
                     myOpMode.telemetry.addData("Tag 21: ", "GPP");
+                    myOpMode.telemetry.update();
+                    return true;
                 } else if (closestObelisk == 22) {
                     pattern = "PGP";
                     myOpMode.telemetry.addData("Tag 22: ", "PGP");
+                    myOpMode.telemetry.update();
+
+                    return true;
                 } else if (closestObelisk == 23){
                     pattern = "PPG";
                     myOpMode.telemetry.addData("Tag 23: ", "PPG");
+                    myOpMode.telemetry.update();
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     public int[] solvePattern(){
-        if (!mag.contains("0") && mag.contains("G") && !pattern.contains("0")){
+        if (!mag.contains("0") && mag.contains("G") ){
             // if I have a full mag with Green and know the pattern
             int greenIndex = mag.indexOf("G");
-            if (pattern.equals("GPP")){
-                if (greenIndex == chamber){// if green is selected
-                    return new int[] {0, 2};// don't move, turn right twice
-                } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my right isn't green, turn left, then turn right twice
-                    return new int[] {1, 2};
-                } else {
-                    // the color to my right is green, turn right, then turn right twice
-                    return new int[] {-1, 2};
-                }
+            switch (pattern) {
+                case "GPP":
+                    if (greenIndex == firingChamber) {// if green is selected
+                        return new int[]{0, -2};// don't move, turn right twice
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
+                        // if the color to my ccw isn't green, turn left, then turn right twice
+                        return new int[]{1, -2};
+                    } else {
+                        // the color to my ccw is green, turn right (2x left), then turn right twice
+                        return new int[]{2, -2};
+                    }
 
-            } else if (pattern.equals("PGP")){
-                if (greenIndex == chamber){ // if green is selected
-                    return new int[] {1, 2}; //  turn left, then turn right twice
-                } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my right isn't green, turn right, then turn right twice
-                    return new int[] {-1, 2};
-                } else {
-                    // the color to my right is green, don't move, turn right twice
-                    return new int[] {0, 2};
-                }
+                case "PGP":
+                    if (greenIndex == firingChamber) { // if green is selected
+                        return new int[]{1, -2}; //  turn left, then turn right twice
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
+                        // if the color to my ccw isn't green, turn right (2x left), then turn right twice
+                        return new int[]{2, -2};
+                    } else {
+                        // the color to my ccw is green, don't move, turn right twice
+                        return new int[]{0, -2};
+                    }
 
-            } else if (pattern.equals("PPG")){
-                if (greenIndex == chamber){ // if green is selected
-                    return new int[] {-1, 2}; //  turn right, then turn right twice
-                } else if ( mag.charAt((chamber + 1) % mag.length())  != 'G' ){
-                    // if the color to my right isn't green, don't move, turn right twice
-                    return new int[] {0, 2};
-                } else {
-                    // the color to my right is green, turn left, then turn right twice
-                    return new int[] {1, 2};
-                }
+                case "PPG":
+                    if (greenIndex == firingChamber) { // if green is selected
+                        return new int[]{2, 2}; //  turn cw (2x ccw), then turn cw twice
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
+                        // if the color to my ccw isn't green, don't move, turn cw twice
+                        return new int[]{0, -2};
+                    } else {
+                        // the color to my ccw is green, turn ccw, then turn cw twice
+                        return new int[]{1, -2};
+                    }
             }
         }
         myOpMode.telemetry.addData(":", mag, pattern, chamber);
         return null;
-    }
-
-    public char scanColor(){
-        NormalizedRGBA colors = colorSensor.getNormalizedColors();
-        if (!Arrays.equals(currentColor, prevColor)) {
-            float[] hsvValues = new float[3];
-            Color.colorToHSV(colors.toColor(), hsvValues);
-
-            prevColor = currentColor;
-
-            if (hsvValues[0] > 250 || hsvValues[0] <= 40) {
-                return 'P';
-            } else if (hsvValues[0] > 90 && hsvValues[0] < 160) {
-                return 'G';
-            } else {
-                return '0';
-            }
-        } else {
-            return 'N';
-        }
     }
 
     public int[] solveAltPattern(String setPattern){
@@ -907,59 +664,353 @@ public class RobotHardware {
         return null;
     }
 
-    public void shootAutomaticSequence(int clock){
-        if (!spindexer.isBusy()) {
-            if (clock == 0) {// 500/50
-                setArmPos(0.7);
-                StringBuilder magBuilder = new StringBuilder(mag);
-                magBuilder.setCharAt(chamber, '0');
+    public void setMagManualBulk(String set){
+        //   (firing chamber on 2)
+        //      (chamber on 0)         210
+        // set things in a cw manner ( XYZ )
+        //    0(X)
+        // 1(Z)   2(Y)
+        StringBuilder magBuilder = new StringBuilder(mag);
+        for (int i=0; i<3; i++) {
+            magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
+            mag = magBuilder.toString();
+        }
+    }
+    public void setChamberManual(Character c){
+        StringBuilder magBuilder = new StringBuilder(mag);
+        magBuilder.setCharAt(chamber, c);
+        mag = magBuilder.toString();
+    }
+
+    public enum colorTypes {
+        UNKNOWN,
+        NONE,
+        PURPLE,
+        GREEN
+    }
+
+    public void scanColor(){
+        NormalizedRGBA color = colorSensor0.getNormalizedColors();
+        float[] hsvValues = new float[3];
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        colorTypes color0 = classifyColor(hsvValues);
+
+        color = colorSensor1.getNormalizedColors();
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        colorTypes color1 = classifyColor(hsvValues);
+
+        color = colorSensor2.getNormalizedColors();
+        Color.colorToHSV(color.toColor(), hsvValues);
+
+        colorTypes color2 = classifyColor(hsvValues);
+
+        //    (0)
+        // (1)   (2)
+        String colorHolder = "";
+
+        switch (color2) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        switch (color1) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        switch (color0) {
+            case GREEN:
+                colorHolder += "G";
+                break;
+
+            case PURPLE:
+                colorHolder += "P";
+                break;
+
+            case NONE:
+            case UNKNOWN:
+                colorHolder += "0";
+                break;
+        }
+
+        setColorMagManualBulk(colorHolder);
+    }
+
+    public void setColorMagManualBulk(String set){
+        //   (firing chamber on 2)
+        //      (chamber on 0)         210
+        // set things in a cw manner ( XYZ )
+        //    0(X)
+        // 1(Z)   2(Y)
+        StringBuilder magBuilder = new StringBuilder(mag);
+        for (int i=0; i<3; i++) {
+            if (set.charAt(i) != '0') {
+                magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
                 mag = magBuilder.toString();
-            } else if (clock == 2+ 3) {// 750/50
-                setArmPos(1);
-            } else if (clock == 2+3+ 3){
-                spindexerHandler(-120);
             }
-
-
         }
     }
 
-    public boolean senseAutomaticSequence(){
-        char scannedColor = scanColor();
-        if (scannedColor != '0' && scannedColor != 'N'){
-            myOpMode.telemetry.addData("Found color ", "");
-            // runs when ball is already secured in socket
-            StringBuilder magBuilder = new StringBuilder(mag);
-            magBuilder.setCharAt(chamber, scannedColor);
-            mag = magBuilder.toString();
+    public colorTypes classifyColor(float[] hsvValues){
+        colorTypes color = colorTypes.UNKNOWN;
+        if (hsvValues[2] < 0.15){
+            color = colorTypes.NONE;
+        } else if (hsvValues[0] > 180 && hsvValues[0] <= 240){
+            color = colorTypes.PURPLE;
+        } else if (hsvValues[1] > 0.5 && hsvValues[1] < 0.8){
+            color = colorTypes.GREEN;
+        }
+        return color;
+    }
 
-            int [] solution = solvePattern();
-            if (solution == null ){
-                if (mag.charAt( (chamber + 1) % mag.length())  == '0'){
-                    spindexerHandler(-120);//cw
-                    myOpMode.telemetry.addData("turning right", "...");
-                } else {
-                    spindexerHandler(120);//ccw
-                    myOpMode.telemetry.addData("turning left", "...");
+    public String getMagPicture(){
+        return "     ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt( (chamber+1) % 3)+")    ("+mag.charAt( (chamber+2) % 3)+")  ";
+    }
+
+    private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
+            new double[]{0, 0},
+            new double[]{1, 1},
+            new double[]{2, 2}
+    ));
+
+    public double getCalculatedVelocity(double distance){
+        int maxIndex = velDataPoints.size()-1;
+        double[] slopeList = new double[maxIndex];
+        for (int i=0; i<maxIndex; i++){
+            slopeList[i] = (
+                    (velDataPoints.get(i+1)[1] - velDataPoints.get(i)[1]) /
+                    (velDataPoints.get(i+1)[0] - velDataPoints.get(i)[0])
+            );
+        }
+        double velZeroIntercept = velDataPoints.get(0)[1] - slopeList[0]*velDataPoints.get(0)[0];
+
+        for (int i=0; i<slopeList.length; i++){
+            if (i == 0){
+                if (distance >= 0 && distance <= velDataPoints.get(0)[0]){
+                    return velZeroIntercept + distance*slopeList[0];
+                }
+            } else if (distance > velDataPoints.get(i)[0] && distance <= velDataPoints.get(i+1)[0]){
+                return velDataPoints.get(i)[1] + distance*slopeList[i];
+            }
+        }
+
+        return 500;
+    }
+
+    public class RoadRunnerActions {
+        public class setSpindexerTarget implements Action{
+            private int vel;
+            private int target;
+            public setSpindexerTarget(int target, int vel){
+                this.vel = vel;
+                this.target = target;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(target, vel);
+                return false;
+            }
+        }
+        public class scanMotif implements Action {
+            public scanMotif(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                return !processObelisk();
+            }
+        }
+        public class setTurretPosition implements Action {
+            private double pos;
+            public setTurretPosition(double pos){
+                this.pos = pos;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setTurretHandlerAbsolute(pos);
+                return !turretHandler.runToTarget();
+            }
+        }
+        public class setShooterVelocity implements Action {
+            private int vel;
+
+            public setShooterVelocity(int vel){
+                this.vel = vel;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setShooterVelocity(vel);
+                return false;
+            }
+        }
+
+        public class shootBalls implements Action{
+            public shootBalls(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(-480, 800);
+                return false;
+            }
+        }
+
+        public class setTurretPowerZero implements Action{
+            public setTurretPowerZero(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                turretHandler.stopServos();
+                return false; // you are not done?
+            }
+        }
+
+        public class sortSpindexer implements Action{
+
+            public sortSpindexer(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                int[] solve = solvePattern();
+                if (solve != null) {
+                    spindexerHandler(120 * solve[0]);
                 }
                 return false;
-            } else {
-                // turn to solution
-                spindexerHandler(solution[0]* 120);
-                myOpMode.telemetry.addData("solving", "...");
-                return true;
+            }
+        }
+
+        public class wiggleSpindexer implements Action{
+            private ElapsedTime timer = new ElapsedTime();
+            private int stage = 0;
+            public wiggleSpindexer(){
+
             }
 
-        } else {
-            return false;
-        }
-    }
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (stage == 0){
+                    spindexerHandler(10, 600);
+                    stage++;
+                }
 
-    public void setMagManual(String set){
-        for (int i=0; i<3; i++) {
-            StringBuilder magBuilder = new StringBuilder(mag);
-            magBuilder.setCharAt((chamber + i) % 3, set.charAt(i));
-            mag = magBuilder.toString();
+                if (stage == 1 && timer.seconds() >= 0.5){
+                    spindexerHandler(-10,600);
+                    stage++;
+                }
+                return (stage < 2);
+            }
+        }
+
+        public class setHoodAngle implements Action{
+            private double pos;
+
+            public setHoodAngle(double pos){
+                this.pos = pos;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setHoodAngle(pos);
+                return false;
+            }
+        }
+
+        public class setIntakeVelocity implements Action{
+            private double vel;
+            public setIntakeVelocity(double vel){
+                this.vel = vel;
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setIntakeSpeed(vel);
+                return false;
+            }
+        }
+
+        public class scanColorSensor implements Action{
+
+            public scanColorSensor(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                scanColor();
+                return true;
+            }
+        }
+
+        public Action wiggleSpindexer(){
+            return new wiggleSpindexer();
+        }
+        public Action scanColorToggle(){
+            return new scanColorSensor();
+        }
+
+        public Action shootAllBalls(){
+            return new shootBalls();
+        }
+
+        public Action setIntakeVel(double vel){
+            return new setIntakeVelocity(vel);
+        }
+
+        public Action setHoodAng(double angle){
+            return new setHoodAngle(angle);
+        }
+
+        public Action sortCurrentSpindexer(){
+            return new sortSpindexer();
+        }
+
+        public Action setShooterVel(int vel){
+            return new setShooterVelocity(vel);
+        }
+
+        public Action stopTurretPower(){
+            return new setTurretPowerZero();
+        }
+        public Action setTurretPos(double deg){
+            return new setTurretPosition(deg);
+        }
+        public Action scanMotif(){
+            return new scanMotif();
+        }
+
+        public Action spindexerTargetAddVel(int target, int vel){
+            return new setSpindexerTarget(target, vel);
         }
     }
 

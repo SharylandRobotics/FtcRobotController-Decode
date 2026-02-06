@@ -27,20 +27,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team00000.auto;
+package org.firstinspires.ftc.team12397.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.team00000.RobotHardware;
+import org.firstinspires.ftc.team12397.RobotHardware;
 
-import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_AXIAL;
-import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_YAW;
-@Disabled
-@Autonomous(name = "Red Alliance", group = "opMode")
+@Autonomous(name = "TopRed", group = "opMode")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class RedAlliance extends LinearOpMode {
+public class
+TopRed extends LinearOpMode {
+
 
     // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
@@ -51,7 +49,7 @@ public class RedAlliance extends LinearOpMode {
         // Initialize all motors and IMU before start
         robot.init();
 
-        while(opModeInInit()) {
+        while (opModeInInit()) {
             // Display heading and status continuously during init loop
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
@@ -64,15 +62,80 @@ public class RedAlliance extends LinearOpMode {
 
         // Execute full autonomous path sequence once started
         if (opModeIsActive()) {
-            // Drive 24" forward, then turn and hold headings as defined
-            robot.driveOmni(MAX_AUTO_AXIAL, 48.0, 0.0, 0.0);
-            robot.turnToHeading(MAX_AUTO_YAW, -90.0);
-            robot.holdHeading(MAX_AUTO_YAW, -90.0, 0.5);
 
-            // Indicate completion and pause for display
-            telemetry.addData("Path", "Complete");
-            telemetry.update();
-            sleep(1000);  // Pause to display last telemetry message.
+            Boolean aprilTagFound = false;
+
+            Boolean phase1 = true;
+            Boolean phase2 = false;
+            Boolean phase3 = false;
+
+            while(phase1){
+
+                robot.setHoodPositions(1);
+                robot.turretVelocity(105);
+                //robot.intakePower(-.3);
+                robot.driveStraight(1, -50, 0);
+                robot.holdHeading(robot.YAW_SPEED, 0, 1);
+                robot.turnToHeading(1,5);
+
+                robot.holdHeading(1, 5, 4);
+
+
+                robot.intakePower(-1);
+                robot.holdHeading(0, 5, 3);
+
+
+                // turn off motors
+                robot.turretVelocity(0);
+                robot.intakePower(0);
+                //phase 2
+
+                robot.turnToHeading(.5,-40);
+                robot.holdHeading(.5, -40, 1);
+                robot.straif(.5,8,-40);
+                robot.intakePower(-1);
+                robot.driveStraight(.5, 18, -40);
+                robot.driveStraight(.5,13,-40);
+
+                //extra time
+                robot.holdHeading(robot.YAW_SPEED, -40, 1);
+                robot.intakePower(.1);// unblock motor
+                robot.holdHeading(robot.YAW_SPEED, -40, 1);
+                robot.intakePower(0);
+                robot.turretVelocity(120);
+
+
+                //shooting
+
+                robot.driveStraight(1,-31,-40);
+                robot.holdHeading(robot.YAW_SPEED, -40, 1);
+                robot.turnToHeading(1,3);
+                robot.holdHeading(robot.YAW_SPEED, 3, 1);
+
+
+                robot.holdHeading(0, 3, 2); // inital hold time
+                robot.intakePower(-1);
+                robot.holdHeading(0, 3, 3);
+
+                // move out
+                robot.straif(1,20,0);
+                phase1 = false;
+
+
+
+
+
+                phase1 = false;
+            }
+            while(aprilTagFound){
+
+            }
+
+
         }
     }
+
 }
+
+
+
