@@ -199,7 +199,7 @@ public class RobotHardware {
         // --- MOTOR DIRECTIONS ---
         // NOTE: these reversals are common for mecanum so "axial + lateral" maps correctly.
         // TODO(STUDENTS): If the robot strafes opposite or spins wrong, swap these directions.
-        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
