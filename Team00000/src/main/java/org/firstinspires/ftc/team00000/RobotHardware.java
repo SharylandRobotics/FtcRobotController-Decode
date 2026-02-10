@@ -110,6 +110,7 @@ public class RobotHardware {
 
     // Auto-assist tuning (AprilTag -> drive commands). Units: inches, degrees.
     private static final double DESIRED_DISTANCE = 140.0; // camera-to-tag inches
+    private static double DESIRED_YAW_DEG = 0;
     private static double DESIRED_BEARING_DEG = 0;
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
     private static final double LATERAL_GAIN = 0.015; // tagYawError -> lateral (strafe) speed
@@ -432,7 +433,7 @@ public class RobotHardware {
         final double targetRpm = power * maxRpm;
         shooterTargetTicksPerSec = targetRpm * ticksPerRev / 60.0;
 
-        topShooter.setVelocity(shooterTargetTicksPerSec);
+        topShooter.setVelocity(shooterTargetTicksPerSec * 0.95);
         bottomShooter.setVelocity(shooterTargetTicksPerSec);
     }
 
@@ -454,6 +455,7 @@ public class RobotHardware {
     public double getShooterTargetTicksPerSec() { return shooterTargetTicksPerSec; }
     public double getTopShooterTicksPerSec() { return Math.abs(topShooter.getVelocity()); }
     public double getBottomShooterTicksPerSec() { return Math.abs(bottomShooter.getVelocity()); }
+
     public double getTopShooterRpm() {
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         return Math.abs(topShooter.getVelocity() * 60.0 / ticksPerRev);
@@ -477,10 +479,17 @@ public class RobotHardware {
         backRightTransfer.setPower(p);
     }
 
-    // Current yaw heading (degrees)
+    // Current yaw heading (degrees).
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
+    }
+
+    // Re-zero IMU yaw so the current direction becomes 0°.
+    public void resetYaw() {
+        if (imu != null) {
+            imu.resetYaw();
+        }
     }
 
     private void initAprilTag() {
@@ -560,10 +569,12 @@ public class RobotHardware {
 
                 // Tag-specific offset: align to the goal face based on asymmetric tag placement.
                 if (goalTagId == 20) {
-                    DESIRED_BEARING_DEG = 23;
+                    DESIRED_YAW_DEG = 20;
+                    DESIRED_BEARING_DEG = 0;
                 }
                 if (goalTagId == 24) {
-                    DESIRED_BEARING_DEG = -23;
+                    DESIRED_YAW_DEG = -20;
+                    DESIRED_BEARING_DEG = 4;
                 }
                 goalRangeIn = chosen.ftcPose.range;
                 goalBearingDeg = chosen.ftcPose.bearing;
@@ -612,8 +623,8 @@ public class RobotHardware {
             return false;
         }
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
-        double headingError =  goalBearingDeg;
-        double yawError = tagYawDeg - DESIRED_BEARING_DEG;
+        double headingError =  goalBearingDeg - DESIRED_BEARING_DEG;
+        double yawError = tagYawDeg - DESIRED_YAW_DEG;
 
         // Sign conventions:
         //  +axial   -> drive forward

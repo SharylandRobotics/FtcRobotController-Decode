@@ -50,9 +50,9 @@ public class DriveTeleOp extends LinearOpMode {
     RobotHardware robot = new RobotHardware(this);
 
     // Shooter tuning (Dashboard-configurable).
-    public static double shooter = 0.475;
+    public static double shooterFar = 0.39;
     public static double shooterMaxRpm = 6000.0;
-    public static double shooterKp = 0.0;
+    public static double shooterKp = 0.1;
     public static double shooterKi = 0.0;
     public static double shooterKd = 0.0;
 
@@ -149,6 +149,7 @@ public class DriveTeleOp extends LinearOpMode {
 
             if (lsBtnEdge) {
                 driveMode = (driveMode == DriveMode.FIELD) ? DriveMode.ROBOT : DriveMode.FIELD;
+                robot.resetYaw();
             }
 
             // D-pad UP/DOWN: transfer control (edge-triggered; no hold required).
@@ -283,7 +284,7 @@ public class DriveTeleOp extends LinearOpMode {
             }
 
             robot.configureShooterVelocityPidfForMaxRpm(shooterMaxRpm, shooterKp, shooterKi, shooterKd);
-            double shooterCmb = shooterEnabled ? shooter : 0.0;
+            double shooterCmb = shooterEnabled ? shooterFar : 0.0;
             robot.setShooterVelocityPercent(shooterCmb, shooterMaxRpm);
             robot.setStopperPower(stopperPower);
             robot.setTransferPower(transferPower);
@@ -293,7 +294,7 @@ public class DriveTeleOp extends LinearOpMode {
             telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
-            telemetry.addData("ShooterCmd", "%.2f", shooterEnabled ? shooter : 0.0);
+            telemetry.addData("ShooterCmd", "%.2f", shooterEnabled ? shooterFar : 0.0);
             telemetry.addData("StopperPwr", "%.2f", stopperPower);
             telemetry.addData("TransferPwr", "%.2f", transferPower);
             telemetry.addData("Op", "shooter=%s intake=%s launch=%s",
