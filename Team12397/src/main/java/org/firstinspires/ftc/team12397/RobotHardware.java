@@ -116,7 +116,7 @@ public class RobotHardware {
     // Note: tagYawDeg is the TAG'S image rotation (not the robot's yaw). We apply this to lateral (strafe).
     private double tagYawDeg = Double.NaN;
 
-    private static final double DESIRED_DISTANCE = 50; // camera-to-tag inches
+    private static final double DESIRED_DISTANCE = 70.4; // camera-to-tag inches
     private static final double AXIAL_GAIN = 0.020; // rangeError -> axial (forward/back) speed
     private static final double LATERAL_GAIN = 0.02; // tagYawError -> lateral (strafe) speed
     private static final double YAW_GAIN = 0.010; // bearingError -> yaw (turn) speed
@@ -164,14 +164,20 @@ public class RobotHardware {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
+
+
         //turret motor reverse?
         turretMotor = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor");
+        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setVelocityPIDFCoefficients(100,1,2,1);
 
         turretMotor2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor2");
+        turretMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         turretMotor2.setDirection(DcMotor.Direction.FORWARD);
         turretMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -186,7 +192,7 @@ public class RobotHardware {
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,        // e.g., logo pointing up
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards front
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu"); // TODO(STUDENTS): confirm IMU name
@@ -715,7 +721,7 @@ public class RobotHardware {
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return false;
         }
-        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE)*0;
 
 
         double headingError =  goalBearingDeg;
@@ -736,4 +742,3 @@ public class RobotHardware {
 
 
 }
-
