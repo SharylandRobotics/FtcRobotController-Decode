@@ -123,13 +123,13 @@ public class FieldCentricAltBlue extends LinearOpMode {
                     intakeVel = 0;
 
                 } else if (intakeVel == 0){ intakeVel = 1; }
-                robot.setIntakeSpeed(intakeVel*1800);
+                robot.setIntakeSpeed(intakeVel*2400);
             } else if (gamepad1.dpadDownWasPressed()){
                 if (intakeVel != -1){
                     intakeVel = -1;
 
                 } else  { intakeVel = 0; }
-                robot.setIntakeSpeed(intakeVel*1800);
+                robot.setIntakeSpeed(intakeVel*2400);
             }
 
 
@@ -205,9 +205,11 @@ public class FieldCentricAltBlue extends LinearOpMode {
             double angle = robot.turretAngleToTarget(new Pose2d(-70, -56, 0), robot.standardDrive.localizer.getPose());
 
             packet.fieldOverlay().setStroke("#008000");
-            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose().plus(new Twist2d(new Vector2d(0,0),
-                    Math.toRadians(angle
-            ))));
+            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose().plus(new Twist2d(new Vector2d(0,0), Math.atan2(
+                    -56 - robot.standardDrive.localizer.getPose().position.y, -70 - robot.standardDrive.localizer.getPose().position.x
+            ) - robot.standardDrive.localizer.getPose().heading.imag))
+
+            );
 
             // Send once
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
@@ -215,7 +217,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
             if (gamepad2.a){
                 telemetry.addData("Angle", angle);
                 robot.setTurretHandlerAbsolute(
-                       -angle
+                       angle
                 );
             } else if (turretToggle){
                 double[] tData = robot.homeToAprilTagBlue();

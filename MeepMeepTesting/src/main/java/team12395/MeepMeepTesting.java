@@ -11,8 +11,8 @@ import java.time.temporal.Temporal;
 public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(700);
-        Pose2d example = new Pose2d(-20, -40, Math.toRadians(25));
-        /*
+        Pose2d example = new Pose2d(-20, -40, Math.toRadians(-90));
+
 
         double cameraOffset = 5;
         double turretAngle = -45;
@@ -22,21 +22,24 @@ public class MeepMeepTesting {
 
 
         // camera-turret axis offset
-        example = example.plus(new Twist2d(new Vector2d(-cameraOffset,0), Math.toRadians(0)));
+        //example = example.plus(new Twist2d(new Vector2d(-cameraOffset,0), Math.toRadians(0)));
 
 
         // turret rotation
-        example = example.plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)));
+        //example = example.plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)));
 
 
         // turret axis-bot center offset
-        example = example.plus(new Twist2d(new Vector2d(10,0), Math.toRadians(0)));
+        //example = example.plus(new Twist2d(new Vector2d(10,0), Math.toRadians(0)));
 
-         */
 
+
+        /*
         Pose2d target = new Pose2d(-70, 56, Math.toRadians(0));
         double deg = Math.atan2(target.position.y - example.position.y,
                 target.position.x - example.position.x) - example.heading.imag;
+
+         */
 
 
 
@@ -46,8 +49,13 @@ public class MeepMeepTesting {
                 .build();
 
                 myBot.runAction(myBot.getDrive().actionBuilder(example)
+                        /*
                                 .turn(deg)
                                 .splineToConstantHeading(target.position, deg + example.heading.imag)
+
+                         */
+                                .lineToY(0)
+
                         .build());
 
 

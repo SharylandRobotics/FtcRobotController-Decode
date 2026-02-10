@@ -539,7 +539,7 @@ public class RobotHardware {
             if (!fresult.isEmpty()) {
                 // placeholder values
                 double cameraOffset = -77.9953 / 25.4 ;
-                double turretAngle = getCurrentTurretDegreePos();
+                double turretAngle = -getCurrentTurretDegreePos();
                 double turretOffset = 55 / 25.4;
 
                 // LL uses meters & deg, RR uses inches & rads
