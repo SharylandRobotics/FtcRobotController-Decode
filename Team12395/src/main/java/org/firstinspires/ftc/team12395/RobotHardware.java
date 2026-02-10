@@ -520,7 +520,7 @@ public class RobotHardware {
         return new double[]{Double.NaN, Double.NaN};
     }
 
-    public Pose2d fetchLocalizedPose(){
+    public Pose2d fetchLocalizedPose(double headingOffset){
         boolean check  = processLLresult();
         if (check){
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
@@ -543,7 +543,7 @@ public class RobotHardware {
                 double turretOffset = 55 / 25.4;
 
                 // LL uses meters & deg, RR uses inches & rads
-                limelight.updateRobotOrientation(getHeading() + turretAngle);
+                limelight.updateRobotOrientation(getHeading() + turretAngle + headingOffset);
 
                 Pose3D rawMT2Pose3D = result.getBotpose_MT2();
                 Position rawMT2Position = rawMT2Pose3D.getPosition().toUnit(DistanceUnit.INCH);
@@ -572,8 +572,10 @@ public class RobotHardware {
     }
 
     public double turretAngleToTarget(Pose2d target, Pose2d currentPose){
-        return Math.atan2(target.position.y - currentPose.position.y,
-                target.position.x - currentPose.position.x) - currentPose.heading.imag;
+        return Math.toDegrees(
+                Math.atan2(target.position.y - currentPose.position.y,
+                target.position.x - currentPose.position.x) - currentPose.heading.imag
+        );
     }
 
     public boolean processObelisk(){

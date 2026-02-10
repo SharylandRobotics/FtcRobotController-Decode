@@ -37,6 +37,8 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Twist2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team12395.RobotHardware;
@@ -98,9 +100,9 @@ public class FieldCentricAltBlue extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            axial   = -gamepad1.left_stick_y*0.75;
-            lateral =  gamepad1.left_stick_x*0.75;
-            yaw     =  gamepad1.right_stick_x*0.75;
+            axial   = -gamepad1.left_stick_y;
+            lateral =  gamepad1.left_stick_x;
+            yaw     =  gamepad1.right_stick_x;
 
             if (gamepad1.right_trigger > 0.05){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
             robot.driveFieldCentric(axial, lateral, yaw);
@@ -188,22 +190,32 @@ public class FieldCentricAltBlue extends LinearOpMode {
             TelemetryPacket packet = new TelemetryPacket();
 
             // Limelight pose (blue) if valid
-            Pose2d llpose = robot.fetchLocalizedPose();
+            Pose2d llpose = robot.fetchLocalizedPose(-90);
             if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)) {
                 packet.fieldOverlay().setStroke("#3F51B5");
                 Drawing.drawRobot(packet.fieldOverlay(), llpose);
+
+                robot.setLocalizerPosition(llpose);
             }
 
             // Odometry pose (red) always
             packet.fieldOverlay().setStroke("#B53F51");
             Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose());
 
+            double angle = robot.turretAngleToTarget(new Pose2d(-70, -56, 0), robot.standardDrive.localizer.getPose());
+
+            packet.fieldOverlay().setStroke("#008000");
+            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose().plus(new Twist2d(new Vector2d(0,0),
+                    Math.toRadians(angle
+            ))));
+
             // Send once
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
             if (gamepad2.a){
+                telemetry.addData("Angle", angle);
                 robot.setTurretHandlerAbsolute(
-                        robot.turretAngleToTarget(new Pose2d(-70, -56, 0), robot.fetchLocalizedPose())
+                       -angle
                 );
             } else if (turretToggle){
                 double[] tData = robot.homeToAprilTagBlue();

@@ -32,10 +32,14 @@ package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to you
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team12395.RobotHardware;
+import org.firstinspires.ftc.team12395.rr.Drawing;
 
 import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
@@ -49,7 +53,7 @@ public class FieldCentricAltRed extends LinearOpMode {
     public static double velocity = 0;
     public static double angle = 0.1;
 
-    public static double preSetVelocityFar = 1900;
+    public static double preSetVelocityFar = 2000;
     public static double preSetAngleFar = 0.3;
     public static double preSetAngleClose = 0.8;
     public static double preSetVelocityClose = 1400;
@@ -91,9 +95,9 @@ public class FieldCentricAltRed extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
 
-            axial   = -gamepad1.left_stick_y*0.9;
-            lateral =  gamepad1.left_stick_x*0.9;
-            yaw     =  gamepad1.right_stick_x*0.9;
+            axial   = -gamepad1.left_stick_y;
+            lateral =  gamepad1.left_stick_x;
+            yaw     =  gamepad1.right_stick_x;
 
             if (gamepad1.right_trigger > 0.05){ axial *= 0.6; lateral *= 0.6; yaw *= 0.6; }
             robot.driveFieldCentric(axial, lateral, yaw);
@@ -114,13 +118,13 @@ public class FieldCentricAltRed extends LinearOpMode {
                     intakeVel = 0;
 
                 } else if (intakeVel == 0){ intakeVel = 1; }
-                robot.setIntakeSpeed(intakeVel*1600);
+                robot.setIntakeSpeed(intakeVel*1800);
             } else if (gamepad1.dpadDownWasPressed()){
                 if (intakeVel != -1){
                     intakeVel = - 1;
 
                 } else  { intakeVel = 0; }
-                robot.setIntakeSpeed(intakeVel*1600);
+                robot.setIntakeSpeed(intakeVel*1800);
             }
 
             robot.scanColor();
@@ -136,21 +140,6 @@ public class FieldCentricAltRed extends LinearOpMode {
                         robot.spindexerHandler(-480);
                     }
                     robot.setMagManualBulk("000");
-                } else if (false) {
-                    robot.spindexerHandler(120*robot.solvePattern()[0]);
-                } else if (!runTurnClock && false) {
-
-                    if (scannedColor.equals(colorTypes.PURPLE)){
-                        if (robot.mag.charAt(robot.chamber) == '0') {
-                            robot.setChamberManual('P');
-                            runTurnClock = true;
-                        }
-                    } else if (scannedColor.equals(colorTypes.GREEN)){
-                        if (robot.mag.charAt(robot.chamber) == '0') {
-                            robot.setChamberManual('G');
-                            runTurnClock = true;
-                        }
-                    }
                 }
             } else if (gamepad1.dpadLeftWasPressed()){
                 robot.spindexer.setPower(0);
@@ -192,7 +181,33 @@ public class FieldCentricAltRed extends LinearOpMode {
                 }
             }
 
-            if (turretToggle){
+            robot.standardDrive.updatePoseEstimate();
+
+            TelemetryPacket packet = new TelemetryPacket();
+
+            // Limelight pose (blue) if valid
+            Pose2d llpose = robot.fetchLocalizedPose(90);
+            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)) {
+                packet.fieldOverlay().setStroke("#3F51B5");
+                Drawing.drawRobot(packet.fieldOverlay(), llpose);
+
+                robot.setLocalizerPosition(llpose);
+            }
+
+            // Odometry pose (red) always
+            packet.fieldOverlay().setStroke("#B53F51");
+            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose());
+
+            // Send once
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
+            if (gamepad2.a) {
+                double angle =  robot.turretAngleToTarget(new Pose2d(-70, 56, 0), robot.standardDrive.localizer.getPose());
+                telemetry.addData("Angle", angle);
+                robot.setTurretHandlerAbsolute(
+                        angle
+                );
+            } else if (turretToggle){
                 double[] tData = robot.homeToAprilTagRed();
                 double errorDeg = tData[0];
 
