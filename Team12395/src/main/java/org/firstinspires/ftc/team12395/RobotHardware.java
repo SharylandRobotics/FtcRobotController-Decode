@@ -571,11 +571,33 @@ public class RobotHardware {
         return new Pose2d(Double.NaN, Double.NaN, Math.toRadians(0));
     }
 
-    public double turretAngleToTarget(Pose2d target, Pose2d currentPose){
-        return Math.toDegrees(
-                Math.atan2(target.position.y - currentPose.position.y,
-                target.position.x - currentPose.position.x) - currentPose.heading.imag
+    /**
+     *
+     * @param target
+     * @param currentPose
+     * @return radians
+     */
+    public double turretAngleToTarget(Vector2d target, Pose2d currentPose){
+        /*
+        // we only apply turret axis-bot center offset because we want to find targetHeading as the center of the turret.
+        double turretOffset = 55 / 25.4;
+
+        currentPose = currentPose
+                // turret axis-bot center offset
+                .plus(new Twist2d(new Vector2d(-turretOffset,0), Math.toRadians(0)));
+
+         */
+
+        Vector2d targetTanComponent = new Vector2d(
+                target.y - currentPose.position.y,
+                target.x - currentPose.position.x
         );
+
+        Rotation2d targetHeading = Rotation2d.exp(
+                Math.atan2(targetTanComponent.y, targetTanComponent.x)
+        );
+
+        return targetHeading.minus(currentPose.heading);
     }
 
     public boolean processObelisk(){

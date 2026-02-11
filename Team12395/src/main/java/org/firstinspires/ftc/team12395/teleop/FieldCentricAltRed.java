@@ -36,6 +36,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team12395.RobotHardware;
@@ -202,7 +203,7 @@ public class FieldCentricAltRed extends LinearOpMode {
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
             if (gamepad2.a) {
-                double angle =  robot.turretAngleToTarget(new Pose2d(-70, 56, 0), robot.standardDrive.localizer.getPose());
+                double angle =  robot.turretAngleToTarget(new Vector2d(-70, 56), robot.standardDrive.localizer.getPose());
                 telemetry.addData("Angle", angle);
                 robot.setTurretHandlerAbsolute(
                         angle

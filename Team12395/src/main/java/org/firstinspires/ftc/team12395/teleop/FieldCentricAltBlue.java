@@ -37,6 +37,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Twist2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -198,18 +199,15 @@ public class FieldCentricAltBlue extends LinearOpMode {
                 robot.setLocalizerPosition(llpose);
             }
 
+            Pose2d currentPose = robot.standardDrive.localizer.getPose();
+            double angle = robot.turretAngleToTarget(new Vector2d(-70, -56), currentPose);
+
             // Odometry pose (red) always
             packet.fieldOverlay().setStroke("#B53F51");
-            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose());
-
-            double angle = robot.turretAngleToTarget(new Pose2d(-70, -56, 0), robot.standardDrive.localizer.getPose());
+            Drawing.drawRobot(packet.fieldOverlay(), currentPose);
 
             packet.fieldOverlay().setStroke("#008000");
-            Drawing.drawRobot(packet.fieldOverlay(), robot.standardDrive.localizer.getPose().plus(new Twist2d(new Vector2d(0,0), Math.atan2(
-                    -56 - robot.standardDrive.localizer.getPose().position.y, -70 - robot.standardDrive.localizer.getPose().position.x
-            ) - robot.standardDrive.localizer.getPose().heading.imag))
-
-            );
+            Drawing.drawRobot(packet.fieldOverlay(), currentPose.plus(new Twist2d(new Vector2d(0,0), angle)));
 
             // Send once
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
