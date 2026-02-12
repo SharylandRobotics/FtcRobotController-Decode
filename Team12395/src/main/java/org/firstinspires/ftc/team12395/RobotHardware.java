@@ -378,9 +378,9 @@ public class RobotHardware {
 
     public void spindexerHandler(int targetAdd){
         getSpindexerOffset();
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
-
         spindexerTarget += targetAdd;
+
+        spindexer.setTargetPosition( (int) ( (spindexerTarget - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -400,7 +400,7 @@ public class RobotHardware {
     }
 
     public void maintainSpindexerHandler(){
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + spindexerFudge) * spindexerTicksPerDegree) );
+        spindexer.setTargetPosition( (int) ( (spindexerTarget - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -409,9 +409,10 @@ public class RobotHardware {
 
     public void spindexerHandler(int targetAdd,  int vel){
         getSpindexerOffset();
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
-
         spindexerTarget += targetAdd;
+
+        spindexer.setTargetPosition( (int) ( (spindexerTarget - spindexerFudge) * spindexerTicksPerDegree) );
+
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -589,8 +590,8 @@ public class RobotHardware {
          */
 
         Vector2d targetTanComponent = new Vector2d(
-                target.y - currentPose.position.y,
-                target.x - currentPose.position.x
+                target.x - currentPose.position.x,
+                target.y - currentPose.position.y
         );
 
         Rotation2d targetHeading = Rotation2d.exp(

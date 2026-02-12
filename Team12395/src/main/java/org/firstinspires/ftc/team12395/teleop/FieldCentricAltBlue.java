@@ -82,6 +82,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
 
         boolean turretToggle = false;
         boolean runTurnClock = false;
+        boolean turretToggle2 = false;
 
         int turnClock = 0;
 
@@ -149,6 +150,8 @@ public class FieldCentricAltBlue extends LinearOpMode {
             } else if (gamepad1.dpadLeftWasPressed()){
                 robot.spindexer.setVelocity(0);
                 runJammingClock = true;
+            } else {
+                telemetry.addData("BLOCKING", "");
             }
 
             if (runJammingClock && jammingClock < 3){
@@ -212,7 +215,11 @@ public class FieldCentricAltBlue extends LinearOpMode {
             // Send once
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
-            if (gamepad2.a){
+            if (gamepad2.aWasPressed()){
+                turretToggle2 = !turretToggle2;
+            }
+
+            if (turretToggle2){
                 telemetry.addData("Angle", angle);
                 robot.setTurretHandlerAbsolute(
                        angle
