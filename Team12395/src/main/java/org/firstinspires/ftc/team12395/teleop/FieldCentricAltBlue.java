@@ -29,19 +29,17 @@
 
 package org.firstinspires.ftc.team12395.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
-import android.app.Activity;
-import android.graphics.Color;
-import android.view.View;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Twist2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team12395.RobotHardware;
 import org.firstinspires.ftc.team12395.rr.Drawing;
 
@@ -72,8 +70,6 @@ public class FieldCentricAltBlue extends LinearOpMode {
         double axial    ; // forward/back (+ forward)
         double lateral  ; // strafe left/right (+ right)
         double yaw      ; // rotation (+ CCW/left turn)
-
-        double tSkew = 0;
 
         double prevHeading = 0;
         int lastTrackingClock = 10;
@@ -115,6 +111,7 @@ public class FieldCentricAltBlue extends LinearOpMode {
                 velocity = 0;
             } else if (gamepad1.aWasPressed()){
                 velocity = preSetVelocityClose; angle = preSetAngleClose;
+                turretToggle2 = !turretToggle2;
             }
 
             robot.setShooterVelocity(velocity);
@@ -136,22 +133,19 @@ public class FieldCentricAltBlue extends LinearOpMode {
 
 
             // gamepad 2 (g1 cuz solo)--
-            if (!robot.spindexer.isBusy()) {
-                if (gamepad1.leftBumperWasPressed()) { // ccw
-                    robot.spindexerHandler(120);
-                } else if (gamepad1.rightBumperWasPressed()) { // cw
-                    if (velocity == preSetVelocityFar){
-                        robot.spindexerHandler(-480, 500);
-                    } else {
-                        robot.spindexerHandler(-480);
-                    }
-                    robot.setMagManualBulk("000");
+            if (gamepad1.leftBumperWasPressed()) { // ccw
+                robot.spindexerHandler(120);
+            } else if (gamepad1.rightBumperWasPressed()) { // cw
+                if (velocity == preSetVelocityFar){
+                    robot.spindexerHandler(-480, 500);
+                } else {
+                    robot.spindexerHandler(-480);
                 }
-            } else if (gamepad1.dpadLeftWasPressed()){
+                robot.setMagManualBulk("000");
+            }
+            if (gamepad1.dpadLeftWasPressed()){
                 robot.spindexer.setVelocity(0);
                 runJammingClock = true;
-            } else {
-                telemetry.addData("BLOCKING", "");
             }
 
             if (runJammingClock && jammingClock < 3){
@@ -215,10 +209,6 @@ public class FieldCentricAltBlue extends LinearOpMode {
             // Send once
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
-            if (gamepad2.aWasPressed()){
-                turretToggle2 = !turretToggle2;
-            }
-
             if (turretToggle2){
                 telemetry.addData("Angle", angle);
                 robot.setTurretHandlerAbsolute(
@@ -229,7 +219,6 @@ public class FieldCentricAltBlue extends LinearOpMode {
                 double errorDeg = tData[0];
 
                 if (!Double.isNaN(errorDeg) ) {
-                    tSkew = tData[1];
                     double farFudge = 0;
                     if (velocity == preSetVelocityFar){ farFudge = Math.copySign(4, errorDeg); }
 
@@ -248,7 +237,9 @@ public class FieldCentricAltBlue extends LinearOpMode {
                 robot.setTurretHandlerAbsolute(0);
             }
 
-            //robot.maintainSpindexerHandler();
+            if (Math.abs(robot.spindexerFudge % 360) >= 3){
+                robot.maintainSpindexerHandler();
+            }
 
             prevHeading = robot.getHeading();
             robot.turretHandler.runToTarget();
@@ -267,12 +258,13 @@ public class FieldCentricAltBlue extends LinearOpMode {
             telemetry.addData(robot.getMagPicture(), "");
             telemetry.addData("current Pattern: ", robot.pattern);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            telemetry.addData("spindexer position? ", robot.getCurrentSpindexerDegreesPos() % 360);
-            telemetry.addData("spindexerE position? ", (robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree));
+            telemetry.addData("Spindexer Power: ", robot.spindexer.getCurrent(CurrentUnit.AMPS));
+            telemetry.addData("spindexer heading? ", robot.getCurrentSpindexerDegreesPos() % 360);
+            telemetry.addData("spindexerE heading? ", ((robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree) % 360));
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
             telemetry.addData("turret deg: ", robot.getCurrentTurretDegreePos());
             telemetry.addData("target turret deg: ", lastTargetTurretPos);
-            telemetry.addData("apt deg: ", tSkew);
+            telemetry.addData("Odo Turret: ", turretToggle2);
 
 
 

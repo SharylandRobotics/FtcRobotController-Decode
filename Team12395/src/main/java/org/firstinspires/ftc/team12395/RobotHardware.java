@@ -404,7 +404,7 @@ public class RobotHardware {
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(600);
+        spindexer.setVelocity(1000);
     }
 
     public void spindexerHandler(int targetAdd,  int vel){
