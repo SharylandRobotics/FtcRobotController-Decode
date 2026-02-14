@@ -558,9 +558,9 @@ public class RobotHardware {
 
                 Pose2d translatedPose = rawPose
                         // camera-turret axis offset
-                        .plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))
+                        //.plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))
                         // turret rotation
-                        .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)))
+                        .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(-turretAngle)))
                         // turret axis-bot center offset
                         .plus(new Twist2d(new Vector2d(turretOffset,0), Math.toRadians(0)));
 
@@ -572,6 +572,19 @@ public class RobotHardware {
         return new Pose2d(Double.NaN, Double.NaN, Math.toRadians(0));
     }
 
+    public double getHeadingVelocity(){
+        return pinpointDriver.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES) - (turretHandler.getCurrentVelocity()/turretTicksPerDegree);
+    }
+
+    public double getDistanceFromTarget(Vector2d target, Pose2d currentPose){
+        Vector2d vectorDelta = new Vector2d(
+                target.x - currentPose.position.x,
+                target.y - currentPose.position.y
+        );
+
+        return Math.sqrt( (vectorDelta.x * vectorDelta.x) + (vectorDelta.y * vectorDelta.y));
+    }
+
     /**
      *
      * @param target
@@ -579,7 +592,7 @@ public class RobotHardware {
      * @return radians
      */
     public double turretAngleToTarget(Vector2d target, Pose2d currentPose){
-        /*
+
         // we only apply turret axis-bot center offset because we want to find targetHeading as the center of the turret.
         double turretOffset = 55 / 25.4;
 
@@ -587,7 +600,7 @@ public class RobotHardware {
                 // turret axis-bot center offset
                 .plus(new Twist2d(new Vector2d(-turretOffset,0), Math.toRadians(0)));
 
-         */
+
 
         Vector2d targetTanComponent = new Vector2d(
                 target.x - currentPose.position.x,

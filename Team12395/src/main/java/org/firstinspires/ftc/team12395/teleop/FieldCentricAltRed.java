@@ -203,7 +203,7 @@ public class FieldCentricAltRed extends LinearOpMode {
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
             if (gamepad2.a) {
-                double angle =  robot.turretAngleToTarget(new Vector2d(-70, 56), robot.standardDrive.localizer.getPose());
+                double angle =  robot.turretAngleToTarget(new Vector2d(-65, 59), robot.standardDrive.localizer.getPose());
                 telemetry.addData("Angle", angle);
                 robot.setTurretHandlerAbsolute(
                         angle

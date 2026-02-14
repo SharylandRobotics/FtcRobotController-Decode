@@ -20,6 +20,7 @@ public class servoDrivenEncoder {
     int currentPos;
     double output = 0;
     int targetPos;
+    double lastVelocity;
 
 
     public static double P = 0.00035;
@@ -84,8 +85,16 @@ public class servoDrivenEncoder {
         servo2.setPower(0);
     }
 
-    private double getCurrentVelocity(){
-        return encoder.getPositionAndVelocity().velocity;
+    public double getCurrentVelocity(){
+        double velocity;
+        double vel = encoder.getPositionAndVelocity().velocity;
+        if (!Double.isNaN(vel) && Double.isFinite(vel)){
+            velocity = vel;
+            lastVelocity = velocity;
+        } else {
+            velocity = lastVelocity;
+        }
+        return velocity;
     }
 
     public double getServoPower(){

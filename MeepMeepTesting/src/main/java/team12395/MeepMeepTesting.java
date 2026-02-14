@@ -11,7 +11,7 @@ import java.time.temporal.Temporal;
 public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(700);
-        Pose2d example = new Pose2d(-70, 56, Math.toRadians(-90));
+        Pose2d example = new Pose2d(-65, 59, Math.toRadians(-90));
 
 
         double cameraOffset = 5;
