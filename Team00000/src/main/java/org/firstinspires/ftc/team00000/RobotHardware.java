@@ -84,10 +84,6 @@ public class RobotHardware {
     private double backLeftSpeed;
     private double frontRightSpeed;
     private double backRightSpeed;
-    private int frontLeftTarget;
-    private int backLeftTarget;
-    private int frontRightTarget;
-    private int backRightTarget;
 
     // Camera pose in robot frame (+X forward, +Y left, +Z up). Update if camera mount changes.
     private final Position cameraPosition = new Position(DistanceUnit.INCH,
@@ -121,7 +117,7 @@ public class RobotHardware {
     public static final double HEADING_THRESHOLD = 1.0;
     public static final double TOLERANCE_TICKS = 10.0;
 
-    // Shooter target (for telemetry).
+    // Shooter target (for telemetry). We treat the shooter as a coupled system and track one target.
     private double shooterTargetTicksPerSec = 0.0;
 
     // Camera intrinsics (pixels). Calibrate per-camera/resolution.
@@ -177,9 +173,8 @@ public class RobotHardware {
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-
-        topShooter.setDirection(DcMotor.Direction.REVERSE);
-        bottomShooter.setDirection(DcMotor.Direction.REVERSE);
+        topShooter.setDirection(DcMotor.Direction.FORWARD);
+        bottomShooter.setDirection(DcMotor.Direction.FORWARD);
 
         leftStopper.setDirection(DcMotorSimple.Direction.FORWARD);
         rightStopper.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -192,7 +187,6 @@ public class RobotHardware {
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         topShooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         bottomShooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -200,7 +194,6 @@ public class RobotHardware {
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         topShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         bottomShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
@@ -208,7 +201,6 @@ public class RobotHardware {
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         topShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         bottomShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -231,10 +223,10 @@ public class RobotHardware {
             int axialMoveCounts = (int)(axialDistance * COUNTS_PER_INCH);
             int lateralMoveCounts = (int)(lateralDistance * COUNTS_PER_INCH);
 
-            frontLeftTarget = frontLeftDrive.getCurrentPosition() + axialMoveCounts + lateralMoveCounts;
-            backLeftTarget = backLeftDrive.getCurrentPosition() + axialMoveCounts - lateralMoveCounts;
-            frontRightTarget = frontRightDrive.getCurrentPosition() + axialMoveCounts - lateralMoveCounts;
-            backRightTarget = backRightDrive.getCurrentPosition() + axialMoveCounts + lateralMoveCounts;
+            int frontLeftTarget = frontLeftDrive.getCurrentPosition() + axialMoveCounts + lateralMoveCounts;
+            int backLeftTarget = backLeftDrive.getCurrentPosition() + axialMoveCounts - lateralMoveCounts;
+            int frontRightTarget = frontRightDrive.getCurrentPosition() + axialMoveCounts - lateralMoveCounts;
+            int backRightTarget = backRightDrive.getCurrentPosition() + axialMoveCounts + lateralMoveCounts;
 
             frontLeftDrive.setTargetPosition(frontLeftTarget);
             backLeftDrive.setTargetPosition(backLeftTarget);
@@ -282,7 +274,7 @@ public class RobotHardware {
 
                 myOpMode.telemetry.addData("Motion", "Drive Straight");
                 myOpMode.telemetry.addData("Target Pos FL:BL:FR:BR", "%7d:%7d:%7d:%7d",
-                        frontLeftTarget,  backLeftTarget, frontRightTarget, backRightTarget);
+                        frontLeftTarget, backLeftTarget, frontRightTarget, backRightTarget);
                 myOpMode.telemetry.addData("Actual Pos FL:BL:FR:BR","%7d:%7d:%7d:%7d",
                         frontLeftDrive.getCurrentPosition(), backLeftDrive.getCurrentPosition(),
                         frontRightDrive.getCurrentPosition(), backRightDrive.getCurrentPosition());
@@ -429,15 +421,16 @@ public class RobotHardware {
 
     public void setShooterVelocityPercent(double power, double maxRpm) {
         power = Range.clip(power, 0.0, 1.0);
-        final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         final double targetRpm = power * maxRpm;
+        final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         shooterTargetTicksPerSec = targetRpm * ticksPerRev / 60.0;
 
-        topShooter.setVelocity(shooterTargetTicksPerSec * 0.95);
+        // Command both shooter motors to the same target velocity.
+        topShooter.setVelocity(shooterTargetTicksPerSec);
         bottomShooter.setVelocity(shooterTargetTicksPerSec);
     }
 
-    public void configureShooterVelocityPidfForMaxRpm(double maxRpm, double kP, double kI, double kD) {
+    public void configureShooterVelocityPIDFForMaxRpm(double maxRpm, double kP, double kI, double kD) {
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         final double maxTicksPerSec = (maxRpm * ticksPerRev) / 60.0;
 
@@ -448,21 +441,52 @@ public class RobotHardware {
         bottomShooter.setVelocityPIDFCoefficients(kP, kI, kD, kF);
     }
 
-    public double rpmToTicksPerSec(double rpm) {
+    public double getShooterMaxTicksPerSec() {
+        // Based on configured motor model.
+        final double maxRpm = topShooter.getMotorType().getMaxRPM();
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
-        return (rpm * ticksPerRev) / 60.0;
+        return (maxRpm * ticksPerRev) / 60.0;
     }
-    public double getShooterTargetTicksPerSec() { return shooterTargetTicksPerSec; }
-    public double getTopShooterTicksPerSec() { return Math.abs(topShooter.getVelocity()); }
-    public double getBottomShooterTicksPerSec() { return Math.abs(bottomShooter.getVelocity()); }
 
-    public double getTopShooterRpm() {
+    public double getShooterTargetTicksPerSec() { return shooterTargetTicksPerSec; }
+
+    // Signed velocities (ticks/sec). Use abs() where you want speed magnitude.
+    public double getShooterVelocityPerSecond() { return topShooter.getVelocity(); }
+
+    public double getShooterVelocityRpm() {
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
-        return Math.abs(topShooter.getVelocity() * 60.0 / ticksPerRev);
+        return topShooter.getVelocity() * 60.0 / ticksPerRev;
     }
-    public double getBottomShooterRpm() {
-        final double ticksPerRev = bottomShooter.getMotorType().getTicksPerRev();
-        return Math.abs(bottomShooter.getVelocity() * 60.0 / ticksPerRev);
+
+    // Shooter encoder/model diagnostics
+    public int getShooterEncoderPosition() {
+        return topShooter.getCurrentPosition();
+    }
+
+    public double getShooterEncoderTicksPerRevolution() {
+        return topShooter.getMotorType().getTicksPerRev();
+    }
+
+    public double getShooterMaxRpm() {
+        return topShooter.getMotorType().getMaxRPM();
+    }
+
+    public double getBatteryVoltage () {
+        double min = Double.POSITIVE_INFINITY;
+        for (VoltageSensor vs : myOpMode.hardwareMap.voltageSensor) {
+            double v = vs.getVoltage();
+            if (v > 0) min = Math.min(min, v);
+        }
+        return (min == Double.POSITIVE_INFINITY) ? Double.NaN : min;
+    }
+
+    public boolean isShooterAtSpeedPercent(double percentTolerance) {
+        double targetTicksPerSecond = getShooterTargetTicksPerSec();
+        if (Math.abs(targetTicksPerSecond) <= 1.0) return false;
+
+        double measuredTicksPerSecond = Math.abs(getShooterVelocityPerSecond());
+        double toleranceTicksPerSecond = Math.abs(targetTicksPerSecond) * percentTolerance;
+        return Math.abs(measuredTicksPerSecond - Math.abs(targetTicksPerSecond)) <= toleranceTicksPerSecond;
     }
 
     public void setStopperPower(double power) {
