@@ -194,6 +194,9 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        outtakeDrive.setVelocityPIDFCoefficients(80, 3, 8,0);
+        outtakeDrive2.setVelocityPIDFCoefficients(80, 3, 8,0);
+
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
         initAprilTag();
@@ -354,6 +357,14 @@ public class RobotHardware {
         if (chosen != null) {
             goalTagId = chosen.id;
             if (chosen.ftcPose != null) {
+
+                // Tag-specific offset: align to the goal face based on asymmetric tag placement.
+                if (goalTagId == 20) {
+                    tagYawDeg = 23;
+                }
+                if (goalTagId == 24) {
+                    tagYawDeg = -23;
+                }
                 goalRangeIn = chosen.ftcPose.range;
                 goalBearingDeg = chosen.ftcPose.bearing;
                 goalElevationDeg = chosen.ftcPose.elevation;
@@ -384,12 +395,12 @@ public class RobotHardware {
     public double getGoalRangeIn() { return goalRangeIn; }
 
     private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
-            new double[]{37, 1070},
-            new double[]{50, 1140},
+            new double[]{37, 1030},
+            new double[]{50, 1100},
             new double[]{62, 1220},
-            new double[]{87, 1290},
-            new double[]{91, 1190},
-            new double[]{98, 1340}
+            new double[]{87, 1270},
+            new double[]{91, 1170},
+            new double[]{98, 1320}
     ));
     private final double[] slopeList = initializeSlopeList();
 
@@ -434,6 +445,39 @@ public class RobotHardware {
         return Math.sqrt(Math.pow(getGoalRangeIn(), 2) - Math.pow(16,2));
     }
 
+    // One closed-loop step toward the goal tag:
+    // range -> axial, tag yaw -> lateral, bearing -> robot yaw.
+    public boolean autoDriveToGoalStep() {
+        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
+            return false;
+        }
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+        double headingError =  goalBearingDeg;
+        double yawError = tagYawDeg - (-26);
+
+        // Sign conventions:
+        //  +axial   -> drive forward
+        //  +lateral -> strafe left
+        //  +yaw     -> CCW rotation
+        double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
+        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
+
+        driveRobotCentric(axial, lateral, yaw);
+        return true;
+    }
+
+    public double autoBearingToGoalCorrect(){
+        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
+            return Double.NaN;
+        }
+
+        double headingError =  goalBearingDeg;
+
+        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
+
+        return yaw;
+    }
 
     public double getGoalBearingDeg() { return goalBearingDeg; }
 

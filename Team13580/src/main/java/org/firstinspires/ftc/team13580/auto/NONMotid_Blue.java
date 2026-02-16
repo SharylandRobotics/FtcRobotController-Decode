@@ -40,7 +40,7 @@ import org.firstinspires.ftc.team13580.roadrunner.MecanumDrive;
 
 import java.lang.Math;
 
-@Autonomous(name = "LM3 Blue", group = "auto")
+@Autonomous(name = "Blue_Regionals", group = "auto")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
 public class NONMotid_Blue extends LinearOpMode {

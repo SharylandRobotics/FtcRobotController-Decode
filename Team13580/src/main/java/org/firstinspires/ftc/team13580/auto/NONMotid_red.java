@@ -40,7 +40,7 @@ import org.firstinspires.ftc.team13580.roadrunner.MecanumDrive;
 
 import java.lang.Math;
 
-@Autonomous(name = "Motid red", group = "auto")
+@Autonomous(name = "Red_regionals", group = "auto")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
 public class NONMotid_red extends LinearOpMode {
@@ -135,7 +135,7 @@ public class NONMotid_red extends LinearOpMode {
     @Override
     public void runOpMode() {
         MecanumDrive drive = new MecanumDrive(hardwareMap,
-                new Pose2d(-50,50, Math.toRadians(126)));
+                new Pose2d(-49,51, Math.toRadians(126)));
         // Initialize all motors and IMU before start
         robot.init();
 

@@ -4,8 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name = "Field Centric Camara", group = "opMode")
-public class FieldCentricCamara extends LinearOpMode {
+@TeleOp(name = "Field Centric Solo", group = "opMode")
+public class FieldCentricSolo extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -21,6 +21,7 @@ public class FieldCentricCamara extends LinearOpMode {
 
         // Toggle variables
         boolean outtakeManual = false;
+        double yawCorrection = 0;
 
         robot.init();
 
@@ -49,13 +50,27 @@ public class FieldCentricCamara extends LinearOpMode {
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            // Auto-drive using camera
-            boolean didAuto = false;
 
-            // Drive robot if not auto-driving
-            if (!didAuto) {
+            boolean bearingAssist = gamepad1.right_bumper;
+
+            if (bearingAssist) {
+                double correction = robot.autoBearingToGoalCorrect();
+                telemetry.addData("Correcting by: ", correction);
+                if (!Double.isNaN(correction)){
+                    yawCorrection = correction;
+                    robot.driveFieldCentric(axial, lateral, yawCorrection);
+                    telemetry.addData("CORRECTING","");
+                } else {
+                    telemetry.addData("INVALID","");
+                    robot.driveFieldCentric(axial, lateral, yaw);
+                }
+            } else {
                 robot.driveFieldCentric(axial, lateral, yaw);
             }
+
+            // Drive robot if not auto-driving
+
+
 
             // Intake control
             if (gamepad1.right_trigger == 1) {
@@ -79,39 +94,37 @@ public class FieldCentricCamara extends LinearOpMode {
                 if (!Double.isNaN(robot.getGoalRangeIn())) {
                     outtake = robot.getCalculatedVelocity(robot.getFloorDistance());  // manual toggle speed
                 }
-            } else if (gamepad2.aWasPressed()) {
-                outtake = 1500;
+            } else {
+                outtake = gamepad1.left_trigger * 2000;
             }
             robot.setOuttakeVelocity((int) outtake);
 
             // Kicker control
 
-            if (gamepad1.a ) {
-                robot.setKickerPower(kickerBackPos);
-            } else if (gamepad2.a){
-                robot.setKickerPower(kickerBackPos);
-            } else {
-                robot.setKickerPower(kickerForwardPos);
-            }
-
-            if (gamepad1.b ) {
-                robot.setKickerLeftPower(kickerLeftBackPos);
-            } else if (gamepad2.b){
+            if (gamepad1.b) {
                 robot.setKickerLeftPower(kickerLeftBackPos);
             } else {
                 robot.setKickerLeftPower(kickerLeftForwardPos);
             }
 
-
-            if(gamepad2.y){
-                robot.setKickerLeftPower(kickerLeftBackPos);
+            if (gamepad2.a) {
                 robot.setKickerPower(kickerBackPos);
-            } else if (gamepad1.y) {
+            } else {
+                robot.setKickerPower(kickerForwardPos);
+            }
+
+            if(gamepad1.y){
                 robot.setKickerLeftPower(kickerLeftBackPos);
                 robot.setKickerPower(kickerBackPos);
             } else {
                 robot.setKickerLeftPower(kickerLeftForwardPos);
                 robot.setKickerPower(kickerForwardPos);
+            }
+
+
+
+            if (gamepad2.aWasPressed()){
+                robot.setOuttakeVelocity(1700);
             }
 
             // Telemetry
@@ -119,6 +132,7 @@ public class FieldCentricCamara extends LinearOpMode {
             telemetry.addData("Outtake Toggle", outtakeManual ? "ON (1300)" : "OFF");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+            telemetry.addData("Camera Values: ", "dist=%.2f  bearing=%.2f  yaw=%.2f", robot.getFloorDistance(), robot.getGoalBearingDeg(), robot.getTagYawDeg());
             telemetry.update();
 
             sleep(50);
