@@ -34,16 +34,13 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Twist2d;
-import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.*;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team12395.RobotHardware;
 import org.firstinspires.ftc.team12395.rr.Drawing;
 
-import static org.firstinspires.ftc.team12395.RobotHardware.*;
+import java.lang.Math;
 
 @TeleOp(name="Field Centric Re (Blue Solo)", group="TeleOp")
 @Config
@@ -52,14 +49,14 @@ public class FieldCentricRe extends LinearOpMode {
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double velocity = 0;
-    public static double angle = 0.1;
+    public static double velocity = 2400;
+    public static double hoodAngle = 0.1;
 
-    public static double preSetVelocityFar = 2000;
-    public static double preSetAngleFar = 0.2;
+    public static double slowFireRateVelocity = 2000;
+    public static Vector2d baseTargetPoint = new Vector2d(-65, -59);
     public static double preSetAngleClose = 0.8;
     public static double preSetVelocityClose = 1400;
-
+    public static boolean shiftGoal = false;
     public static double intakeVel = 0;
 
 
@@ -74,9 +71,15 @@ public class FieldCentricRe extends LinearOpMode {
         int lastTrackingClock = 10;
         double lastTargetTurretPos = 0;
         double headingVelocity;
+        double distanceToTarget;
 
         boolean intakeToggle = false;
         boolean turretToggle = false;
+        boolean fireControlToggle = false;
+
+        double effectiveDistanceToTarget;
+        Vector2d effectiveTargetPoint;
+        PoseVelocity2d robotVelocityVector;
 
         robot.init();
 
@@ -97,14 +100,70 @@ public class FieldCentricRe extends LinearOpMode {
 
             robot.driveFieldCentric(axial, lateral, yaw);
 
-            if (gamepad1.bWasPressed()){
-                velocity = 0;
-            } else if (gamepad1.aWasPressed()){
-                velocity = preSetVelocityClose; angle = preSetAngleClose;
+
+            headingVelocity = robot.getHeadingVelocity();
+            telemetry.addData("Heading Velocity: ",  headingVelocity);
+            TelemetryPacket packet = new TelemetryPacket();
+
+            Pose2d llpose = robot.fetchLocalizedPose(-90);
+
+            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)) {
+                packet.fieldOverlay().setStroke("#3F51B5");
+                Drawing.drawRobot(packet.fieldOverlay(), llpose);
+
+                if (Math.abs(headingVelocity) < 80) {
+                    robot.setLocalizerPosition(llpose);
+                }
             }
 
+            robotVelocityVector = robot.standardDrive.updatePoseEstimate();
+            Pose2d currentPose = robot.standardDrive.localizer.getPose();
+            distanceToTarget = robot.getDistanceFromTarget(baseTargetPoint, currentPose);
+
+
+            if (gamepad1.xWasPressed()){
+                fireControlToggle = !fireControlToggle;
+            } else if (gamepad1.bWasPressed()){
+                velocity = 0;
+                fireControlToggle = false;
+            } else if (gamepad1.aWasPressed()){
+                velocity = preSetVelocityClose; hoodAngle = preSetAngleClose;
+                fireControlToggle = false;
+            }
+
+            if (fireControlToggle){
+                velocity  = robot.getRegressionValue(distanceToTarget, 1);
+                hoodAngle = robot.getRegressionValue(distanceToTarget, 2);
+            }
+
+
+            // THIS REMAINS IN INCHES
+            Vector2d worldVelocity = Rotation2d.fromDouble(currentPose.heading.log()).times(robotVelocityVector.linearVel);
+            if (shiftGoal) {
+                // drift calculated with ideal values (velocity is not measured)
+                Vector2d drift = worldVelocity.times(robot.timeToTarget(velocity, hoodAngle,  distanceToTarget));
+                // shift goal
+                effectiveTargetPoint = baseTargetPoint.minus(drift);
+            } else {
+                effectiveTargetPoint = baseTargetPoint;
+            }
+            // -----
+
+            effectiveDistanceToTarget = robot.getDistanceFromTarget(effectiveTargetPoint, currentPose);
+            double angle = -robot.turretAngleToTarget(effectiveTargetPoint, currentPose);
+            telemetry.addData("Angle: ", Math.toDegrees(angle));
+
+            if (turretToggle){
+                robot.setTurretHandlerAbsolute(Math.toDegrees(angle));
+            } else {
+                robot.setTurretHandlerAbsolute(0);
+            }
+            robot.turretHandler.runToTarget();
+
+
             robot.setShooterVelocity(velocity);
-            robot.setHoodAngle(angle);
+            robot.setHoodAngle(hoodAngle);
+
 
             if (gamepad1.yWasPressed()){
                 intakeToggle = !intakeToggle;
@@ -125,13 +184,12 @@ public class FieldCentricRe extends LinearOpMode {
             }
 
 
-
             // gamepad 2 (g1 cuz solo)--
             if (gamepad1.leftBumperWasPressed()) { // ccw
                 robot.spindexerHandler(120);
             } else if (gamepad1.rightBumperWasPressed()) { // cw
-                if (velocity == preSetVelocityFar){
-                    robot.spindexerHandler(-480, 1000);
+                if (velocity >= slowFireRateVelocity){
+                    robot.spindexerHandler(-480, 800);
                 } else {
                     robot.spindexerHandler(-480);
                 }
@@ -146,52 +204,27 @@ public class FieldCentricRe extends LinearOpMode {
                 turretToggle = !turretToggle;
             }
 
-            robot.standardDrive.updatePoseEstimate();
-            headingVelocity = robot.getHeadingVelocity();
+            // effective target
+            packet.fieldOverlay().setStroke("#F2F527");
+            Drawing.drawRobot(packet.fieldOverlay(), new Pose2d(effectiveTargetPoint, Math.atan2(worldVelocity.y, worldVelocity.x)));
 
-            telemetry.addData("Heading Velocity: ",  headingVelocity);
+            // base target
+            packet.fieldOverlay().setStroke("#F59527");
+            Drawing.drawRobot(packet.fieldOverlay(), new Pose2d(baseTargetPoint, 0));
 
-            TelemetryPacket packet = new TelemetryPacket();
-
-            // Limelight pose (blue) if valid
-            Pose2d llpose = robot.fetchLocalizedPose(-90);
-
-            if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)) {
-                packet.fieldOverlay().setStroke("#3F51B5");
-                Drawing.drawRobot(packet.fieldOverlay(), llpose);
-
-                if (!(headingVelocity > 80)) {
-                    robot.setLocalizerPosition(llpose);
-                }
-            }
-
-            Pose2d currentPose = robot.standardDrive.localizer.getPose();
-            double angle = robot.turretAngleToTarget(new Vector2d(-65, -59), currentPose);
-            telemetry.addData("Angle", Math.toDegrees(-angle));
-
-            // Odometry pose (red) always
+            // Odometry pose (red)
             packet.fieldOverlay().setStroke("#B53F51");
             Drawing.drawRobot(packet.fieldOverlay(), currentPose);
-
+            // Turret angle (green)
             packet.fieldOverlay().setStroke("#008000");
-            Drawing.drawRobot(packet.fieldOverlay(), currentPose.plus(new Twist2d(new Vector2d(0,0), angle)));
+            Drawing.drawRobot(packet.fieldOverlay(), currentPose.plus(new Twist2d(new Vector2d(0,0), -angle)));
 
-            // Send once
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
-            if (turretToggle){
-                robot.setTurretHandlerAbsolute(
-                        Math.toDegrees(-angle)
-                );
-            } else {
-                robot.setTurretHandlerAbsolute(0);
-            }
 
             if (Math.abs(robot.spindexerFudge % 360) >= 3){
                 robot.maintainSpindexerHandler();
             }
-
-            robot.turretHandler.runToTarget();
 
             if (gamepad2.a){
                 robot.pattern = "GPP";
@@ -212,14 +245,12 @@ public class FieldCentricRe extends LinearOpMode {
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
             telemetry.addData("turret deg: ", robot.getCurrentTurretDegreePos());
             telemetry.addData("target turret deg: ", lastTargetTurretPos);
-            telemetry.addData("Distance to Target: ", robot.getDistanceFromTarget(new Vector2d(-65, -59), currentPose));
+            telemetry.addData("Distance to Target: ", distanceToTarget);
+            telemetry.addData("Effective Distance to Target: ", effectiveDistanceToTarget);
 
 
 
             telemetry.update();
-
-            // Pace loop-helps with readability and prevents spamming the DS
-            sleep(50); // ~20 Hz;
 
             if (lastTrackingClock <= 2000){
                 lastTrackingClock++;

@@ -72,7 +72,6 @@ public class RobotHardware {
     public GoBildaPinpointDriver pinpointDriver;
 
     public RevColorSensorV3 colorSensor0, colorSensor1, colorSensor2;
-    public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
     public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
     public String pattern = "PPG";// a pattern is better than no pattern
@@ -829,34 +828,65 @@ public class RobotHardware {
         return "     ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt( (chamber+1) % 3)+")    ("+mag.charAt( (chamber+2) % 3)+")  ";
     }
 
-    private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
-            new double[]{0, 0},
-            new double[]{1, 1},
-            new double[]{2, 2}
+    private final ArrayList<double[]> dataPoints = new ArrayList<>(Arrays.asList(
+            // 0 : distance, 1 : rpm, 2 : angle
+            new double[]{42.2, 1400, 0.9 },
+            new double[]{63.2, 1500, 0.75},
+            new double[]{82  , 1600, 0.6 },
+            new double[]{95.5, 1700, 0.5 },
+            new double[]{130 , 1900, 0.4 }
     ));
+    private final double[] velocitySlopeList = initializeSlopeList(1);
+    private final double[] angleSlopeList = initializeSlopeList(2);
 
-    public double getCalculatedVelocity(double distance){
-        int maxIndex = velDataPoints.size()-1;
-        double[] slopeList = new double[maxIndex];
-        for (int i=0; i<maxIndex; i++){
-            slopeList[i] = (
-                    (velDataPoints.get(i+1)[1] - velDataPoints.get(i)[1]) /
-                    (velDataPoints.get(i+1)[0] - velDataPoints.get(i)[0])
+    private double[] initializeSlopeList(int valueIndex){
+        int maxIndex = dataPoints.size();
+        double[] list = new double[maxIndex];
+        for (int i=0; i<maxIndex-1; i++){
+            list[i] = (
+                    (dataPoints.get(i+1)[valueIndex] - dataPoints.get(i)[valueIndex]) /
+                            (dataPoints.get(i+1)[0] - dataPoints.get(i)[0])
             );
         }
-        double velZeroIntercept = velDataPoints.get(0)[1] - slopeList[0]*velDataPoints.get(0)[0];
 
-        for (int i=0; i<slopeList.length; i++){
+        return list;
+    }
+
+    public double getRegressionValue(double distance, int valueIndex){
+        double returnVal;
+        double[] slopeList;
+        if (valueIndex == 1){
+            returnVal = 500;
+            slopeList = velocitySlopeList;
+        } else {
+            returnVal = 0.6;
+            slopeList = angleSlopeList;
+        }
+
+        double velZeroIntercept = dataPoints.get(0)[valueIndex] - slopeList[0]* dataPoints.get(0)[0];
+
+        for (int i = 0; i< slopeList.length; i++){
             if (i == 0){
-                if (distance >= 0 && distance <= velDataPoints.get(0)[0]){
-                    return velZeroIntercept + distance*slopeList[0];
+                if (distance >= 0 && distance <= dataPoints.get(0)[0]){
+
+                    myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
+                    myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                    returnVal = velZeroIntercept + distance* slopeList[0];
                 }
-            } else if (distance > velDataPoints.get(i)[0] && distance <= velDataPoints.get(i+1)[0]){
-                return velDataPoints.get(i)[1] + distance*slopeList[i];
+            } else if ((i == slopeList.length-1 && distance >= dataPoints.get(i)[0]) ||
+                    distance > dataPoints.get(i)[0] && distance <= dataPoints.get(i+1)[0]){
+
+                myOpMode.telemetry.addData("Bottom Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
+                myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                returnVal = dataPoints.get(i)[valueIndex] + (distance- dataPoints.get(i)[0])* slopeList[i];
             }
         }
 
-        return 500;
+        return returnVal;
+    }
+
+    public double timeToTarget(double velocity, double angle, double distance){
+        return distance / (velocity * Math.cos(Math.toRadians(angle)));
     }
 
     public class RoadRunnerActions {
