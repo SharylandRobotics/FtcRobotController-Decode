@@ -19,8 +19,8 @@ public class TopRed extends LinearOpMode {
 
 
         // Target turret velocities
-        double FIRST_VELOCITY = 1000;
-        double SECOND_VELOCITY = 1000;
+        double FIRST_VELOCITY = 1500;
+        double SECOND_VELOCITY = 1600;
 
 
         // Initialize all motors and IMU before start
@@ -41,17 +41,17 @@ public class TopRed extends LinearOpMode {
 
 
         // === Autonomous routine ===
-        robot.setHoodPositions(1);
+        robot.setHoodPositions(.8);
         robot.turretVelocity(FIRST_VELOCITY);
 
 
-        robot.driveStraight(1, -50, 0);
+        robot.driveStraight(.7, -50, 0);
         robot.holdHeading(robot.YAW_SPEED, 0, 1);
         robot.turnToHeading(1, 5);
-
+        robot.holdHeading(robot.YAW_SPEED, 5, 1);
 
         // Wait until turret reaches speed while holding heading
-        while (opModeIsActive() && robot.getVelocity() < FIRST_VELOCITY-20) {
+        while (robot.getVelocity() < FIRST_VELOCITY-20) {
             robot.holdHeading(1, 5, 0.1);
         }
 
@@ -70,8 +70,8 @@ public class TopRed extends LinearOpMode {
         robot.holdHeading(0.5, -40, 1);
         robot.straif(0.5, 8, -40);
         robot.intakePower(-1);
-        robot.driveStraight(0.5, 18, -40);
-        robot.driveStraight(0.5, 13, -40);
+        robot.driveStraight(0.3, 18, -40);
+        robot.driveStraight(0.3, 13, -40);
 
 
         // Extra heading hold and turret prep
@@ -83,14 +83,14 @@ public class TopRed extends LinearOpMode {
 
 
         // Shooting movement
-        robot.driveStraight(1, -31, -40);
+        robot.driveStraight(.7, -31, -40);
         robot.holdHeading(robot.YAW_SPEED, -40, 1);
         robot.turnToHeading(1, 3);
         robot.holdHeading(robot.YAW_SPEED, 3, 1);
 
 
         // Wait until turret reaches shooting speed
-        while (opModeIsActive() && robot.getVelocity() < SECOND_VELOCITY-20) {
+        while (robot.getVelocity() < SECOND_VELOCITY-20) {
             robot.holdHeading(1, 3, 0.1);
         }
 

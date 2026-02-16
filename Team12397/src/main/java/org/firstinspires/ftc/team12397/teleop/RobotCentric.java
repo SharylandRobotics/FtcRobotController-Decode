@@ -44,7 +44,7 @@ public class RobotCentric extends LinearOpMode {
         boolean intakeOn = false;
 
 
-        double VELOCITY = 1000;
+        double VELOCITY = 1500;
 
 
         // --- INIT PHASE ---
@@ -79,6 +79,7 @@ public class RobotCentric extends LinearOpMode {
                 case HoldWait:
                     if (robot.getVelocity() >= VELOCITY-20) {
                         robot.intakePower(-1);
+                        turretTimer.reset();
                         turretState = TurretState.Fire;
                     }
                     break;
@@ -86,7 +87,7 @@ public class RobotCentric extends LinearOpMode {
 
                 case Fire:
                     // Fire until manually stopped or velocity drops
-                    if (isTimeUp(5.0)) {
+                    if (isTimeUp(4.0)) {
                         turretState = TurretState.End;
                     }
                     break;
@@ -128,7 +129,7 @@ public class RobotCentric extends LinearOpMode {
 
                 // Hood toggle
                 if (gamepad1.b) servoOn = !servoOn;
-                robot.setHoodPositions(servoOn ? 0.5 : 1);
+                robot.setHoodPositions(servoOn ? 1 : .8);
 
 
                 // Manual turret

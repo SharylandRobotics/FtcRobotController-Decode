@@ -77,7 +77,8 @@ public class TwoPlayerRC extends LinearOpMode {
         boolean intakeOn = false;
         boolean lastIntakeState = false;
 
-        double VELOCITY = 1000;
+
+        double VELOCITY = 1500;
         // --- INIT PHASE ---
         // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
         // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
@@ -117,6 +118,7 @@ public class TwoPlayerRC extends LinearOpMode {
                 case HoldWait:
                     if (robot.getVelocity() >= VELOCITY-20) {
                         robot.intakePower(-1);
+                        turretTimer.reset();
                         turretState = TwoPlayerRC.TurretState.Fire;
                     }
                     break;
@@ -124,7 +126,7 @@ public class TwoPlayerRC extends LinearOpMode {
 
                 case Fire:
                     // Fire until manually stopped or velocity drops
-                    if (isTimeUp(5.0)) {
+                    if (isTimeUp(4.0)) {
                         turretState = TwoPlayerRC.TurretState.End;
                     }
                     break;
@@ -175,14 +177,14 @@ public class TwoPlayerRC extends LinearOpMode {
 
                 }
                 if(servoOn){
-                    robot.setHoodPositions(.4);
+                    robot.setHoodPositions(1);
                 }
                 else {
-                    robot.setHoodPositions(1);
+                    robot.setHoodPositions(.8);
                 }
                 // manual turret shooter #note same as slow mode camera
                 if(gamepad1.left_bumper){
-                    robot.turretVelocity(150);
+                    robot.turretVelocity(VELOCITY);
                 }
                 else{
                     robot.turretVelocity(0);
@@ -194,7 +196,7 @@ public class TwoPlayerRC extends LinearOpMode {
 
             // Student Note: Hold LB for precision (slow) mode.
             boolean slow = gamepad1.left_bumper;
-            double scale = slow ? 0.4 : 1.0;
+            double scale = slow ? 1 : .8;
 
             axial = -gamepad2.left_stick_y * scale;
             lateral = gamepad2.left_stick_x * scale;
@@ -225,6 +227,7 @@ public class TwoPlayerRC extends LinearOpMode {
                 robot.driveRobotCentric(axial, lateral, yaw);
             }
             // ############### Controls ################
+            telemetry.addData("Turret Speed", robot.getVelocity());
             if (statusMsg.equals("KILLED") && turretTimer.milliseconds() < 3000) {
                 telemetry.addLine("-----------------------------");
                 telemetry.addLine("      SYSTEM KILLED          ");

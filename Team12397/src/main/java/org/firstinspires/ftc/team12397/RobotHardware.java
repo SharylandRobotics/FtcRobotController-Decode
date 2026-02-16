@@ -151,7 +151,7 @@ public class RobotHardware {
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
-        //servo
+        //servos
         hood = myOpMode.hardwareMap.get(Servo.class, "hood_servo");
         //hood.setPosition(MID_SERVO);
         // second servo
