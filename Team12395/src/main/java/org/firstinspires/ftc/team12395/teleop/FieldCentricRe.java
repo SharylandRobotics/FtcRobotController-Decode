@@ -58,7 +58,8 @@ public class FieldCentricRe extends LinearOpMode {
     public static double preSetVelocityClose = 1400;
     public static boolean shiftGoal = false;
     public static double intakeVel = 0;
-
+    public static double flyWheelConstant = 1;
+    public static double servoAngleSlope = 1;
 
     @Override
     public void runOpMode() {
@@ -134,6 +135,8 @@ public class FieldCentricRe extends LinearOpMode {
             if (fireControlToggle){
                 velocity  = robot.getRegressionValue(distanceToTarget, 1);
                 hoodAngle = robot.getRegressionValue(distanceToTarget, 2);
+                telemetry.addData("Calculated Velocity: ", velocity);
+                telemetry.addData("Hood Angle: ", hoodAngle);
             }
 
 
@@ -141,7 +144,7 @@ public class FieldCentricRe extends LinearOpMode {
             Vector2d worldVelocity = Rotation2d.fromDouble(currentPose.heading.log()).times(robotVelocityVector.linearVel);
             if (shiftGoal) {
                 // drift calculated with ideal values (velocity is not measured)
-                Vector2d drift = worldVelocity.times(robot.timeToTarget(velocity, hoodAngle,  distanceToTarget));
+                Vector2d drift = worldVelocity.times(robot.timeToTarget(velocity*flyWheelConstant, hoodAngle*servoAngleSlope,  distanceToTarget));
                 // shift goal
                 effectiveTargetPoint = baseTargetPoint.minus(drift);
             } else {

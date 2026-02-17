@@ -372,7 +372,7 @@ public class RobotHardware {
 
     // 8192
     public void getSpindexerOffset(){
-        spindexerFudge = (spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) - (spindexer.getCurrentPosition()/spindexerTicksPerDegree);
+        spindexerFudge = ( (spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) - (spindexer.getCurrentPosition()/spindexerTicksPerDegree) ) % 360;
     }
 
     public void spindexerHandler(int targetAdd){
