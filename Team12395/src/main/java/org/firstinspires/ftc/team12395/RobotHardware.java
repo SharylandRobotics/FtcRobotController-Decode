@@ -255,6 +255,13 @@ public class RobotHardware {
         pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
     }
 
+    public double tpsToBallisticVelocityIN(double tps, double efficiency) {
+        double rps = tps / 28;
+        double wheelRadiusInches = 2.5;
+        double velocity = rps * wheelRadiusInches;
+        return  velocity * efficiency;
+    }
+
     public void setLocalizerPosition(Pose2d pose){
         try {
             standardDrive.localizer.setPose(pose);
