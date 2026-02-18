@@ -52,7 +52,8 @@ public class FieldCentricRe extends LinearOpMode {
     public static double velocity = 0;
     public static double hoodAngle = 0.1;
 
-    public static double slowFireRateVelocity = 2000;
+    public static double slowFireRateVelocity = 1800;
+    public static int normalSpinVelocity = 1800;
     public static Vector2d baseTargetPoint = new Vector2d(-65, -59);
     public static double preSetAngleClose = 0.8;
     public static double preSetVelocityClose = 1400;
@@ -192,14 +193,14 @@ public class FieldCentricRe extends LinearOpMode {
                 robot.spindexerHandler(120);
             } else if (gamepad1.rightBumperWasPressed()) { // cw
                 if (velocity >= slowFireRateVelocity){
-                    robot.spindexerHandler(-480, 800);
+                    robot.spindexerHandler(-480, 600);
                 } else {
-                    robot.spindexerHandler(-480);
+                    robot.spindexerHandler(-480, normalSpinVelocity);
                 }
                 robot.setMagManualBulk("000");
             }
             if (gamepad1.dpadLeftWasPressed()){
-                robot.spindexer.setVelocity(0);
+                robot.spindexer.setPower(0);
             }
 
 
@@ -225,9 +226,13 @@ public class FieldCentricRe extends LinearOpMode {
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
 
-            if (Math.abs(robot.spindexerFudge % 360) >= 3){
+            /*
+            if (Math.abs(robot.spindexerFudge % 360) >= 3 ){
+                telemetry.addData("SPINDEXER CORRECTING: ", "");
                 robot.maintainSpindexerHandler();
             }
+
+             */
 
             if (gamepad2.a){
                 robot.pattern = "GPP";
@@ -243,11 +248,8 @@ public class FieldCentricRe extends LinearOpMode {
             telemetry.addData(robot.getMagPicture(), "");
             telemetry.addData("current Pattern: ", robot.pattern);
             telemetry.addData("Measured Velocity: ", robot.shooter.getVelocity());
-            telemetry.addData("spindexer heading? ", robot.getCurrentSpindexerDegreesPos() % 360);
             telemetry.addData("spindexerE heading? ", ((robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree) % 360));
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
-            telemetry.addData("turret deg: ", robot.getCurrentTurretDegreePos());
-            telemetry.addData("target turret deg: ", lastTargetTurretPos);
             telemetry.addData("Distance to Target: ", distanceToTarget);
             telemetry.addData("Effective Distance to Target: ", effectiveDistanceToTarget);
 

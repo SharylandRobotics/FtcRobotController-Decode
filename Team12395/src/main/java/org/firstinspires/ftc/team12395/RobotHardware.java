@@ -212,7 +212,7 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         spindexer.setVelocityPIDFCoefficients(14,4,1,4);
-        spindexer.setPower(0.3);
+        spindexer.setPower(1);
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter.setVelocityPIDFCoefficients(100, 5, 1, 5);
@@ -698,7 +698,7 @@ public class RobotHardware {
                     }
             }
         }
-        myOpMode.telemetry.addData(":", mag, pattern, chamber);
+        myOpMode.telemetry.addData(":", mag, pattern, firingChamber);
         return null;
     }
 
@@ -712,7 +712,7 @@ public class RobotHardware {
 
     public void setMagManualBulk(String set){
         //   (firing chamber on 2)
-        //      (chamber on 0)         210
+        //      (chamber on 0)         201
         // set things in a cw manner ( XYZ )
         //    0(X)
         // 1(Z)   2(Y)
@@ -771,7 +771,7 @@ public class RobotHardware {
                 break;
         }
 
-        switch (color1) {
+        switch (color0) {
             case GREEN:
                 colorHolder += "G";
                 break;
@@ -786,7 +786,7 @@ public class RobotHardware {
                 break;
         }
 
-        switch (color0) {
+        switch (color1) {
             case GREEN:
                 colorHolder += "G";
                 break;
@@ -806,13 +806,13 @@ public class RobotHardware {
 
     public void setColorMagManualBulk(String set){
         //   (firing chamber on 2)
-        //      (chamber on 0)         210
+        //      (chamber on 0)         201
         // set things in a cw manner ( XYZ )
         //    0(X)
         // 1(Z)   2(Y)
         StringBuilder magBuilder = new StringBuilder(mag);
         for (int i=0; i<3; i++) {
-            if (set.charAt(i) == '0') {
+            if (set.charAt(i) != '0') {
                 magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
                 mag = magBuilder.toString();
             }
@@ -872,23 +872,21 @@ public class RobotHardware {
 
         double velZeroIntercept = dataPoints.get(0)[valueIndex] - slopeList[0]* dataPoints.get(0)[0];
 
-        for (int i = 0; i< slopeList.length; i++){
-            if (i == 0){
-                myOpMode.telemetry.addData("0th Pass","");
-                if (distance >= 0 && distance <= dataPoints.get(0)[0]){
+        if (distance <= dataPoints.get(0)[0]){
+            myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(0)[0] +", " + dataPoints.get(0)[valueIndex]);
+            myOpMode.telemetry.addData("Slope Reference: ", slopeList[0]);
+            returnVal = velZeroIntercept + distance* slopeList[0];
+            return returnVal;
+        }
 
-                    myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
-                    myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
-                    returnVal = velZeroIntercept + distance* slopeList[0];
-                } else {
-                    myOpMode.telemetry.addData("0th Pass ", "FAIL");
-                }
-            } else if ((i == slopeList.length-1 && distance >= dataPoints.get(i)[0]) ||
+        for (int i = 1; i< slopeList.length; i++){
+            if ((i == slopeList.length-1 && distance >= dataPoints.get(i)[0]) ||
                     distance > dataPoints.get(i)[0] && distance <= dataPoints.get(i+1)[0]){
 
                 myOpMode.telemetry.addData("Bottom Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
                 myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
                 returnVal = dataPoints.get(i)[valueIndex] + (distance- dataPoints.get(i)[0])* slopeList[i];
+                return returnVal;
             }
         }
 

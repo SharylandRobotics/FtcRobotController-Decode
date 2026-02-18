@@ -58,15 +58,22 @@ public class RRcolorSort extends LinearOpMode {
 
         if (isStopRequested()) return;
 
-        robot.setMagManualBulk("GPP");
+        robot.setMagManualBulk("000");
 
         Actions.runBlocking(
                 new SequentialAction(
                         actionLib.setIntakeVel(2000),
-                        new ParallelAction(
+                        new RaceAction(
                                 actionLib.scanColorToggle(),
-                                driveToBalls
-                        )
+                                new SequentialAction(
+                                        driveToBalls,
+                                        actionLib.wiggleSpindexer(),
+                                        new SleepAction(2)
+                                )
+                        ),
+                        new SleepAction(2),
+                        actionLib.sortCurrentSpindexer(),
+                        new SleepAction(5)
                 )
         );
     }
