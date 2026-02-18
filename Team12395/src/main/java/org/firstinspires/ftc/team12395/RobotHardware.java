@@ -379,7 +379,7 @@ public class RobotHardware {
 
     // 8192
     public void getSpindexerOffset(){
-        spindexerFudge = ( (spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) - (spindexer.getCurrentPosition()/spindexerTicksPerDegree) ) % 360;
+        spindexerFudge = ((spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) % 360) - ((spindexer.getCurrentPosition()/spindexerTicksPerDegree) % 360);
     }
 
     public void spindexerHandler(int targetAdd){
@@ -812,7 +812,7 @@ public class RobotHardware {
         // 1(Z)   2(Y)
         StringBuilder magBuilder = new StringBuilder(mag);
         for (int i=0; i<3; i++) {
-            if (set.charAt(i) != '0') {
+            if (set.charAt(i) == '0') {
                 magBuilder.setCharAt((firingChamber + i) % 3, set.charAt(i));
                 mag = magBuilder.toString();
             }
@@ -874,11 +874,14 @@ public class RobotHardware {
 
         for (int i = 0; i< slopeList.length; i++){
             if (i == 0){
+                myOpMode.telemetry.addData("0th Pass","");
                 if (distance >= 0 && distance <= dataPoints.get(0)[0]){
 
                     myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
                     myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
                     returnVal = velZeroIntercept + distance* slopeList[0];
+                } else {
+                    myOpMode.telemetry.addData("0th Pass ", "FAIL");
                 }
             } else if ((i == slopeList.length-1 && distance >= dataPoints.get(i)[0]) ||
                     distance > dataPoints.get(i)[0] && distance <= dataPoints.get(i+1)[0]){
@@ -997,12 +1000,12 @@ public class RobotHardware {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (stage == 0){
-                    spindexerHandler(10, 600);
+                    spindexerHandler(10, 1000);
                     stage++;
                 }
 
-                if (stage == 1 && timer.seconds() >= 0.5){
-                    spindexerHandler(-10,600);
+                if (stage == 1 && timer.seconds() >= 1){
+                    spindexerHandler(-10,1000);
                     stage++;
                 }
                 return (stage < 2);

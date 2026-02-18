@@ -49,7 +49,7 @@ public class FieldCentricRe extends LinearOpMode {
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static double velocity = 2400;
+    public static double velocity = 0;
     public static double hoodAngle = 0.1;
 
     public static double slowFireRateVelocity = 2000;
