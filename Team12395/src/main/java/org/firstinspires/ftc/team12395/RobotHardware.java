@@ -870,12 +870,12 @@ public class RobotHardware {
             slopeList = angleSlopeList;
         }
 
-        double velZeroIntercept = dataPoints.get(0)[valueIndex] - slopeList[0]* dataPoints.get(0)[0];
+        double velZeroIntercept = dataPoints.get(0)[valueIndex] - (slopeList[0]* dataPoints.get(0)[0]);
 
         if (distance <= dataPoints.get(0)[0]){
             myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(0)[0] +", " + dataPoints.get(0)[valueIndex]);
             myOpMode.telemetry.addData("Slope Reference: ", slopeList[0]);
-            returnVal = velZeroIntercept + distance* slopeList[0];
+            returnVal = velZeroIntercept + (distance* slopeList[0]);
             return returnVal;
         }
 

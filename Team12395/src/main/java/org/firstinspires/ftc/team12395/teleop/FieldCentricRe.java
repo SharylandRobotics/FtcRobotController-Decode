@@ -53,7 +53,7 @@ public class FieldCentricRe extends LinearOpMode {
     public static double hoodAngle = 0.1;
 
     public static double slowFireRateVelocity = 1800;
-    public static int normalSpinVelocity = 1800;
+    public static int normalSpinVelocity = 1650;
     public static Vector2d baseTargetPoint = new Vector2d(-65, -59);
     public static double preSetAngleClose = 0.8;
     public static double preSetVelocityClose = 1400;
@@ -193,7 +193,7 @@ public class FieldCentricRe extends LinearOpMode {
                 robot.spindexerHandler(120);
             } else if (gamepad1.rightBumperWasPressed()) { // cw
                 if (velocity >= slowFireRateVelocity){
-                    robot.spindexerHandler(-480, 600);
+                    robot.spindexerHandler(-480, 800);
                 } else {
                     robot.spindexerHandler(-480, normalSpinVelocity);
                 }
