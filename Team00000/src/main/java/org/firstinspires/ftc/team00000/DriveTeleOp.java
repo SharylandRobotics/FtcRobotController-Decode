@@ -36,38 +36,38 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-// Unified TeleOp with a drive-mode toggle.
-// Drive: LS=translate, RS=rotate, LB=slow mode.
-// Assist: hold RB for AprilTag assist.
-// Shooter: X=spin-up toggle, Y=burst feed.
-// Transfer: D-pad UP/DOWN sticky fwd/rev, LEFT safe stop, RIGHT stopper toggle, A intake toggle, B hold quick reverse.
-// Toggle drive mode (FIELD/ROBOT): press LS (left stick button).
+// Reference TeleOp for Team00000.
+// Controls:
+// - Drive: left stick translate, right stick rotate, left bumper precision mode.
+// - Vision assist: hold right bumper for AprilTag goal approach.
+// - Shooter: X toggles spin-up, Y starts timed burst feed.
+// - Transfer/stoppers: d-pad and A/B manage intake, reverse, and gate state.
 @Config
 @TeleOp(name = "Drive TeleOp", group = "opMode")
 
 public class DriveTeleOp extends LinearOpMode {
 
-    // Hardware abstraction (motors, IMU, AprilTag vision).
+    // Robot subsystem wrapper (drive, shooter, transfer, vision).
     RobotHardware robot = new RobotHardware(this);
 
-    // Shooter tuning (Dashboard-configurable).
-    public static double shooterFar = 0.39;
+    // Shooter tuning exposed through FTC Dashboard.
+    public static double shooterFar = 0.35;
     public static double shooterMaxRpm = 0.0;
     public static double shooterKp = 0.3;
     public static double shooterKi = 0.0;
     public static double shooterKd = 0.0;
 
-    // Cache last-applied shooter PIDF configuration to avoid spamming Hub writes every loop.
+    // Cached PIDF values to avoid writing coefficients every loop iteration.
     private double lastEffMaxRpm = Double.NaN;
     private double lastShooterKp = Double.NaN;
     private double lastShooterKi = Double.NaN;
     private double lastShooterKd = Double.NaN;
 
-    // Mechanism outputs (Dashboard-visible for tuning).
+    // Current mechanism outputs (also visible in Dashboard).
     public static double stopperPower = 0.0;
     public static double transferPower = 0.0;
 
-    // Edge-detect state for buttons.
+    // Previous-frame gamepad state used for edge detection.
     private boolean prevUp = false;
     private boolean prevDown = false;
     private boolean prevLeft = false;
@@ -75,9 +75,9 @@ public class DriveTeleOp extends LinearOpMode {
     private boolean prevA = false;
     private boolean prevX = false;
     private boolean prevY = false;
-    private boolean prevLsBtn = false;
+    private boolean prevL3 = false;
 
-    // Driver modes/state.
+    // Runtime operator state.
     private boolean shooterEnabled = false;
     private boolean intakeMode = false;
     private boolean launchMode = false;
@@ -85,15 +85,17 @@ public class DriveTeleOp extends LinearOpMode {
     private long readySinceMs = 0;
     private long feedStartMs = 0;
 
-    // Shot profiling (Dashboard-tunable)
+    // Shot-profile multipliers used during burst feed.
     public static double SHOT1_MULTIPLIER = 1.00;
     public static double SHOT2_MULTIPLIER = 1.03;
     public static double SHOT3_MULTIPLIER = 1.06;
 
-    private int shotIndex = 0; // 0=next shot is #1, 1=#2, 2=#3
-    private int firingShotIndex = 0; // latched when a burst starts; used during feed so multipliers stay consistent
+    // 0-based selected shot index.
+    private int shotIndex = 0;
+    // Latched at burst start so profile math stays stable during feed.
+    private int firingShotIndex = 0;
 
-    // Sag capture (ticks/sec magnitude)
+    // Shooter speed sag capture (ticks/sec magnitude).
     private double preFeedTicksPerSecond = Double.NaN;
     private double minimumFeedTicksPerSecond = Double.NaN;
 
@@ -104,7 +106,7 @@ public class DriveTeleOp extends LinearOpMode {
     // Burst timing (milliseconds).
     public static int LAUNCH_SPOOL_MS = 0;
     public static int LAUNCH_FEED_MS = 1200;
-    // How many artifacts to launch per Y burst.
+    // Number of artifacts launched per Y burst.
     public static int LAUNCH_ARTIFACTS_PER_BURST = 3;
 
     public static double SHOOT_READY_PCT_TOL = 0.20;
@@ -124,7 +126,7 @@ public class DriveTeleOp extends LinearOpMode {
         double lateral;
         double yaw;
 
-        // Initialize hardware and dashboard telemetry.
+        // Initialize hardware and telemetry sinks (Driver Station + Dashboard).
         robot.init();
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.setMsTransmissionInterval(100);
@@ -156,7 +158,7 @@ public class DriveTeleOp extends LinearOpMode {
             boolean b = gamepad1.b;
             boolean x = gamepad1.x;
             boolean y = gamepad1.y;
-            boolean lsBtn = gamepad1.left_stick_button;
+            boolean l3 = gamepad1.left_stick_button;
 
             boolean upEdge = up && !prevUp;
             boolean downEdge = down && !prevDown;
@@ -165,14 +167,15 @@ public class DriveTeleOp extends LinearOpMode {
             boolean aEdge = a && !prevA;
             boolean xEdge = x && !prevX;
             boolean yEdge = y && !prevY;
-            boolean lsBtnEdge = lsBtn && !prevLsBtn;
+            boolean l3Edge = l3 && !prevL3;
 
-            if (lsBtnEdge) {
+            // Left Stick: toggle drive mode.
+            if (l3Edge) {
                 driveMode = (driveMode == DriveMode.FIELD) ? DriveMode.ROBOT : DriveMode.FIELD;
                 robot.resetYaw();
             }
 
-            // D-pad UP/DOWN: transfer control (edge-triggered; no hold required).
+            // D-pad UP/DOWN: transfer control.
             if (upEdge) {
                 transferPower = TRANSFER_FWD;
                 intakeMode = true;
@@ -184,7 +187,7 @@ public class DriveTeleOp extends LinearOpMode {
                 launchMode = false;
             }
 
-            // D-pad LEFT: safe stop (transfer off, stoppers closed).
+            // D-pad LEFT: safe stop.
             if (leftEdge) {
                 transferPower = 0.0;
                 stopperPower = STOPPER_CLOSED;
@@ -193,12 +196,12 @@ public class DriveTeleOp extends LinearOpMode {
                 shotIndex = 0;
             }
 
-            // D-pad RIGHT: toggle stoppers (manual override).
+            // D-pad RIGHT: toggle stoppers.
             if (rightEdge) {
                 stopperPower = (stopperPower == STOPPER_OPEN) ? STOPPER_CLOSED : STOPPER_OPEN;
             }
 
-            // A: toggle intake mode (runs transfer forward; stoppers forced closed).
+            // A: toggle intake mode.
             if (aEdge) {
                 intakeMode = !intakeMode;
                 launchMode = false;
@@ -211,7 +214,7 @@ public class DriveTeleOp extends LinearOpMode {
                 shotIndex = 0;
             }
 
-            // B (hold): quick reverse to clear jams (overrides other modes).
+            // B (hold): quick reverse to clear jams.
             if (b) {
                 transferPower = TRANSFER_REV;
                 stopperPower = STOPPER_CLOSED;
@@ -219,7 +222,7 @@ public class DriveTeleOp extends LinearOpMode {
                 launchMode = false;
             }
 
-            // X: toggle shooter spin-up (no feeding).
+            // X: toggle shooter spin-up.
             if (xEdge) {
                 shooterEnabled = !shooterEnabled;
                 if (!shooterEnabled) {
@@ -273,8 +276,8 @@ public class DriveTeleOp extends LinearOpMode {
                         minimumFeedTicksPerSecond = preFeedTicksPerSecond;
                     }
 
-                    double curTs = Math.abs(robot.getShooterVelocityPerSecond());
-                    if (!Double.isNaN(minimumFeedTicksPerSecond)) minimumFeedTicksPerSecond = Math.min(minimumFeedTicksPerSecond, curTs);
+                    double currentTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
+                    if (!Double.isNaN(minimumFeedTicksPerSecond)) minimumFeedTicksPerSecond = Math.min(minimumFeedTicksPerSecond, currentTicksPerSecond);
                     long feedElapsed = now - feedStartMs;
                     long totalFeedMs = (long) LAUNCH_FEED_MS * Math.max(1, LAUNCH_ARTIFACTS_PER_BURST);
                     if (feedElapsed < totalFeedMs) {
@@ -310,7 +313,7 @@ public class DriveTeleOp extends LinearOpMode {
             prevA = a;
             prevX = x;
             prevY = y;
-            prevLsBtn = lsBtn;
+            prevL3 = l3;
 
             // Slow mode scales driver inputs for precision.
             boolean slow = gamepad1.left_bumper;
@@ -435,9 +438,8 @@ public class DriveTeleOp extends LinearOpMode {
 
             telemetry.addData("Goal", (goalId != null) ? goalId : "–");
             telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
-            telemetry.addData("Aim",  "horiz=%.1f in  aboveHorizontal=%s",
-                    horizontal,
-                    Double.isNaN(aimAboveHorizontal) ? "–" : "%.1f°", aimAboveHorizontal);
+            String aimAboveText = Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal);
+            telemetry.addData("Aim",  "horiz=%.1f in  aboveHorizontal=%s", horizontal, aimAboveText);
             telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 

@@ -39,40 +39,40 @@ import static org.firstinspires.ftc.team00000.RobotHardware.MAX_AUTO_YAW;
 @Disabled
 @Autonomous(name = "Red Alliance", group = "opMode")
 
-// Autonomous routine using gyro-based driving with RobotHardware helpers
+// Example autonomous routine for the red alliance side.
 public class RedAlliance extends LinearOpMode {
 
-    // Instantiate RobotHardware and link this OpMode
+    // Shared robot hardware/service wrapper.
     RobotHardware robot = new RobotHardware(this);
 
     @Override
     public void runOpMode() {
 
-        // Initialize all motors and IMU before start
+        // Initialize hardware prior to match start.
         robot.init();
 
         while(opModeInInit()) {
-            // Display heading and status continuously during init loop
+            // Pre-start status telemetry.
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
             telemetry.update();
         }
 
-        // Wait for PLAY; exit early if stop is pressed
+        // Wait for PLAY; return early if STOP is requested.
         waitForStart();
         if (isStopRequested()) return;
 
-        // Execute full autonomous path sequence once started
+        // Execute the programmed path sequence.
         if (opModeIsActive()) {
-            // Drive 24" forward, then turn and hold headings as defined
+            // Drive forward, turn, and settle heading.
             robot.driveOmni(MAX_AUTO_AXIAL, 48.0, 0.0, 0.0);
             robot.turnToHeading(MAX_AUTO_YAW, -90.0);
             robot.holdHeading(MAX_AUTO_YAW, -90.0, 0.5);
 
-            // Indicate completion and pause for display
+            // Report completion and pause briefly for operator visibility.
             telemetry.addData("Path", "Complete");
             telemetry.update();
-            sleep(1000);  // Pause to display last telemetry message.
+            sleep(1000);
         }
     }
 }
