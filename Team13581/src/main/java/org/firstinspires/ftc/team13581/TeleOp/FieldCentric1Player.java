@@ -29,23 +29,16 @@
 
 package org.firstinspires.ftc.team13581.TeleOp;
 
-import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.SwitchableLight;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.team13581.RobotHardware;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.opencv.ImageRegion;
-import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 
-@TeleOp(name="Field Centric", group="TeleOp")
+@TeleOp(name="Field Centric 1 Player", group="TeleOp")
 
-public class FieldCentric extends LinearOpMode {
+public class FieldCentric1Player extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -98,20 +91,20 @@ public class FieldCentric extends LinearOpMode {
             //telemetry.addData("RGB: ", "R=%.3f G=%.3f B=%.3f", robot.getRGBColor()[0], robot.getRGBColor()[1], robot.getRGBColor()[2]);
 
             telemetry.update();
-            if (gamepad1.bWasPressed()){
+            if (gamepad1.aWasPressed()){
                 runIntake = !runIntake;
                 if (runIntake){
                     robot.setIntake1(1);
                 }
             }
-            if (gamepad1.aWasPressed()){
+            if (gamepad1.xWasPressed()){
                 runIntake = !runIntake;
                 if (runIntake){
                     robot.setIntake1(1);
                     robot.setIntake2(.7);
                 }
             }
-            if (gamepad1.yWasPressed()){
+            if (gamepad1.bWasPressed()){
                 runIntake = !runIntake;
                 if (runIntake){
                     robot.setIntake1(-1);
@@ -123,76 +116,49 @@ public class FieldCentric extends LinearOpMode {
                 robot.setIntake2(0);
             }
 
-            if (gamepad1.x){
+            if (gamepad1.y){
                 robot.setIntake2(0.5);
             }
 
-
-            if (gamepad1.right_bumper) {
-                robot.setIntake2(0);
-            }
-
-            if (gamepad2.left_bumper) {
-                robot.setAimPos(0.6);
+            if (gamepad1.left_bumper) {
+                robot.setAimPos(1);
                 velocity = 1300;
             }
-            if (gamepad2.right_bumper) {
-                robot.setAimPos(0.3);
+            if (gamepad1.right_bumper) {
+                robot.setAimPos(0.325);
                 velocity = 1500;
             }
-            if (gamepad2.a) {
-                velocity = 2200;
-            }
-            if (gamepad2.b) {
+
+            if (gamepad1.dpad_right) {
                 velocity = 0;
             }
 
             robot.setShootSpeed(velocity);
-            if (velocity >= 1000) {
-                robot.setStopper(1);
-            } else {
+            if (velocity == 0) {
                 robot.setStopper(0);
+            } else {
+                robot.setStopper(0.7);
             }
 
-
-            if (gamepad2.dpad_up) {
-                double tempPos = robot.getAimPos();
-                if (tempPos > 0.1) {
-                    robot.setAimPos(tempPos - 0.02);
-                }
-            }
-
-            if (gamepad2.dpad_left) {
-                robot.setAimPos(0.45);
-            }
-
-            if (gamepad2.dpad_down) {
-                double tempPos = robot.getAimPos();
-                if (tempPos < (0.75)) {
-                    robot.setAimPos(tempPos + 0.02);
-                }
-            }
-
-
-            if (gamepad2.right_trigger > 0) {
+            if (gamepad1.right_trigger > 0) {
                 double tempPosR = robot.hAimRPos();
 
                 if (tempPosR > (0)) {
                     robot.setTurretPos(tempPosR - 0.01);
                 }
             }
-            if (gamepad2.left_trigger > 0)    {
+            if (gamepad1.left_trigger > 0)    {
                 double tempPosR = robot.hAimRPos();
 
                 if (tempPosR < (1)) {
                     robot.setTurretPos(tempPosR + 0.01);
                 }
             }
-            if (gamepad2.dpad_right) {
+            if (gamepad1.dpad_left) {
                 robot.setTurretPos(0.5);
             }
 
-            if (gamepad2.xWasPressed()){
+            if (gamepad1.dpadDownWasPressed()){
                 double scan = robot.getGoalBearingDeg();
                 double deg = 0.0;
                 double pos = 0.0;
@@ -208,15 +174,6 @@ public class FieldCentric extends LinearOpMode {
                     robot.updateAprilTagDetections();
                 }
             }
-
-            if (gamepad1.dpadUpWasPressed()){
-                gain++;
-            }
-            if (gamepad1.dpadDownWasPressed()){
-                gain--;
-            }
-
-            //robot.colorSensor.setGain((float) gain);
 
             sleep(50);
         }

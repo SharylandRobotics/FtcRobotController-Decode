@@ -76,6 +76,8 @@ public class RobotHardware {
     private Servo hAimL = null;
     private Servo vAim = null;
 
+    private Servo stopper = null;
+
     private IMU imu = null;
 
     private double  headingError     = 0;
@@ -178,6 +180,8 @@ public class RobotHardware {
 
         vAim = myOpMode.hardwareMap.get(Servo.class, "v_aim");
 
+        stopper = myOpMode.hardwareMap.get(Servo.class, "stopper");
+
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));
@@ -187,21 +191,23 @@ public class RobotHardware {
 
         imu.resetYaw();
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
         Intake1.setDirection(DcMotor.Direction.FORWARD);
         Intake2.setDirection(DcMotor.Direction.REVERSE);
 
         outtakeMotorR.setDirection(DcMotor.Direction.FORWARD);
         outtakeMotorL.setDirection(DcMotor.Direction.REVERSE);
 
-
+/*
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+ */
 
         outtakeMotorR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         outtakeMotorL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -219,15 +225,15 @@ public class RobotHardware {
         Intake2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
 
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         outtakeMotorR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         outtakeMotorL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        outtakeMotorR.setVelocityPIDFCoefficients(50, 1, 3, 1);
+        outtakeMotorR.setVelocityPIDFCoefficients(100, 1, 3, 1);
 
         hAimR.setPosition(0.5);
         hAimL.setPosition(0.5);
@@ -261,7 +267,7 @@ public class RobotHardware {
 
         double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
                 Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-        if (max > 1.0) {
+        if (max > 0.9) {
             frontLeftPower  /= max;
             frontRightPower /= max;
             backLeftPower   /= max;
@@ -289,6 +295,10 @@ public class RobotHardware {
         return hAimR.getPosition();
     }
     public double hAimLPos(){return hAimL.getPosition();}
+
+    public void setStopper(double pos) {
+        stopper.setPosition(pos/10);
+    }
 
     public void setTurretPos(double posR) {
         hAimR.setPosition(posR);
