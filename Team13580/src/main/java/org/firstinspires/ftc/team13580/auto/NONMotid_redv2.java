@@ -40,10 +40,10 @@ import org.firstinspires.ftc.team13580.roadrunner.MecanumDrive;
 
 import java.lang.Math;
 
-@Autonomous(name = "Blue close", group = "auto")
+@Autonomous(name = "Red close", group = "auto")
 
 // Autonomous routine using gyro-based driving with RobotHardware helpers
-public class NONMotid_Blue extends LinearOpMode {
+public class NONMotid_redv2 extends LinearOpMode {
 
     // Instantiate RobotHardware and link this OpMode
     RobotHardware robot = new RobotHardware(this);
@@ -135,81 +135,81 @@ public class NONMotid_Blue extends LinearOpMode {
     @Override
     public void runOpMode() {
         MecanumDrive drive = new MecanumDrive(hardwareMap,
-                new Pose2d(-49,-51, Math.toRadians(-126)));
+                new Pose2d(-49,51, Math.toRadians(126)));
         // Initialize all motors and IMU before start
         robot.init();
 
-        Action path1 = drive.actionBuilder(new Pose2d(-49,-51, Math.toRadians(-126)))
-                .setTangent(Math.atan2(-24+51, -30+49))
-                .lineToYLinearHeading(-24, Math.toRadians(-130))
+        Action path1 = drive.actionBuilder(new Pose2d(-49,51, Math.toRadians(126)))
+                .setTangent(Math.atan2(24-51, -30+49))
+                .lineToYLinearHeading(24, Math.toRadians(130))
                 .build();
 
-        Action path2 = drive.actionBuilder(new Pose2d(-30,-24, Math.toRadians(-130)))
-                .setTangent(Math.atan2(-20+24, 11+30))
-                .lineToYLinearHeading(-20, Math.toRadians(-90))
-                .setTangent(Math.atan2(-60+20, 0))
-                .lineToYLinearHeading(-60, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
-                .setTangent(Math.atan2(-20+60, 0))
-                .lineToYLinearHeading(-20, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+        Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
+                .setTangent(Math.atan2(20-24, 12+30))
+                .lineToYLinearHeading(20, Math.toRadians(90))
+                .setTangent(Math.atan2(53-20, 0))
+                .lineToYLinearHeading(53, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(14-53, 0))
+                .lineToYLinearHeading(16, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+            .build();
+
+        Action path3_opengate = drive.actionBuilder(new Pose2d(12,14, Math.toRadians(90)))
+                .setTangent(Math.atan2(18-14, -20-12))
+                .lineToYLinearHeading(18, Math.toRadians(135), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                        .build();
+
+        Action path4_First_gate_intake = drive.actionBuilder(new Pose2d(-20,18, Math.toRadians(135)))
+                .setTangent(Math.atan2(20-18, 12+20))
+                .lineToYLinearHeading(20, Math.toRadians(115))
+                .setTangent(Math.atan2(58-20, 0))
+                .lineToYLinearHeading(58, Math.toRadians(115))
                 .build();
 
-        Action path3_opengate = drive.actionBuilder(new Pose2d(11,-20, Math.toRadians(-90)))
-                .setTangent(Math.atan2(-18+20, -20-11))
-                .lineToYLinearHeading(-18, Math.toRadians(-130), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
-                .build();
-
-        Action path4_First_gate_intake = drive.actionBuilder(new Pose2d(-20,-18, Math.toRadians(-135)))
-                .setTangent(Math.atan2(-20+18, 10.5+20))
-                .lineToYLinearHeading(-20, Math.toRadians(-115))
-                .setTangent(Math.atan2(-60+20, 0))
-                .lineToYLinearHeading(-60, Math.toRadians(-115))
-                .build();
-
-        Action slide_to_intake = drive.actionBuilder(new Pose2d(10.5,-60, Math.toRadians(-115)))
-                .setTangent(Math.atan2(0, 19-10.5))
+        Action slide_to_intake = drive.actionBuilder(new Pose2d(12,58, Math.toRadians(115)))
+                .setTangent(Math.atan2(0, 19-13))
                 .lineToX(19, new TranslationalVelConstraint(60), new ProfileAccelConstraint(-60, 100))
 
-                .build();
+                        .build();
 
-        Action path5 = drive.actionBuilder(new Pose2d(19,-60, Math.toRadians(-115)))
-                .setTangent(Math.atan2(-22+58, 0))
-                .lineToYLinearHeading(-22, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
-                .setTangent(Math.atan2(-18+22, -22-19))
-                .lineToYLinearHeading(-18, Math.toRadians(-155), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
-                .build();
+        Action path5 = drive.actionBuilder(new Pose2d(19,58, Math.toRadians(115)))
+                .setTangent(Math.atan2(16-58, 12-19))
+                .lineToYLinearHeading(16, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(18-16, -22-19))
+                .lineToYLinearHeading(18, Math.toRadians(145), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                        .build();
 
-        Action path6_second_gate_intake = drive.actionBuilder(new Pose2d(-22,-18, Math.toRadians(-155)))
-                .setTangent(Math.atan2(-20+18, 12+22))
-                .lineToYLinearHeading(-20, Math.toRadians(-115))
-                .setTangent(Math.atan2(-58+20, 0))
-                .lineToYLinearHeading(-58, Math.toRadians(-115), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action path6_second_gate_intake = drive.actionBuilder(new Pose2d(-22,18, Math.toRadians(140)))
+                .setTangent(Math.atan2(20-18, 12+22))
+                .lineToYLinearHeading(20, Math.toRadians(115))
+                .setTangent(Math.atan2(58-20, 0))
+                .lineToYLinearHeading(58, Math.toRadians(115), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(0, 17-12))
                 .lineToX(17, new TranslationalVelConstraint(60), new ProfileAccelConstraint(-60, 100))
                 .build();
 
-        Action path7 = drive.actionBuilder(new Pose2d(17,-58, Math.toRadians(-115)))
-                .setTangent(Math.atan2(-20+58, 0))
-                .lineToYLinearHeading(-20, Math.toRadians(115), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
-                .setTangent(Math.atan2(-24+20, -22-17))
-                .lineToYLinearHeading(-24, Math.toRadians(140), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action path7 = drive.actionBuilder(new Pose2d(17,58, Math.toRadians(115)))
+                .setTangent(Math.atan2(20-58, 0))
+                .lineToYLinearHeading(20, Math.toRadians(115), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(24-20, -22-17))
+                .lineToYLinearHeading(24, Math.toRadians(140), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
 
-        Action path8_close_intake = drive.actionBuilder(new Pose2d(-22,-24, Math.toRadians(-145)))
-                .setTangent(Math.atan2(-18+24, -14+22))
-                .lineToYLinearHeading(-18, Math.toRadians(-90))
-                .setTangent(Math.atan2(-53+18, 0))
-                .lineToYLinearHeading(-53, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
-                .build();
+        Action path8_close_intake = drive.actionBuilder(new Pose2d(-22,24, Math.toRadians(145)))
+                .setTangent(Math.atan2(18-24, -14+22))
+                .lineToYLinearHeading(18, Math.toRadians(90))
+                .setTangent(Math.atan2(48-18, 0))
+                .lineToYLinearHeading(48, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                        .build();
 
-        Action path9 = drive.actionBuilder(new Pose2d(-14,-53, Math.toRadians(-90)))
-                .setTangent(Math.atan2(-20+53, -16+14))
-                .lineToYLinearHeading(-20, Math.toRadians(-135), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
-                .build();
+        Action path9 = drive.actionBuilder(new Pose2d(-14,48, Math.toRadians(90)))
+                .setTangent(Math.atan2(18-48, -16+14))
+                .lineToYLinearHeading(18, Math.toRadians(135), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                        .build();
 
-        Action path10_park = drive.actionBuilder(new Pose2d(-16,-20, Math.toRadians(-135)))
-                .setTangent(Math.atan2(-49+20, -14+16))
-                .lineToYLinearHeading(-49, Math.toRadians(-90), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
-                .build();
+        Action path10_park = drive.actionBuilder(new Pose2d(-16,18, Math.toRadians(135)))
+                .setTangent(Math.atan2(49-18, -14+16))
+                .lineToYLinearHeading(49, Math.toRadians(90), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
+                        .build();
 
 
 
@@ -224,8 +224,8 @@ public class NONMotid_Blue extends LinearOpMode {
                                 path1,
                                 shoot(1150)
                         ),
-                        new SleepAction(.5),
-                        spinUp2(.8),
+                        new SleepAction(.4),
+                        spinUp(),
                         rightkick(-1),
                         leftkick(-1),
                         new SleepAction(1.5),
@@ -248,8 +248,8 @@ public class NONMotid_Blue extends LinearOpMode {
                         spinUp2(.3),
                         path4_First_gate_intake,
                         spinUp2(.9),
-                        shoot(1150),
-                        new SleepAction(.3),
+                                shoot(1150),
+                                new SleepAction(.3),
                         slide_to_intake,
                         new SleepAction(1),
                         path5,

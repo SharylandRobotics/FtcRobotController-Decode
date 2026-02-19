@@ -141,62 +141,57 @@ public class NONMotid_red extends LinearOpMode {
 
         Action path1 = drive.actionBuilder(new Pose2d(-49,51, Math.toRadians(126)))
                 .setTangent(Math.atan2(24-51, -30+51))
-                .lineToY(24)
-                .build();
-
-        Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(126)))
-                .setTangent(Math.atan2(26-24, 18+30))
-                .lineToYLinearHeading(26, Math.toRadians(90))
-                .setTangent(Math.atan2(30-26, 0))
-                .lineToYLinearHeading(30, Math.toRadians(90))
-                .setTangent(Math.atan2(0, 11-18))
-                .lineToX(11)
-                .setTangent(Math.atan2(54-34, 0))
-                .lineToYLinearHeading(54, Math.toRadians(90))
-                .build();
-
-
-        Action path3_opengate = drive.actionBuilder(new Pose2d(11,54, Math.toRadians(90)))
-                .setTangent(Math.atan2(28-54, 0))
-                .lineToYLinearHeading(28, Math.toRadians(90))
-                .setTangent(Math.atan2(24-28, -30-11))
-                .lineToYLinearHeading(24, Math.toRadians(175))
-                .turnTo(Math.toRadians(130))
-                .build();
-
-        Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-24, -10+30))
-                .lineToYLinearHeading(28, Math.toRadians(90))
-                .setTangent(Math.atan2(38-28, 0))
-                .lineToYLinearHeading(38, Math.toRadians(90))
-                .setTangent(Math.atan2(0, -10+10))
-                .lineToX(-14)
-                .setTangent(Math.atan2(53-38, 0))
-                .lineToYLinearHeading(53, Math.toRadians(90))
-                .build();
-
-        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(-14,53, Math.toRadians(90)))
-                .setTangent(Math.atan2(24-53, -30+14))
                 .lineToYLinearHeading(24, Math.toRadians(130))
+                .build();
+
+        Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
+                .setTangent(Math.atan2(20-24, 12+30))
+                .lineToYLinearHeading(20, Math.toRadians(90))
+                .setTangent(Math.atan2(54-20, 0))
+                .lineToYLinearHeading(54, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(46-54, 0))
+                .lineToYLinearHeading(46, Math.toRadians(90),  new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(0, 6-12))
+                .lineToX(6)
+                .setTangent(Math.atan2(18-46, 0))
+                .lineToYLinearHeading(18, Math.toRadians(90),  new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
+
+                .build();
+
+
+        Action path3_opengate = drive.actionBuilder(new Pose2d(6,18, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-18, -30-6))
+                .lineToYLinearHeading(24, Math.toRadians(135), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .build();
+
+        Action path4_intakemiddle = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(135 )))
+                .setTangent(Math.atan2(18-24, -14+30))
+                .lineToYLinearHeading(18, Math.toRadians(90))
+                .setTangent(Math.atan2(48-18, 0))
+                .lineToYLinearHeading(48, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .build();
+
+        Action path5_shoot3rd = drive.actionBuilder(new Pose2d(-14,48, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-48, -30+14))
+                .lineToYLinearHeading(24, Math.toRadians(130), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
         Action path6_intakelast = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-24, 38+30))
-                .lineToYLinearHeading(28, Math.toRadians(90))
-                .setTangent(Math.atan2(34-28, 0))
-                .lineToYLinearHeading(34, Math.toRadians(90))
-                .setTangent(Math.atan2(0, 34-38))
-                .lineToX(34)
-                .setTangent(Math.atan2(56-34, 0))
-                .lineToYLinearHeading(56, Math.toRadians(90))
+                .setTangent(Math.atan2(20-24, 34+30))
+                .lineToYLinearHeading(20, Math.toRadians(90))
+                .setTangent(Math.atan2(56-20, 0))
+                .lineToYLinearHeading(56, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(28-56, 0))
+                .lineToYLinearHeading(28, Math.toRadians(90), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
                         .build();
 
-        Action path7_lastshot = drive.actionBuilder(new Pose2d(34,56, Math.toRadians(90)))
-                .setTangent(Math.atan2(24-56, -30-34))
-                .lineToYLinearHeading(24, Math.toRadians(130))
-                        .build();
+        Action path7_lastshot = drive.actionBuilder(new Pose2d(34,28, Math.toRadians(90)))
+                .setTangent(Math.atan2(24-28, -30-34))
+                .lineToYLinearHeading(24, Math.toRadians(155), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-60, 100))
+//                .turnTo(Math.toRadians(130))
+                .build();
 
-        Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
+        Action path8_park = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(155)))
                 .setTangent(Math.atan2(40-24, -10+30))
                 .lineToYLinearHeading(40, Math.toRadians(90), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
                         .build();
@@ -217,13 +212,13 @@ public class NONMotid_red extends LinearOpMode {
                                 path1,
                                 shoot(1150)
                         ),
-                        new SleepAction(.5),
+                        new SleepAction(.4),
                         spinUp(),
-                        rightkick(1),
-                        leftkick(1),
-                        new SleepAction(2),
-                        rightkick(0),
-                        leftkick(0),
+                        rightkick(-1),
+                        leftkick(-1),
+                        new SleepAction(1.5),
+                        rightkick(.3),
+                        leftkick(.3),
                         new ParallelAction(
                                 path2,
                                 spinUp2(.5)
@@ -233,12 +228,12 @@ public class NONMotid_red extends LinearOpMode {
                                 shoot(1150),
                                 spinUp2(.5)
                         ),
-                        spinUp2(.5),
-                        rightkick(1),
-                        leftkick(1),
-                        new SleepAction(2),
-                        rightkick(0),
-                        leftkick(0),
+                        spinUp2(.6),
+                        rightkick(-1),
+                        leftkick(-1),
+                        new SleepAction(1.5),
+                        rightkick(0.3),
+                        leftkick(0.3),
                         new ParallelAction(
                                 path4_intakemiddle,
                                 spinUp2(.5)
@@ -248,24 +243,25 @@ public class NONMotid_red extends LinearOpMode {
                                 spinUp2(.5),
                                 shoot(1150)
                         ),
-                        rightkick(1),
-                        leftkick(1),
+                        spinUp2(.6),
+                        rightkick(-1),
+                        leftkick(-1),
                         new SleepAction(2),
-                        rightkick(0),
-                        leftkick(0),
+                        rightkick(0.3),
+                        leftkick(0.3),
                         new ParallelAction(
                                 path6_intakelast,
-                                spinUp2(.5)
+                                spinUp2(.6)
                         ),
-                        spinUp2(.3),
+                        spinUp2(.5),
                         new ParallelAction(
                                 path7_lastshot,
                                 shoot(1150)
                         ),
-                        rightkick(1),
-                        leftkick(1),
-                        spinUp2(.5),
-                        new SleepAction(2),
+                        spinUp2(.6),
+                        rightkick(-1),
+                        leftkick(-1),
+                        new SleepAction(1.5),
                         new ParallelAction(
                                 path8_park,
                                 rightkick(0),

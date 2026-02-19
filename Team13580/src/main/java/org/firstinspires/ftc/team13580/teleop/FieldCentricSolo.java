@@ -42,31 +42,16 @@ public class FieldCentricSolo extends LinearOpMode {
             robot.updateAprilTagDetections();
 
             // Precision mode
-            boolean slow = gamepad1.left_bumper;
-            double scale = slow ? 0.4 : 1.0;
+           // boolean slow = gamepad1.left_bumper;
+           // double scale = slow ? 0.4 : 1.0;
 
             // Joystick input
-            axial = -gamepad1.left_stick_y * scale;
-            lateral = gamepad1.left_stick_x * scale;
-            yaw = gamepad1.right_stick_x * scale;
+            axial = -gamepad1.left_stick_y ;
+           lateral = gamepad1.left_stick_x ;
+            yaw = gamepad1.right_stick_x ;
 
 
-            boolean bearingAssist = gamepad1.right_bumper;
-
-            if (bearingAssist) {
-                double correction = robot.autoBearingToGoalCorrect();
-                telemetry.addData("Correcting by: ", correction);
-                if (!Double.isNaN(correction)){
-                    yawCorrection = correction;
-                    robot.driveFieldCentric(axial, lateral, yawCorrection);
-                    telemetry.addData("CORRECTING","");
-                } else {
-                    telemetry.addData("INVALID","");
-                    robot.driveFieldCentric(axial, lateral, yaw);
-                }
-            } else {
-                robot.driveFieldCentric(axial, lateral, yaw);
-            }
+      // }
 
             // Drive robot if not auto-driving
 
@@ -80,7 +65,7 @@ public class FieldCentricSolo extends LinearOpMode {
             } else if (gamepad1.right_bumper) {
                 intake = 0.3;
             } else {
-                intake = .6;
+                intake = 0;
             }
             robot.setIntakePower(intake);
 
@@ -128,7 +113,7 @@ public class FieldCentricSolo extends LinearOpMode {
             }
 
             // Telemetry
-            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+           // telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Outtake Toggle", outtakeManual ? "ON (1300)" : "OFF");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);

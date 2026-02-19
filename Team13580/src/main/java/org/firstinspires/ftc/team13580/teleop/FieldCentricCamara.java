@@ -12,9 +12,9 @@ public class FieldCentricCamara extends LinearOpMode {
     @Override
     public void runOpMode() {
         double kickerBackPos = -1;
-        double kickerForwardPos = .3;
+        double kickerForwardPos = .2;
         double kickerLeftBackPos = -1;
-        double kickerLeftForwardPos = .3;
+        double kickerLeftForwardPos = .2;
 
         double axial, lateral, yaw;
         double intake, outtake = 0;  // Initialize outtake here
@@ -41,13 +41,13 @@ public class FieldCentricCamara extends LinearOpMode {
             robot.updateAprilTagDetections();
 
             // Precision mode
-            boolean slow = gamepad1.left_bumper;
-            double scale = slow ? 0.4 : 1.0;
+          //  boolean slow = gamepad1.left_bumper;
+           // double scale = slow ? 0.4 : 1.0;
 
             // Joystick input
-            axial = -gamepad1.left_stick_y * scale;
-            lateral = gamepad1.left_stick_x * scale;
-            yaw = gamepad1.right_stick_x * scale;
+            axial = -gamepad1.left_stick_y ;
+            lateral = gamepad1.left_stick_x;
+            yaw = gamepad1.right_stick_x ;
 
             // Auto-drive using camera
             boolean didAuto = false;
@@ -65,7 +65,7 @@ public class FieldCentricCamara extends LinearOpMode {
             } else if (gamepad1.right_bumper) {
                 intake = 0.3;
             } else {
-                intake = .6;
+                intake = 0;
             }
             robot.setIntakePower(intake);
 
@@ -115,7 +115,7 @@ public class FieldCentricCamara extends LinearOpMode {
             }
 
             // Telemetry
-            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+           // telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Outtake Toggle", outtakeManual ? "ON (1300)" : "OFF");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
