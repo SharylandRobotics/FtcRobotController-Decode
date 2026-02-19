@@ -30,7 +30,6 @@ public class RobotCentric extends LinearOpMode {
         return false;
     }
 
-
     @Override
     public void runOpMode() {
 
@@ -44,7 +43,7 @@ public class RobotCentric extends LinearOpMode {
         boolean intakeOn = false;
 
 
-        double VELOCITY = 1500;
+        double VELOCITY = 1350;
 
 
         // --- INIT PHASE ---
