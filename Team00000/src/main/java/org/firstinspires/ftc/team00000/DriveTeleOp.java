@@ -36,12 +36,21 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
-// Reference TeleOp for Team00000.
-// Controls:
-// - Drive: left stick translate, right stick rotate, left bumper precision mode.
-// - Vision assist: hold right bumper for AprilTag goal approach.
-// - Shooter: X toggles spin-up, Y starts timed burst feed.
-// - Transfer/stoppers: d-pad and A/B manage intake, reverse, and gate state.
+/**
+ * Driver-controlled OpMode for Team00000.
+ *
+ * <p>Teaching goals for students:
+ * 1) Separate robot services ({@link RobotHardware}) from operator state logic in this class.
+ * 2) Demonstrate edge-triggered input handling and timed state machines.
+ * 3) Expose key tuning values in FTC Dashboard via {@link Config}.
+ *
+ * <p>Primary controls:
+ * - Drive: left stick translate, right stick rotate, left bumper precision mode
+ * - Vision assist: hold right bumper for AprilTag approach
+ * - Shooter: X toggles spin-up, Y runs timed burst feed
+ * - Shooter tuning: right stick button toggles AUTO_TAG, triggers trim model output
+ * - Transfer/stoppers: d-pad and A/B intake/reverse/gate control
+ */
 @Config
 @TeleOp(name = "Drive TeleOp", group = "opMode")
 
@@ -63,7 +72,7 @@ public class DriveTeleOp extends LinearOpMode {
     private double lastShooterKi = Double.NaN;
     private double lastShooterKd = Double.NaN;
 
-    // Current mechanism outputs (also visible in Dashboard).
+    // Current mechanism outputs (also visible and editable from Dashboard).
     public static double stopperPower = 0.0;
     public static double transferPower = 0.0;
 
@@ -76,8 +85,12 @@ public class DriveTeleOp extends LinearOpMode {
     private boolean prevX = false;
     private boolean prevY = false;
     private boolean prevL3 = false;
+    private boolean prevR3 = false;
+    private boolean prevTrimInc = false;
+    private boolean prevTrimDec = false;
+    private boolean prevTrimReset = false;
 
-    // Runtime operator state.
+    // Runtime operator state machine.
     private boolean shooterEnabled = false;
     private boolean intakeMode = false;
     private boolean launchMode = false;
@@ -86,8 +99,12 @@ public class DriveTeleOp extends LinearOpMode {
     private long feedStartMs = 0;
     private long feedAccumulatedMs = 0;
     private long lastLaunchLoopMs = 0;
+    private boolean jamReverseActive = false;
+    private double jamRestoreTransferPower = 0.0;
+    private double jamRestoreStopperPower = 0.0;
+    private long lastTrimStepMs = 0;
 
-    // Shot-profile multipliers used during burst feed.
+    // Shot-profile multipliers used within a burst feed sequence.
     public static double SHOT1_MULTIPLIER = 1.00;
     public static double SHOT2_MULTIPLIER = 1.03;
     public static double SHOT3_MULTIPLIER = 1.06;
@@ -111,6 +128,7 @@ public class DriveTeleOp extends LinearOpMode {
     // Number of artifacts launched per Y burst.
     public static int LAUNCH_ARTIFACTS_PER_BURST = 3;
 
+    // Shooter readiness and feed gating.
     public static double SHOOT_READY_PCT_TOL = 0.20;
     public static double SHOOT_FEED_PCT_TOL = 0.10;
     public static int SHOOT_READY_TIMEOUT_MS = 900;
@@ -121,6 +139,26 @@ public class DriveTeleOp extends LinearOpMode {
     public static double SHOOT_READY_MIN_TPS = 470.0;
     public static double SHOOT_FEED_MIN_TPS = 430.0;
     public static double SHOOTER_LAUNCH_MIN_CMD = 0.45;
+
+    // AUTO_TAG shooter model parameters (range in inches, command in [0..1]).
+    public static boolean SHOOTER_AUTO_TAG = false;
+    public static double SHOOTER_AUTO_REF_RANGE_IN = 140.0;
+    public static double SHOOTER_AUTO_REF_CMD = 0.38;
+    public static double SHOOTER_AUTO_CMD_PER_IN = 0.0018;
+    public static double SHOOTER_AUTO_MIN_CMD = 0.20;
+    public static double SHOOTER_AUTO_MAX_CMD = 0.90;
+    public static double SHOOTER_AUTO_FALLBACK_CMD = 0.38;
+    public static double SHOOTER_AUTO_RANGE_ALPHA = 0.25;
+    public static int SHOOTER_AUTO_RANGE_HOLD_MS = 500;
+    public static double SHOOTER_VOLTAGE_NOMINAL = 12.0;
+    public static double SHOOTER_VOLTAGE_COMP_WEIGHT = 1.0;
+    public static double SHOOTER_VOLTAGE_COMP_MIN = 0.90;
+    public static double SHOOTER_VOLTAGE_COMP_MAX = 1.20;
+    public static double SHOOTER_AUTO_TRIM_CMD = 0.0;
+    public static double SHOOTER_TRIM_STEP_CMD = 0.005;
+    public static double SHOOTER_TRIM_MAX_CMD = 0.20;
+    public static double SHOOTER_TRIM_TRIGGER_THRESHOLD = 0.60;
+    public static int SHOOTER_TRIM_REPEAT_MS = 120;
 
     // Mechanism power presets.
     public static double TRANSFER_FWD = 0.70;
@@ -136,15 +174,22 @@ public class DriveTeleOp extends LinearOpMode {
         double lateral;
         double yaw;
 
-        // Initialize hardware and telemetry sinks (Driver Station + Dashboard).
+        // Initialize hardware once, then mirror telemetry to Driver Station + Dashboard.
         robot.init();
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.setMsTransmissionInterval(100);
+        SHOOTER_AUTO_TRIM_CMD = Range.clip(SHOOTER_AUTO_TRIM_CMD,
+                -Math.abs(SHOOTER_TRIM_MAX_CMD), Math.abs(SHOOTER_TRIM_MAX_CMD));
+        lastTrimStepMs = 0;
+        robot.resetShooterAutoModel(SHOOTER_AUTO_FALLBACK_CMD);
 
         while(opModeInInit()) {
-            // Pre-start checks: verify heading updates and vision is initialized.
+            // Pre-start checks for students: heading, mode, and tuning controls.
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            telemetry.addData("ShooterMode", SHOOTER_AUTO_TAG ? "AUTO_TAG" : "MANUAL");
+            telemetry.addData("ShooterTrim", "%+.3f", SHOOTER_AUTO_TRIM_CMD);
+            telemetry.addData("TuneCtrl", "R3 mode  RT/LT trim  RT+LT reset");
             if (TELEMETRY_VERBOSE) {
                 telemetry.addData("Vision", "Ready (AprilTag)");
                 telemetry.addData("Mode", "INIT");
@@ -159,7 +204,7 @@ public class DriveTeleOp extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            // Refresh AprilTag detections (used for assist + telemetry).
+            // Keep vision data fresh for assist, telemetry, and shooter auto model.
             robot.updateAprilTagDetections();
 
             boolean up = gamepad1.dpad_up;
@@ -171,6 +216,11 @@ public class DriveTeleOp extends LinearOpMode {
             boolean x = gamepad1.x;
             boolean y = gamepad1.y;
             boolean l3 = gamepad1.left_stick_button;
+            boolean r3 = gamepad1.right_stick_button;
+            boolean trimIncPressed = gamepad1.right_trigger >= SHOOTER_TRIM_TRIGGER_THRESHOLD;
+            boolean trimDecPressed = gamepad1.left_trigger >= SHOOTER_TRIM_TRIGGER_THRESHOLD;
+            boolean trimResetPressed = trimIncPressed && trimDecPressed;
+            long loopNowMs = System.currentTimeMillis();
 
             boolean upEdge = up && !prevUp;
             boolean downEdge = down && !prevDown;
@@ -180,14 +230,21 @@ public class DriveTeleOp extends LinearOpMode {
             boolean xEdge = x && !prevX;
             boolean yEdge = y && !prevY;
             boolean l3Edge = l3 && !prevL3;
+            boolean r3Edge = r3 && !prevR3;
 
-            // Left Stick: toggle drive mode.
+            // Left stick button toggles drive frame: field-centric vs robot-centric.
             if (l3Edge) {
                 driveMode = (driveMode == DriveMode.FIELD) ? DriveMode.ROBOT : DriveMode.FIELD;
                 robot.resetYaw();
             }
 
-            // D-pad UP/DOWN: transfer control.
+            // Right stick button toggles auto shooter modeling.
+            if (r3Edge) {
+                SHOOTER_AUTO_TAG = !SHOOTER_AUTO_TAG;
+            }
+            updateAutoShooterTrim(loopNowMs, trimIncPressed, trimDecPressed, trimResetPressed);
+
+            // D-pad UP/DOWN directly command transfer direction.
             if (upEdge) {
                 transferPower = TRANSFER_FWD;
                 intakeMode = true;
@@ -199,7 +256,7 @@ public class DriveTeleOp extends LinearOpMode {
                 launchMode = false;
             }
 
-            // D-pad LEFT: safe stop.
+            // D-pad LEFT is a hard stop for transfer + stopper.
             if (leftEdge) {
                 transferPower = 0.0;
                 stopperPower = STOPPER_CLOSED;
@@ -208,12 +265,12 @@ public class DriveTeleOp extends LinearOpMode {
                 shotIndex = 0;
             }
 
-            // D-pad RIGHT: toggle stoppers.
+            // D-pad RIGHT toggles stopper open/closed.
             if (rightEdge) {
                 stopperPower = (stopperPower == STOPPER_OPEN) ? STOPPER_CLOSED : STOPPER_OPEN;
             }
 
-            // A: toggle intake mode.
+            // A toggles intake mode.
             if (aEdge) {
                 intakeMode = !intakeMode;
                 launchMode = false;
@@ -226,15 +283,28 @@ public class DriveTeleOp extends LinearOpMode {
                 shotIndex = 0;
             }
 
-            // B (hold): quick reverse to clear jams.
+            // B (hold) is a temporary anti-jam reverse override.
             if (b) {
+                if (!jamReverseActive) {
+                    if (launchMode) {
+                        jamRestoreTransferPower = 0.0;
+                        jamRestoreStopperPower = STOPPER_CLOSED;
+                    } else {
+                        jamRestoreTransferPower = transferPower;
+                        jamRestoreStopperPower = stopperPower;
+                    }
+                    jamReverseActive = true;
+                }
                 transferPower = TRANSFER_REV;
                 stopperPower = STOPPER_CLOSED;
-                intakeMode = false;
                 launchMode = false;
+            } else if (jamReverseActive) {
+                jamReverseActive = false;
+                transferPower = jamRestoreTransferPower;
+                stopperPower = jamRestoreStopperPower;
             }
 
-            // X: toggle shooter spin-up.
+            // X toggles shooter flywheel spin-up.
             if (xEdge) {
                 shooterEnabled = !shooterEnabled;
                 if (!shooterEnabled) {
@@ -246,22 +316,22 @@ public class DriveTeleOp extends LinearOpMode {
                 }
             }
 
-            // Y: burst feed for a fixed time window; requires shooter enabled.
+            // Y starts burst feed sequence (if shooter already enabled).
             if (yEdge && shooterEnabled) {
                 launchMode = true;
                 intakeMode = false;
-                launchStartMs = System.currentTimeMillis();
+                launchStartMs = loopNowMs;
                 readySinceMs = 0;
                 feedStartMs = 0;
                 feedAccumulatedMs = 0;
                 lastLaunchLoopMs = launchStartMs;
-                firingShotIndex = 0;
+                firingShotIndex = Range.clip(shotIndex, 0, 2);
                 preFeedTicksPerSecond = Double.NaN;
                 minimumFeedTicksPerSecond = Double.NaN;
             }
 
             if(launchMode && shooterEnabled) {
-                long now = System.currentTimeMillis();
+                long now = loopNowMs;
                 long t = now - launchStartMs;
                 long dt = Math.max(0, now - lastLaunchLoopMs);
                 lastLaunchLoopMs = now;
@@ -294,7 +364,7 @@ public class DriveTeleOp extends LinearOpMode {
                         minimumFeedTicksPerSecond = Double.NaN;
                     }
                 } else {
-                    boolean atSpeed = isShooterReady(SHOOT_READY_PCT_TOL, SHOOT_READY_MIN_TPS);
+                    boolean atSpeed = robot.isShooterReady(SHOOT_READY_PCT_TOL, SHOOT_READY_MIN_TPS);
 
                     if (atSpeed) {
                         if (readySinceMs == 0) readySinceMs = now;
@@ -308,12 +378,12 @@ public class DriveTeleOp extends LinearOpMode {
                     boolean readyOrTimeout = (minSpoolMet && readyStable) || timeoutHit;
 
                     if (!readyOrTimeout) {
-                        // Spool phase: keep stoppers closed and do not feed.
+                        // Spool phase: hold feed closed until ready (or timeout policy triggers).
                         stopperPower = STOPPER_CLOSED;
                         transferPower = 0.0;
                         feedStartMs = 0;
                     } else {
-                        // Start feeding exactly once.
+                        // Latch feed start once, then accumulate active feed time.
                         if (feedStartMs == 0) {
                             feedStartMs = now;
                             preFeedTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
@@ -321,7 +391,7 @@ public class DriveTeleOp extends LinearOpMode {
                         }
 
                         long totalFeedMs = (long) LAUNCH_FEED_MS * Math.max(1, LAUNCH_ARTIFACTS_PER_BURST);
-                        boolean atFeedSpeed = isShooterReady(SHOOT_FEED_PCT_TOL, SHOOT_FEED_MIN_TPS);
+                        boolean atFeedSpeed = robot.isShooterReady(SHOOT_FEED_PCT_TOL, SHOOT_FEED_MIN_TPS);
                         boolean allowFeedNow = atFeedSpeed || (timeoutHit && ALLOW_FEED_ON_TIMEOUT);
                         if (feedAccumulatedMs < totalFeedMs) {
                             double currentTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
@@ -333,7 +403,7 @@ public class DriveTeleOp extends LinearOpMode {
                                 stopperPower = STOPPER_OPEN;
                                 transferPower = TRANSFER_FWD;
                             } else {
-                                // Hold feed closed until shooter speed recovers.
+                                // Pause feed if speed drops below threshold.
                                 stopperPower = STOPPER_CLOSED;
                                 transferPower = 0.0;
                             }
@@ -352,7 +422,7 @@ public class DriveTeleOp extends LinearOpMode {
                     }
                 }
             } else {
-                // Safety: keep stoppers closed while in-taking.
+                // Safety default outside launch mode.
                 if (intakeMode && !b) {
                     stopperPower = STOPPER_CLOSED;
                 }
@@ -373,8 +443,12 @@ public class DriveTeleOp extends LinearOpMode {
             prevX = x;
             prevY = y;
             prevL3 = l3;
+            prevR3 = r3;
+            prevTrimInc = trimIncPressed;
+            prevTrimDec = trimDecPressed;
+            prevTrimReset = trimResetPressed;
 
-            // Slow mode scales driver inputs for precision.
+            // Slow mode scales driver inputs for precision driving.
             boolean slow = gamepad1.left_bumper;
             double scale = slow ? 0.4 : 1.0;
 
@@ -382,7 +456,7 @@ public class DriveTeleOp extends LinearOpMode {
             lateral = gamepad1.left_stick_x * scale;
             yaw = gamepad1.right_stick_x * scale;
 
-            // Use motor's configured maxRPM unless overridden from Dashboard.
+            // Use motor metadata maxRPM unless Dashboard override is active.
             double effMaxRpm = (shooterMaxRpm > 0.0) ? shooterMaxRpm : robot.getShooterMaxRpm();
             if (Double.isNaN(lastEffMaxRpm)
                     || Math.abs(effMaxRpm - lastEffMaxRpm) > 1e-6
@@ -395,14 +469,39 @@ public class DriveTeleOp extends LinearOpMode {
                 lastShooterKi = shooterKi;
                 lastShooterKd = shooterKd;
             }
-            double shooterBase = shooterEnabled ? shooterFar : 0.0;
+            // AprilTag measurements drive both shooter model and operator telemetry.
+            Integer goalId = robot.getGoalTagId();
+            double range = robot.getGoalRangeIn();
+            double bearing = robot.getGoalBearingDeg();
+            double elevation = robot.getGoalElevationDeg();
+
+            SHOOTER_AUTO_TRIM_CMD = Range.clip(SHOOTER_AUTO_TRIM_CMD,
+                    -Math.abs(SHOOTER_TRIM_MAX_CMD), Math.abs(SHOOTER_TRIM_MAX_CMD));
+            robot.updateShooterAutoModel(
+                    range,
+                    loopNowMs,
+                    SHOOTER_AUTO_RANGE_ALPHA,
+                    SHOOTER_AUTO_RANGE_HOLD_MS,
+                    SHOOTER_AUTO_REF_RANGE_IN,
+                    SHOOTER_AUTO_REF_CMD,
+                    SHOOTER_AUTO_CMD_PER_IN,
+                    SHOOTER_AUTO_FALLBACK_CMD,
+                    SHOOTER_AUTO_MIN_CMD,
+                    SHOOTER_AUTO_MAX_CMD,
+                    SHOOTER_VOLTAGE_NOMINAL,
+                    SHOOTER_VOLTAGE_COMP_WEIGHT,
+                    SHOOTER_VOLTAGE_COMP_MIN,
+                    SHOOTER_VOLTAGE_COMP_MAX,
+                    SHOOTER_AUTO_TRIM_CMD);
+
+            double shooterBase = 0.0;
+            if (shooterEnabled) {
+                shooterBase = SHOOTER_AUTO_TAG ? robot.getShooterAutoBaseCmd() : shooterFar;
+            }
 
             int effectiveShotIndex;
             if (launchMode && shooterEnabled && feedStartMs != 0) {
-                long feedElapsed = System.currentTimeMillis() - feedStartMs;
-                int step = (LAUNCH_FEED_MS > 0) ? (int) (feedElapsed / (long) LAUNCH_FEED_MS) : 0;
-                step = Range.clip(step, 0, 2); // only 3 multipliers available
-                effectiveShotIndex = firingShotIndex + step;
+                effectiveShotIndex = firingShotIndex + getBurstStepFromAccumulatedFeedMs();
             } else {
                 effectiveShotIndex = shotIndex;
             }
@@ -417,19 +516,13 @@ public class DriveTeleOp extends LinearOpMode {
 
             robot.setShooterVelocityPercent(shooterApplied, effMaxRpm);
 
-            // Vision values (for telemetry and driver assist).
-            Integer goalId = robot.getGoalTagId();
-            double range = robot.getGoalRangeIn();
-            double bearing = robot.getGoalBearingDeg();
-            double elevation = robot.getGoalElevationDeg();
-
-            // Derived aim helpers (assumes camera pitched up 8°).
+            // Simple derived helpers for students while tuning.
             double horizontal = (Double.isNaN(range) || Double.isNaN(bearing))
                     ? Double.NaN
                     : range * Math.cos(Math.toRadians(bearing));
             double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (8.0 + elevation));
 
-            // RB (hold): AprilTag assist (range->drive, tagYaw->strafe, bearing->turn).
+            // RB (hold): AprilTag drive assist (range->axial, tagYaw->lateral, bearing->turn).
             boolean autoAssist = gamepad1.right_bumper;
             boolean didAuto = false;
             if (autoAssist) {
@@ -438,7 +531,7 @@ public class DriveTeleOp extends LinearOpMode {
                 didAuto = robot.autoDriveToGoalStep();
             }
 
-            // Manual drive (routes to FIELD- or ROBOT-centric based on driveMode).
+            // Manual drive fallback when assist is inactive or has no valid target.
             if (!didAuto) {
                 if (driveMode == DriveMode.FIELD) {
                     robot.driveFieldCentric(axial, lateral, yaw);
@@ -460,32 +553,42 @@ public class DriveTeleOp extends LinearOpMode {
 
             int activeShotIndex;
             if (launchMode && shooterEnabled && feedStartMs != 0) {
-                long feedElapsed = System.currentTimeMillis() - feedStartMs;
-                int step = (LAUNCH_FEED_MS > 0) ? (int) (feedElapsed / (long) LAUNCH_FEED_MS) : 0;
-                step = Range.clip(step, 0, 2);
-                activeShotIndex = firingShotIndex + step;
+                activeShotIndex = firingShotIndex + getBurstStepFromAccumulatedFeedMs();
             } else {
                 activeShotIndex = shotIndex;
             }
             activeShotIndex = Range.clip(activeShotIndex, 0, 2);
-            double activeShotMultiplier = (activeShotIndex == 0) ? SHOT1_MULTIPLIER : (activeShotIndex == 1 ? SHOT2_MULTIPLIER : SHOT3_MULTIPLIER);
 
             telemetry.addData("Shooter", shooterEnabled ? "ON" : "OFF");
+            telemetry.addData("ShooterMode", SHOOTER_AUTO_TAG ? "AUTO_TAG" : "MANUAL");
             telemetry.addData("Launch", launchMode ? "ON" : "OFF");
             telemetry.addData("ShooterTPS", "%.0f", currentTicksPerSecond);
+            telemetry.addData("ShooterCmd", "%.3f", shooterApplied);
+            telemetry.addData("Trim", "%+.3f", SHOOTER_AUTO_TRIM_CMD);
             telemetry.addData("Shot", "%d", (activeShotIndex + 1));
             telemetry.addData("AtSpeed", "%s",
-                    isShooterReady(SHOOT_READY_PCT_TOL, SHOOT_READY_MIN_TPS) ? "YES" : "no",
-                    SHOOT_READY_PCT_TOL * 100.0);
+                    robot.isShooterReady(SHOOT_READY_PCT_TOL, SHOOT_READY_MIN_TPS) ? "YES" : "no");
             telemetry.addData("FeedReady", "%s",
-                    isShooterReady(SHOOT_FEED_PCT_TOL, SHOOT_FEED_MIN_TPS) ? "YES" : "no",
-                    SHOOT_FEED_PCT_TOL * 100.0);
+                    robot.isShooterReady(SHOOT_FEED_PCT_TOL, SHOOT_FEED_MIN_TPS) ? "YES" : "no");
 
             if (TELEMETRY_VERBOSE) {
+                double filteredRangeIn = robot.getShooterAutoFilteredRangeIn();
+                double batteryVoltage = robot.getShooterAutoBatteryVoltage();
+                String filteredRangeText = Double.isNaN(filteredRangeIn)
+                        ? "–"
+                        : String.format("%.1f", filteredRangeIn);
+                String batteryText = Double.isNaN(batteryVoltage)
+                        ? "–"
+                        : String.format("%.2fV", batteryVoltage);
                 telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
                 telemetry.addData("DriveRaw", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
-                telemetry.addData("ShooterCommand", "%.2f", shooterEnabled ? shooterFar : 0.0);
-                telemetry.addData("ShooterCmdApplied", "%.2f", shooterEnabled ? (shooterFar * activeShotMultiplier) : 0.0);
+                telemetry.addData("ShooterCommand", "%.2f", shooterBase);
+                telemetry.addData("ShooterCmdApplied", "%.2f", shooterApplied);
+                telemetry.addData("ShooterAuto", "%s trim=%+.3f", SHOOTER_AUTO_TAG ? "ON" : "OFF", SHOOTER_AUTO_TRIM_CMD);
+                telemetry.addData("ShooterAutoBase", "%.3f  voltComp=%.3f", robot.getShooterAutoBaseCmd(), robot.getShooterAutoVoltageComp());
+                telemetry.addData("ShooterAutoRange", "raw=%.1f in  filt=%s in", range, filteredRangeText);
+                telemetry.addData("Battery", "%s", batteryText);
+                telemetry.addData("TuneCtrl", "R3=AUTO_TAG  RT/LT=trim  RT+LT=reset");
                 telemetry.addData("ShooterModelPercent", "=%.0f%%", shooterSpeedPercent);
                 telemetry.addData("StopperPower", "%.2f", stopperPower);
                 telemetry.addData("TransferPower", "%.2f", transferPower);
@@ -512,18 +615,59 @@ public class DriveTeleOp extends LinearOpMode {
             }
             telemetry.update();
 
-            // Loop timing (ms): keep small for responsiveness and timing accuracy.
+            // Fixed loop delay keeps control timing predictable and CPU load reasonable.
             sleep(20);
         }
     }
 
-    private boolean isShooterReady(double percentTolerance, double minTicksPerSecond) {
-        if (robot.isShooterAtSpeedPercent(percentTolerance)) {
-            return true;
+    /**
+     * Converts accumulated active feed time into burst profile step index.
+     *
+     * <p>Using accumulated feed time (instead of wall time) keeps shot progression stable when feed
+     * pauses for speed recovery.
+     */
+    private int getBurstStepFromAccumulatedFeedMs() {
+        if (LAUNCH_FEED_MS <= 0) {
+            return 0;
         }
-        if (minTicksPerSecond > 0.0) {
-            return Math.abs(robot.getShooterVelocityPerSecond()) >= minTicksPerSecond;
-        }
-        return false;
+        return Range.clip((int) (feedAccumulatedMs / (long) LAUNCH_FEED_MS), 0, 2);
     }
+
+    /**
+     * Applies live operator trim adjustments to AUTO_TAG shooter command.
+     *
+     * <p>Controls:
+     * RT increases trim, LT decreases trim, RT+LT resets trim.
+     */
+    private void updateAutoShooterTrim(long nowMs, boolean trimIncPressed, boolean trimDecPressed, boolean trimResetPressed) {
+        SHOOTER_AUTO_TRIM_CMD = Range.clip(SHOOTER_AUTO_TRIM_CMD,
+                -Math.abs(SHOOTER_TRIM_MAX_CMD), Math.abs(SHOOTER_TRIM_MAX_CMD));
+        if (!SHOOTER_AUTO_TAG) {
+            lastTrimStepMs = 0;
+            return;
+        }
+        if (trimResetPressed) {
+            if (!prevTrimReset) {
+                SHOOTER_AUTO_TRIM_CMD = 0.0;
+                lastTrimStepMs = nowMs;
+            }
+            return;
+        }
+
+        boolean singleDirection = trimIncPressed ^ trimDecPressed;
+        if (!singleDirection) {
+            return;
+        }
+
+        boolean risingEdge = (trimIncPressed && !prevTrimInc) || (trimDecPressed && !prevTrimDec);
+        boolean repeatReady = (lastTrimStepMs == 0)
+                || (nowMs - lastTrimStepMs >= Math.max(20, SHOOTER_TRIM_REPEAT_MS));
+        if (risingEdge || repeatReady) {
+            double step = trimIncPressed ? Math.abs(SHOOTER_TRIM_STEP_CMD) : -Math.abs(SHOOTER_TRIM_STEP_CMD);
+            SHOOTER_AUTO_TRIM_CMD = Range.clip(SHOOTER_AUTO_TRIM_CMD + step,
+                    -Math.abs(SHOOTER_TRIM_MAX_CMD), Math.abs(SHOOTER_TRIM_MAX_CMD));
+            lastTrimStepMs = nowMs;
+        }
+    }
+
 }
