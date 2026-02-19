@@ -48,7 +48,7 @@ public class TwoPlayerRC extends LinearOpMode {
         boolean lastIntakeState = false;
 
 
-        double VELOCITY = 1350;
+        double VELOCITY = 1300;
         // --- INIT PHASE ---
         // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
         // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()

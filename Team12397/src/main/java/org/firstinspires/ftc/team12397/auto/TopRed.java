@@ -19,8 +19,8 @@ public class TopRed extends LinearOpMode {
 
 
         // Target turret velocities
-        double FIRST_VELOCITY = 1500;
-        double SECOND_VELOCITY = 1600;
+        double FIRST_VELOCITY = 1300;
+        double SECOND_VELOCITY = 1300;
 
 
         // Initialize all motors and IMU before start
@@ -47,17 +47,17 @@ public class TopRed extends LinearOpMode {
 
         robot.driveStraight(.7, -50, 0);
         robot.holdHeading(robot.YAW_SPEED, 0, 1);
-        robot.turnToHeading(1, 5);
-        robot.holdHeading(robot.YAW_SPEED, 5, 1);
+        robot.turnToHeading(1, 7);
+        robot.holdHeading(robot.YAW_SPEED, 7, 1);
 
         // Wait until turret reaches speed while holding heading
         while (robot.getVelocity() < FIRST_VELOCITY-20) {
-            robot.holdHeading(1, 5, 0.1);
+            robot.holdHeading(1, 7, 0.1);
         }
 
 
         robot.intakePower(-1);
-        robot.holdHeading(0, 5, 3);
+        robot.holdHeading(0, 7, 3);
 
 
         // Turn off motors
@@ -68,11 +68,11 @@ public class TopRed extends LinearOpMode {
         // Phase 2 movement
         robot.turnToHeading(0.5, -40);
         robot.holdHeading(0.5, -40, 1);
-        robot.straif(0.5, 8, -40);
+        robot.straif(0.5, 7, 40);
         robot.intakePower(-1);
         robot.driveStraight(0.3, 18, -40);
-        robot.driveStraight(0.3, 13, -40);
-
+        robot.driveStraight(0.3, 15, -40);
+        robot.straif(0.5, -1, 40);
 
         // Extra heading hold and turret prep
         robot.holdHeading(robot.YAW_SPEED, -40, 1);
@@ -83,23 +83,23 @@ public class TopRed extends LinearOpMode {
 
 
         // Shooting movement
-        robot.driveStraight(.7, -31, -40);
+        robot.driveStraight(.7, -33, -40);
         robot.holdHeading(robot.YAW_SPEED, -40, 1);
-        robot.turnToHeading(1, 3);
-        robot.holdHeading(robot.YAW_SPEED, 3, 1);
+        robot.turnToHeading(1, 7);
+        robot.holdHeading(robot.YAW_SPEED, 7, 1);
 
 
         // Wait until turret reaches shooting speed
         while (robot.getVelocity() < SECOND_VELOCITY-20) {
-            robot.holdHeading(1, 3, 0.1);
+            robot.holdHeading(1, 7, 0.1);
         }
 
 
         robot.intakePower(-1);
-        robot.holdHeading(0, 3, 3);
+        robot.holdHeading(0, 7, 3);
 
 
         // Move out
-        robot.straif(1, 20, 0);
+        robot.straif(1, 22, 0);
     }
 }
