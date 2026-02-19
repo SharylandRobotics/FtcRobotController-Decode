@@ -406,6 +406,7 @@ public class RobotHardware {
     }
 
     public void maintainSpindexerHandler(){
+        getSpindexerOffset();
         spindexer.setTargetPosition( (int) ( (spindexerTarget - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -863,7 +864,7 @@ public class RobotHardware {
         double returnVal;
         double[] slopeList;
         if (valueIndex == 1){
-            returnVal = 500;
+            returnVal = 1400;
             slopeList = velocitySlopeList;
         } else {
             returnVal = 0.6;
@@ -955,7 +956,7 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480, 800);
+                spindexerHandler(-480, 1500);
                 return false;
             }
         }
@@ -998,12 +999,12 @@ public class RobotHardware {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (stage == 0){
-                    spindexerHandler(10, 1000);
+                    spindexerHandler(20, 1000);
                     stage++;
                 }
 
-                if (stage == 1 && timer.seconds() >= 1){
-                    spindexerHandler(-10,1000);
+                if (stage == 1 && (timer.seconds() >= 1 || !spindexer.isBusy())){
+                    spindexerHandler(-20,1000);
                     stage++;
                 }
                 return (stage < 2);

@@ -62,12 +62,12 @@ public class RRcolorSort extends LinearOpMode {
 
         Actions.runBlocking(
                 new SequentialAction(
-                        actionLib.setIntakeVel(2000),
+                        actionLib.setIntakeVel(2400),
+                        new SleepAction(2),
                         new RaceAction(
                                 actionLib.scanColorToggle(),
                                 new SequentialAction(
-                                        driveToBalls,
-                                        actionLib.wiggleSpindexer(),
+                                        actionLib.spindexerTargetAddVel(20,800),
                                         new SleepAction(2)
                                 )
                         ),

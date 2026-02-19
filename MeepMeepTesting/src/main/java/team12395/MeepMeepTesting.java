@@ -32,7 +32,7 @@ public class MeepMeepTesting {
         double deg = Math.atan2(target.position.y - example.position.y,
                 target.position.x - example.position.x) - example.heading.imag;
          */
-        Pose2d startPose = new Pose2d(-62, 36, Math.toRadians(90));
+        Pose2d startPose = new Pose2d(-47, 50, Math.toRadians(126));
 
         Pose2d shoot1 =  new Pose2d(-20, 22, Math.toRadians(90));
 
