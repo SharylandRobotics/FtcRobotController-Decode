@@ -51,7 +51,7 @@ public class DriveTeleOp extends LinearOpMode {
     RobotHardware robot = new RobotHardware(this);
 
     // Shooter tuning exposed through FTC Dashboard.
-    public static double shooterFar = 0.35;
+    public static double shooterFar = 0.38;
     public static double shooterMaxRpm = 0.0;
     public static double shooterKp = 0.3;
     public static double shooterKi = 0.0;
@@ -84,6 +84,8 @@ public class DriveTeleOp extends LinearOpMode {
     private long launchStartMs = 0;
     private long readySinceMs = 0;
     private long feedStartMs = 0;
+    private long feedAccumulatedMs = 0;
+    private long lastLaunchLoopMs = 0;
 
     // Shot-profile multipliers used during burst feed.
     public static double SHOT1_MULTIPLIER = 1.00;
@@ -110,14 +112,22 @@ public class DriveTeleOp extends LinearOpMode {
     public static int LAUNCH_ARTIFACTS_PER_BURST = 3;
 
     public static double SHOOT_READY_PCT_TOL = 0.20;
-    public static int SHOOT_READY_TIMEOUT_MS = 800;
+    public static double SHOOT_FEED_PCT_TOL = 0.10;
+    public static int SHOOT_READY_TIMEOUT_MS = 900;
     public static int FIRE_SETTLE_MS = 80;
+    public static boolean ALLOW_FEED_ON_TIMEOUT = true;
+    public static double SHOOTER_FEED_BOOST = 0.10;
+    public static boolean IMMEDIATE_LAUNCH_ON_Y = true;
+    public static double SHOOT_READY_MIN_TPS = 470.0;
+    public static double SHOOT_FEED_MIN_TPS = 430.0;
+    public static double SHOOTER_LAUNCH_MIN_CMD = 0.45;
 
     // Mechanism power presets.
-    public static double TRANSFER_FWD = 0.80;
+    public static double TRANSFER_FWD = 0.70;
     public static double TRANSFER_REV = -0.20;
     public static double STOPPER_OPEN = 0.80;
     public static double STOPPER_CLOSED = 0.00;
+    public static boolean TELEMETRY_VERBOSE = false;
 
     @Override
     public void runOpMode() {
@@ -134,11 +144,13 @@ public class DriveTeleOp extends LinearOpMode {
         while(opModeInInit()) {
             // Pre-start checks: verify heading updates and vision is initialized.
             telemetry.addData("Status", "Hardware Initialized");
-            telemetry.addData("Vision", "Ready (AprilTag)");
-            telemetry.addData("Mode", "INIT");
-            telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
-                    robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            if (TELEMETRY_VERBOSE) {
+                telemetry.addData("Vision", "Ready (AprilTag)");
+                telemetry.addData("Mode", "INIT");
+                telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
+                        robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
+            }
             telemetry.update();
         }
 
@@ -241,6 +253,8 @@ public class DriveTeleOp extends LinearOpMode {
                 launchStartMs = System.currentTimeMillis();
                 readySinceMs = 0;
                 feedStartMs = 0;
+                feedAccumulatedMs = 0;
+                lastLaunchLoopMs = launchStartMs;
                 firingShotIndex = 0;
                 preFeedTicksPerSecond = Double.NaN;
                 minimumFeedTicksPerSecond = Double.NaN;
@@ -249,38 +263,22 @@ public class DriveTeleOp extends LinearOpMode {
             if(launchMode && shooterEnabled) {
                 long now = System.currentTimeMillis();
                 long t = now - launchStartMs;
+                long dt = Math.max(0, now - lastLaunchLoopMs);
+                lastLaunchLoopMs = now;
 
-                boolean atSpeed = robot.isShooterAtSpeedPercent(SHOOT_READY_PCT_TOL);
-
-                if (atSpeed) {
-                    if (readySinceMs == 0) readySinceMs = now;
-                } else {
-                    readySinceMs = 0;
-                }
-
-                boolean readyStable = (readySinceMs != 0) && (now - readySinceMs >= FIRE_SETTLE_MS);
-                boolean timeoutHit = (t >= SHOOT_READY_TIMEOUT_MS);
-                boolean minSpoolMet = (t >= LAUNCH_SPOOL_MS);
-                boolean readyOrTimeout = (minSpoolMet && readyStable) || timeoutHit;
-
-                if (!readyOrTimeout) {
-                    // Spool phase: keep stoppers closed and do not feed.
-                    stopperPower = STOPPER_CLOSED;
-                    transferPower = 0.0;
-                    feedStartMs = 0;
-                } else {
-                    // Start feeding exactly once.
+                if (IMMEDIATE_LAUNCH_ON_Y) {
                     if (feedStartMs == 0) {
                         feedStartMs = now;
                         preFeedTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
                         minimumFeedTicksPerSecond = preFeedTicksPerSecond;
                     }
-
-                    double currentTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
-                    if (!Double.isNaN(minimumFeedTicksPerSecond)) minimumFeedTicksPerSecond = Math.min(minimumFeedTicksPerSecond, currentTicksPerSecond);
-                    long feedElapsed = now - feedStartMs;
                     long totalFeedMs = (long) LAUNCH_FEED_MS * Math.max(1, LAUNCH_ARTIFACTS_PER_BURST);
-                    if (feedElapsed < totalFeedMs) {
+                    if (feedAccumulatedMs < totalFeedMs) {
+                        double currentTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
+                        if (!Double.isNaN(minimumFeedTicksPerSecond)) {
+                            minimumFeedTicksPerSecond = Math.min(minimumFeedTicksPerSecond, currentTicksPerSecond);
+                        }
+                        feedAccumulatedMs += dt;
                         stopperPower = STOPPER_OPEN;
                         transferPower = TRANSFER_FWD;
                     } else {
@@ -290,8 +288,67 @@ public class DriveTeleOp extends LinearOpMode {
                         shotIndex = 0;
                         readySinceMs = 0;
                         feedStartMs = 0;
+                        feedAccumulatedMs = 0;
+                        lastLaunchLoopMs = 0;
                         preFeedTicksPerSecond = Double.NaN;
                         minimumFeedTicksPerSecond = Double.NaN;
+                    }
+                } else {
+                    boolean atSpeed = isShooterReady(SHOOT_READY_PCT_TOL, SHOOT_READY_MIN_TPS);
+
+                    if (atSpeed) {
+                        if (readySinceMs == 0) readySinceMs = now;
+                    } else {
+                        readySinceMs = 0;
+                    }
+
+                    boolean readyStable = (readySinceMs != 0) && (now - readySinceMs >= FIRE_SETTLE_MS);
+                    boolean timeoutHit = (t >= SHOOT_READY_TIMEOUT_MS);
+                    boolean minSpoolMet = (t >= LAUNCH_SPOOL_MS);
+                    boolean readyOrTimeout = (minSpoolMet && readyStable) || timeoutHit;
+
+                    if (!readyOrTimeout) {
+                        // Spool phase: keep stoppers closed and do not feed.
+                        stopperPower = STOPPER_CLOSED;
+                        transferPower = 0.0;
+                        feedStartMs = 0;
+                    } else {
+                        // Start feeding exactly once.
+                        if (feedStartMs == 0) {
+                            feedStartMs = now;
+                            preFeedTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
+                            minimumFeedTicksPerSecond = preFeedTicksPerSecond;
+                        }
+
+                        long totalFeedMs = (long) LAUNCH_FEED_MS * Math.max(1, LAUNCH_ARTIFACTS_PER_BURST);
+                        boolean atFeedSpeed = isShooterReady(SHOOT_FEED_PCT_TOL, SHOOT_FEED_MIN_TPS);
+                        boolean allowFeedNow = atFeedSpeed || (timeoutHit && ALLOW_FEED_ON_TIMEOUT);
+                        if (feedAccumulatedMs < totalFeedMs) {
+                            double currentTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
+                            if (!Double.isNaN(minimumFeedTicksPerSecond)) {
+                                minimumFeedTicksPerSecond = Math.min(minimumFeedTicksPerSecond, currentTicksPerSecond);
+                            }
+                            if (allowFeedNow) {
+                                feedAccumulatedMs += dt;
+                                stopperPower = STOPPER_OPEN;
+                                transferPower = TRANSFER_FWD;
+                            } else {
+                                // Hold feed closed until shooter speed recovers.
+                                stopperPower = STOPPER_CLOSED;
+                                transferPower = 0.0;
+                            }
+                        } else {
+                            stopperPower = STOPPER_CLOSED;
+                            transferPower = 0.0;
+                            launchMode = false;
+                            shotIndex = 0;
+                            readySinceMs = 0;
+                            feedStartMs = 0;
+                            feedAccumulatedMs = 0;
+                            lastLaunchLoopMs = 0;
+                            preFeedTicksPerSecond = Double.NaN;
+                            minimumFeedTicksPerSecond = Double.NaN;
+                        }
                     }
                 }
             } else {
@@ -302,6 +359,8 @@ public class DriveTeleOp extends LinearOpMode {
 
                 readySinceMs = 0;
                 feedStartMs = 0;
+                feedAccumulatedMs = 0;
+                lastLaunchLoopMs = 0;
                 preFeedTicksPerSecond = Double.NaN;
                 minimumFeedTicksPerSecond = Double.NaN;
             }
@@ -351,6 +410,10 @@ public class DriveTeleOp extends LinearOpMode {
 
             double shotMultiplier = (effectiveShotIndex == 0) ? SHOT1_MULTIPLIER : (effectiveShotIndex == 1 ? SHOT2_MULTIPLIER : SHOT3_MULTIPLIER);
             double shooterApplied = shooterBase * shotMultiplier;
+            if (launchMode && shooterEnabled) {
+                shooterApplied = Range.clip(shooterApplied + SHOOTER_FEED_BOOST, 0.0, 1.0);
+                shooterApplied = Math.max(shooterApplied, SHOOTER_LAUNCH_MIN_CMD);
+            }
 
             robot.setShooterVelocityPercent(shooterApplied, effMaxRpm);
 
@@ -388,13 +451,8 @@ public class DriveTeleOp extends LinearOpMode {
             robot.setTransferPower(transferPower);
 
             telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
-            telemetry.addData("DriveMode", driveMode == DriveMode.FIELD ? "FIELD" : "ROBOT");
-            telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
+            telemetry.addData("Drive", driveMode == DriveMode.FIELD ? "FIELD" : "ROBOT");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
-            telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
-            telemetry.addData("ShooterCommand", "%.2f", shooterEnabled ? shooterFar : 0.0);
-            telemetry.addData("StopperPower", "%.2f", stopperPower);
-            telemetry.addData("TransferPower", "%.2f", transferPower);
 
             double targetTicksPerSecond = Math.abs(robot.getShooterTargetTicksPerSec());
             double currentTicksPerSecond = Math.abs(robot.getShooterVelocityPerSecond());
@@ -412,39 +470,60 @@ public class DriveTeleOp extends LinearOpMode {
             activeShotIndex = Range.clip(activeShotIndex, 0, 2);
             double activeShotMultiplier = (activeShotIndex == 0) ? SHOT1_MULTIPLIER : (activeShotIndex == 1 ? SHOT2_MULTIPLIER : SHOT3_MULTIPLIER);
 
-            telemetry.addData("ShotIndex", "%d", (activeShotIndex + 1));
-            telemetry.addData("ShooterCmdApplied", "%.2f", shooterEnabled ? (shooterFar * activeShotMultiplier) : 0.0);
-            telemetry.addData("ShooterAtSpeed", "%s (tol=%.1f%%)",
-                    robot.isShooterAtSpeedPercent(SHOOT_READY_PCT_TOL) ? "YES" : "no",
+            telemetry.addData("Shooter", shooterEnabled ? "ON" : "OFF");
+            telemetry.addData("Launch", launchMode ? "ON" : "OFF");
+            telemetry.addData("ShooterTPS", "%.0f", currentTicksPerSecond);
+            telemetry.addData("Shot", "%d", (activeShotIndex + 1));
+            telemetry.addData("AtSpeed", "%s",
+                    isShooterReady(SHOOT_READY_PCT_TOL, SHOOT_READY_MIN_TPS) ? "YES" : "no",
                     SHOOT_READY_PCT_TOL * 100.0);
-            telemetry.addData("ShooterSpeedPercent", "=%.0f%%", shooterSpeedPercent);
+            telemetry.addData("FeedReady", "%s",
+                    isShooterReady(SHOOT_FEED_PCT_TOL, SHOOT_FEED_MIN_TPS) ? "YES" : "no",
+                    SHOOT_FEED_PCT_TOL * 100.0);
 
-            if (!Double.isNaN(preFeedTicksPerSecond) && !Double.isNaN(minimumFeedTicksPerSecond) && preFeedTicksPerSecond > 1.0) {
-                double shooterSagPercent = (1.0 - (minimumFeedTicksPerSecond / preFeedTicksPerSecond)) * 100.0;
-                telemetry.addData("ShooterSag", "=%.0f%%", shooterSagPercent);
-            } else {
-                telemetry.addData("ShooterSag", "–");
+            if (TELEMETRY_VERBOSE) {
+                telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
+                telemetry.addData("DriveRaw", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+                telemetry.addData("ShooterCommand", "%.2f", shooterEnabled ? shooterFar : 0.0);
+                telemetry.addData("ShooterCmdApplied", "%.2f", shooterEnabled ? (shooterFar * activeShotMultiplier) : 0.0);
+                telemetry.addData("ShooterModelPercent", "=%.0f%%", shooterSpeedPercent);
+                telemetry.addData("StopperPower", "%.2f", stopperPower);
+                telemetry.addData("TransferPower", "%.2f", transferPower);
+                telemetry.addData("Op", "shooter=%s intake=%s launch=%s",
+                        shooterEnabled ? "ON" : "OFF",
+                        intakeMode ? "ON" : "OFF",
+                        launchMode ? "ON" : "OFF");
+
+                if (!Double.isNaN(preFeedTicksPerSecond) && !Double.isNaN(minimumFeedTicksPerSecond) && preFeedTicksPerSecond > 1.0) {
+                    double shooterSagPercent = (1.0 - (minimumFeedTicksPerSecond / preFeedTicksPerSecond)) * 100.0;
+                    telemetry.addData("ShooterSag", "=%.0f%%", shooterSagPercent);
+                } else {
+                    telemetry.addData("ShooterSag", "–");
+                }
+                telemetry.addData("ShooterMax", "%.0f t/s (model)", robot.getShooterMaxTicksPerSec());
+
+                String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
+                telemetry.addData("Obelisk", motif);
+                telemetry.addData("Goal", (goalId != null) ? goalId : "–");
+                telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
+                String aimAboveText = Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal);
+                telemetry.addData("Aim",  "horiz=%.1f in  aboveHorizontal=%s", horizontal, aimAboveText);
+                telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             }
-
-            telemetry.addData("ShooterMax", "%.0f t/s (model)", robot.getShooterMaxTicksPerSec());
-
-            telemetry.addData("Op", "shooter=%s intake=%s launch=%s",
-                    shooterEnabled ? "ON" : "OFF",
-                    intakeMode ? "ON" : "OFF",
-                    launchMode ? "ON" : "OFF");
-
-            String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
-            telemetry.addData("Obelisk", motif);
-
-            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
-            telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
-            String aimAboveText = Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal);
-            telemetry.addData("Aim",  "horiz=%.1f in  aboveHorizontal=%s", horizontal, aimAboveText);
-            telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
             telemetry.update();
 
             // Loop timing (ms): keep small for responsiveness and timing accuracy.
             sleep(20);
         }
+    }
+
+    private boolean isShooterReady(double percentTolerance, double minTicksPerSecond) {
+        if (robot.isShooterAtSpeedPercent(percentTolerance)) {
+            return true;
+        }
+        if (minTicksPerSecond > 0.0) {
+            return Math.abs(robot.getShooterVelocityPerSecond()) >= minTicksPerSecond;
+        }
+        return false;
     }
 }

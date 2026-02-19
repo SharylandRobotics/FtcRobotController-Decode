@@ -431,9 +431,14 @@ public class RobotHardware {
     public void configureShooterVelocityPIDFForMaxRpm(double maxRpm, double kP, double kI, double kD) {
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         final double maxTicksPerSec = (maxRpm * ticksPerRev) / 60.0;
+        final double nominalVoltage = 12.0;
+        double batteryVoltage = getBatteryVoltage();
 
         // Feedforward scaled so full output maps to modeled max velocity.
-        final double kF = 32767.0 / Math.max(1.0, maxTicksPerSec);
+        double kF = 32767.0 / Math.max(1.0, maxTicksPerSec);
+        if (!Double.isNaN(batteryVoltage) && batteryVoltage > 1.0) {
+            kF *= (nominalVoltage / batteryVoltage);
+        }
 
         topShooter.setVelocityPIDFCoefficients(kP, kI, kD, kF);
         bottomShooter.setVelocityPIDFCoefficients(kP, kI, kD, kF);
