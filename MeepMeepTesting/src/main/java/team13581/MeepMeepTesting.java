@@ -15,37 +15,48 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-49, 51, -180))
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-49, -51, 180))
                 //PreLoad
-                .setTangent(Math.atan2(51-33.3,-49+32.4))
-                .lineToYLinearHeading(32.4,Math.toRadians(135))
+                .setTangent(Math.atan2(-33.3+51,-32.4+49))
+                .lineToYLinearHeading(-33.3,Math.toRadians(220))
                 //First Row
-                .setTangent(Math.atan2(33.3-28,-32.4+9))
-                        .lineToYLinearHeading(28,Math.toRadians(90))
-                .setTangent(Math.atan2(55-26.6,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
-                //Shoot First Row
-                                .setTangent(Math.atan2(51-28,-9+31))
-                                .lineToYLinearHeading(32.4, Math.toRadians(135))
+                .setTangent(Math.atan2(-28+33.3,-12+32.4))
+                .lineToYLinearHeading(-28,Math.toRadians(270))
+                .setTangent(Math.atan2(-56+28,0))
+                .lineToYLinearHeading(-56,Math.toRadians(270))
+                //First Shoot
+                .setTangent(Math.atan2(-33.3+56,-32.4+12))
+                .lineToYLinearHeading(-33.3,Math.toRadians(220))
+                //Clear Gate
+                .setTangent((Math.atan2(-46+33.3,1.4+32.4)))
+                .lineToYLinearHeading(-46,Math.toRadians(270))
+                .setTangent((Math.atan2(-60+46,0)))
+                .lineToYLinearHeading(-60,Math.toRadians(270))
                 //Second Row
-                                .setTangent(Math.atan2(34.7-32.4,11.8+31))
-                                .splineToLinearHeading( new Pose2d(11.8, 31.4, Math.toRadians(90)), Math.toRadians(90))
-                                .setTangent(Math.atan2(55-31.4,0))
-                                .lineToYLinearHeading(55,Math.toRadians(90))
-               //Shoot Second Row
-                                .setTangent(Math.atan2(33-23.6,29-11.8))
-                                .lineToYLinearHeading(32.4, Math.toRadians(135))
-                //clear gate
-                                .setTangent(Math.atan2(60-33,1+35))
-                                .lineToYLinearHeading(55,Math.toRadians(90))
-                //Third Row (Needs work on Spline)
-                               .setTangent(Math.atan2(27-12,36-17.2))
-                .splineToLinearHeading( new Pose2d(36, 27, Math.toRadians(90)), Math.toRadians(90))
-                .setTangent(Math.atan2(55-27,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
-                //Shoot Third Row
-                .setTangent(Math.atan2(33-23.6,40-11.8))
-                .lineToYLinearHeading(32.4, Math.toRadians(135))
+                .setTangent(Math.atan2(-28+55,0))
+                .lineToYLinearHeading(-28,Math.toRadians(270))
+                .setTangent(Math.atan2(0,12.2-1.4))
+                .lineToXLinearHeading(12.2,Math.toRadians(270))
+                .setTangent(Math.atan2(-55+28,0))
+                .lineToYLinearHeading(-55,Math.toRadians(270))
+                //Second Shoot
+                .setTangent(Math.atan2(-33.3+55,-32.4-12.2))
+                .lineToYLinearHeading(-33.3, Math.toRadians(220))
+                //Third Row
+                .setTangent(Math.atan2(-28+33.3,36+32.4))
+                .lineToYLinearHeading(-28,Math.toRadians(270))
+                .setTangent(Math.atan2(-55+28,0))
+                .lineToYLinearHeading(-55,Math.toRadians(270))
+                //Third Shoot
+                .setTangent(Math.atan2(-33.3+55,-32.4-36))
+                .lineToYLinearHeading(-33.3,Math.toRadians(220))
+                //TeleOp Position
+                .setTangent(Math.atan2(-28+33.3,-8+32.4))
+                .lineToYLinearHeading(-28,Math.toRadians(270))
+
+
+
+
 
 
                                 //.lineToYLinearHeading(27,Math.toRadians(90))

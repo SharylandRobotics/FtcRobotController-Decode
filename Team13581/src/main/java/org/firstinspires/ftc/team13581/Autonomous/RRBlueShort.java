@@ -1,24 +1,21 @@
 package org.firstinspires.ftc.team13581.Autonomous;
 
 import androidx.annotation.NonNull;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.team13581.RobotHardware;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.team13581.RobotHardware;
 import org.firstinspires.ftc.team13581.rr.MecanumDrive;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.SequentialAction;
 
 import java.lang.Math;
 
 @Config
-@Autonomous(name="RR Red Short Goal", group="Autonomous")
+@Autonomous(name="RR Blue Short Goal", group="Autonomous")
 
-public class RRRedShortGoal extends LinearOpMode {
+public class RRBlueShort extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -123,57 +120,57 @@ public class RRRedShortGoal extends LinearOpMode {
     @Override
     public void runOpMode(){
 
-        Pose2d initialPose = new Pose2d(-49, 51, -180);
+        Pose2d initialPose = new Pose2d(-49, -51, 180);
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
 
         robot.init();
 
-        Action Preload = drive.actionBuilder(initialPose)
-                .setTangent(Math.atan2(33.3-51,-32.4+49))
-                .lineToYLinearHeading(33.3,Math.toRadians(130), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action Preload = drive.actionBuilder(new Pose2d(-49, -51, 180))
+                .setTangent(Math.atan2(-33.3+51,-32.4+49))
+                .lineToYLinearHeading(-33.3,Math.toRadians(230))
                 .build();
 
-        Action FirstRow = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(22-33.3,-12+32.4))
-                .lineToYLinearHeading(22,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
-                .setTangent(Math.atan2(56-28,0))
-                .lineToYLinearHeading(56,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action FirstRow = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(230)))
+                .setTangent(Math.atan2(-22+33.3,-12+32.4))
+                .lineToYLinearHeading(-22,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(-56+28,0))
+                .lineToYLinearHeading(-56,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 . build();
-        Action FirstShoot = drive.actionBuilder(new Pose2d(-12,56,Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-56,-32.4+12))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
+        Action FirstShoot = drive.actionBuilder(new Pose2d(-12,-56,Math.toRadians(270)))
+                .setTangent(Math.atan2(-33.3+56,-32.4+12))
+                .lineToYLinearHeading(-33.3,Math.toRadians(230))
                 .build();
-        Action SecondRow = drive.actionBuilder(new Pose2d(1.4,58, Math.toRadians(90)))
-                .setTangent(Math.atan2(28-55,0))
-                .lineToYLinearHeading(28,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action SecondRow = drive.actionBuilder(new Pose2d(1.4,-58, Math.toRadians(270)))
+                .setTangent(Math.atan2(-28+55,0))
+                .lineToYLinearHeading(-28,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(0,12.2-1.4))
-                .lineToXLinearHeading(12.2,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
-                .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .lineToXLinearHeading(12.2,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(-55+28,0))
+                .lineToYLinearHeading(-55,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
-        Action SecondShoot = drive.actionBuilder(new Pose2d(12.2,55, Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-55,-32.4-12.2))
-                .lineToYLinearHeading(33.3, Math.toRadians(130))
+        Action SecondShoot = drive.actionBuilder(new Pose2d(12.2,-55, Math.toRadians(270)))
+                .setTangent(Math.atan2(-33.3+55,-32.4-12.2))
+                .lineToYLinearHeading(-33.3, Math.toRadians(230))
                 .build();
-        Action ClearGate = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent((Math.atan2(46-33.3,1.4+32.4)))
-                .lineToYLinearHeading(46,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
-                .setTangent((Math.atan2(60-46,0)))
-                .lineToYLinearHeading(60,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action ClearGate = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(230)))
+                .setTangent((Math.atan2(-46+33.3,1.4+32.4)))
+                .lineToYLinearHeading(-46,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent((Math.atan2(-60+46,0)))
+                .lineToYLinearHeading(-60,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
-        Action ThirdRow = drive.actionBuilder(new Pose2d(1.4,56, Math.toRadians(90)))
-                .setTangent(Math.atan2(28-33.3,36+32.4))
-                .lineToYLinearHeading(28,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
-                .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action ThirdRow = drive.actionBuilder(new Pose2d(1.4,-56, Math.toRadians(270)))
+                .setTangent(Math.atan2(-28+33.3,36+32.4))
+                .lineToYLinearHeading(-28,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(-55+28,0))
+                .lineToYLinearHeading(55,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
-        Action ThirdShoot = drive.actionBuilder(new Pose2d(36,55, Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-55,-32.4-36))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
+        Action ThirdShoot = drive.actionBuilder(new Pose2d(36,-55, Math.toRadians(270)))
+                .setTangent(Math.atan2(-33.3+55,-32.4-36))
+                .lineToYLinearHeading(-33.3,Math.toRadians(220))
                 .build();
-        Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-33.3,-8+32.4))
-                .lineToYLinearHeading(28,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+        Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(230)))
+                .setTangent(Math.atan2(-28+33.3,-8+32.4))
+                .lineToYLinearHeading(-28,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
         while(opModeInInit()) {
             // Display heading and status continuously during init loop

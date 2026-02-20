@@ -344,7 +344,7 @@ public class RobotHardware {
 
         double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
                 Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-        if (max > 1.0) {
+        if (max > 0.9) {
             frontLeftPower  /= max;
             frontRightPower /= max;
             backLeftPower   /= max;
