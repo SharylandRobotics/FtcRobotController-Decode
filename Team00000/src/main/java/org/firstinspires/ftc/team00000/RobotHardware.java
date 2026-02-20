@@ -114,10 +114,10 @@ public class RobotHardware {
     private static double DESIRED_BEARING_DEG = 0;
     private static final double AXIAL_GAIN = 0.020; // range error -> forward/back command
     private static final double LATERAL_GAIN = 0.015; // tag yaw error -> strafe command
-    private static final double YAW_GAIN = 0.010; // bearing error -> turn command
+    private static final double YAW_GAIN = 0.015; // bearing error -> turn command
     public static final double MAX_AUTO_AXIAL = 0.90;
     public static final double MAX_AUTO_LATERAL = 0.90;
-    public static final double MAX_AUTO_YAW = 0.70;
+    public static final double MAX_AUTO_YAW = 0.85;
     public static final double HEADING_THRESHOLD = 1.0;
     public static final double TOLERANCE_TICKS = 10.0;
 

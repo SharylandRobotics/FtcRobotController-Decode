@@ -48,7 +48,7 @@ import com.qualcomm.robotcore.util.Range;
  * - Drive: left stick translate, right stick rotate, left bumper precision mode
  * - Vision assist: hold right bumper for AprilTag approach
  * - Shooter: X toggles spin-up, Y runs timed burst feed
- * - Shooter tuning: right stick button toggles AUTO_TAG, triggers trim model output
+ * - Shooter tuning: RT/LT trim auto model (RT+LT reset)
  * - Transfer/stoppers: d-pad and A/B intake/reverse/gate control
  */
 @Config
@@ -60,7 +60,6 @@ public class DriveTeleOp extends LinearOpMode {
     RobotHardware robot = new RobotHardware(this);
 
     // Shooter tuning exposed through FTC Dashboard.
-    public static double shooterFar = 0.38;
     public static double shooterMaxRpm = 0.0;
     public static double shooterKp = 0.3;
     public static double shooterKi = 0.0;
@@ -85,7 +84,6 @@ public class DriveTeleOp extends LinearOpMode {
     private boolean prevX = false;
     private boolean prevY = false;
     private boolean prevL3 = false;
-    private boolean prevR3 = false;
     private boolean prevTrimInc = false;
     private boolean prevTrimDec = false;
     private boolean prevTrimReset = false;
@@ -105,9 +103,9 @@ public class DriveTeleOp extends LinearOpMode {
     private long lastTrimStepMs = 0;
 
     // Shot-profile multipliers used within a burst feed sequence.
-    public static double SHOT1_MULTIPLIER = 1.00;
-    public static double SHOT2_MULTIPLIER = 1.03;
-    public static double SHOT3_MULTIPLIER = 1.06;
+    public static double SHOT1_MULTIPLIER = 0.98;
+    public static double SHOT2_MULTIPLIER = 0.98;
+    public static double SHOT3_MULTIPLIER = 0.95;
 
     // 0-based selected shot index.
     private int shotIndex = 0;
@@ -134,20 +132,19 @@ public class DriveTeleOp extends LinearOpMode {
     public static int SHOOT_READY_TIMEOUT_MS = 900;
     public static int FIRE_SETTLE_MS = 80;
     public static boolean ALLOW_FEED_ON_TIMEOUT = true;
-    public static double SHOOTER_FEED_BOOST = 0.10;
+    public static double SHOOTER_FEED_BOOST = 0.05;
     public static boolean IMMEDIATE_LAUNCH_ON_Y = true;
     public static double SHOOT_READY_MIN_TPS = 470.0;
     public static double SHOOT_FEED_MIN_TPS = 430.0;
     public static double SHOOTER_LAUNCH_MIN_CMD = 0.45;
 
-    // AUTO_TAG shooter model parameters (range in inches, command in [0..1]).
-    public static boolean SHOOTER_AUTO_TAG = false;
+    // Auto shooter model parameters (range in inches, command in [0..1]).
     public static double SHOOTER_AUTO_REF_RANGE_IN = 140.0;
-    public static double SHOOTER_AUTO_REF_CMD = 0.38;
+    public static double SHOOTER_AUTO_REF_CMD = 0.42;
     public static double SHOOTER_AUTO_CMD_PER_IN = 0.0018;
     public static double SHOOTER_AUTO_MIN_CMD = 0.20;
     public static double SHOOTER_AUTO_MAX_CMD = 0.90;
-    public static double SHOOTER_AUTO_FALLBACK_CMD = 0.38;
+    public static double SHOOTER_AUTO_FALLBACK_CMD = 0.42;
     public static double SHOOTER_AUTO_RANGE_ALPHA = 0.25;
     public static int SHOOTER_AUTO_RANGE_HOLD_MS = 500;
     public static double SHOOTER_VOLTAGE_NOMINAL = 12.0;
@@ -187,9 +184,8 @@ public class DriveTeleOp extends LinearOpMode {
             // Pre-start checks for students: heading, mode, and tuning controls.
             telemetry.addData("Status", "Hardware Initialized");
             telemetry.addData("Heading", "%4.0f", robot.getHeading());
-            telemetry.addData("ShooterMode", SHOOTER_AUTO_TAG ? "AUTO_TAG" : "MANUAL");
             telemetry.addData("ShooterTrim", "%+.3f", SHOOTER_AUTO_TRIM_CMD);
-            telemetry.addData("TuneCtrl", "R3 mode  RT/LT trim  RT+LT reset");
+            telemetry.addData("TuneCtrl", "RT/LT trim  RT+LT reset");
             if (TELEMETRY_VERBOSE) {
                 telemetry.addData("Vision", "Ready (AprilTag)");
                 telemetry.addData("Mode", "INIT");
@@ -216,7 +212,6 @@ public class DriveTeleOp extends LinearOpMode {
             boolean x = gamepad1.x;
             boolean y = gamepad1.y;
             boolean l3 = gamepad1.left_stick_button;
-            boolean r3 = gamepad1.right_stick_button;
             boolean trimIncPressed = gamepad1.right_trigger >= SHOOTER_TRIM_TRIGGER_THRESHOLD;
             boolean trimDecPressed = gamepad1.left_trigger >= SHOOTER_TRIM_TRIGGER_THRESHOLD;
             boolean trimResetPressed = trimIncPressed && trimDecPressed;
@@ -230,7 +225,6 @@ public class DriveTeleOp extends LinearOpMode {
             boolean xEdge = x && !prevX;
             boolean yEdge = y && !prevY;
             boolean l3Edge = l3 && !prevL3;
-            boolean r3Edge = r3 && !prevR3;
 
             // Left stick button toggles drive frame: field-centric vs robot-centric.
             if (l3Edge) {
@@ -238,10 +232,6 @@ public class DriveTeleOp extends LinearOpMode {
                 robot.resetYaw();
             }
 
-            // Right stick button toggles auto shooter modeling.
-            if (r3Edge) {
-                SHOOTER_AUTO_TAG = !SHOOTER_AUTO_TAG;
-            }
             updateAutoShooterTrim(loopNowMs, trimIncPressed, trimDecPressed, trimResetPressed);
 
             // D-pad UP/DOWN directly command transfer direction.
@@ -443,7 +433,6 @@ public class DriveTeleOp extends LinearOpMode {
             prevX = x;
             prevY = y;
             prevL3 = l3;
-            prevR3 = r3;
             prevTrimInc = trimIncPressed;
             prevTrimDec = trimDecPressed;
             prevTrimReset = trimResetPressed;
@@ -494,10 +483,7 @@ public class DriveTeleOp extends LinearOpMode {
                     SHOOTER_VOLTAGE_COMP_MAX,
                     SHOOTER_AUTO_TRIM_CMD);
 
-            double shooterBase = 0.0;
-            if (shooterEnabled) {
-                shooterBase = SHOOTER_AUTO_TAG ? robot.getShooterAutoBaseCmd() : shooterFar;
-            }
+            double shooterBase = shooterEnabled ? robot.getShooterAutoBaseCmd() : 0.0;
 
             int effectiveShotIndex;
             if (launchMode && shooterEnabled && feedStartMs != 0) {
@@ -560,7 +546,6 @@ public class DriveTeleOp extends LinearOpMode {
             activeShotIndex = Range.clip(activeShotIndex, 0, 2);
 
             telemetry.addData("Shooter", shooterEnabled ? "ON" : "OFF");
-            telemetry.addData("ShooterMode", SHOOTER_AUTO_TAG ? "AUTO_TAG" : "MANUAL");
             telemetry.addData("Launch", launchMode ? "ON" : "OFF");
             telemetry.addData("ShooterTPS", "%.0f", currentTicksPerSecond);
             telemetry.addData("ShooterCmd", "%.3f", shooterApplied);
@@ -584,11 +569,11 @@ public class DriveTeleOp extends LinearOpMode {
                 telemetry.addData("DriveRaw", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
                 telemetry.addData("ShooterCommand", "%.2f", shooterBase);
                 telemetry.addData("ShooterCmdApplied", "%.2f", shooterApplied);
-                telemetry.addData("ShooterAuto", "%s trim=%+.3f", SHOOTER_AUTO_TAG ? "ON" : "OFF", SHOOTER_AUTO_TRIM_CMD);
+                telemetry.addData("ShooterAuto", "trim=%+.3f", SHOOTER_AUTO_TRIM_CMD);
                 telemetry.addData("ShooterAutoBase", "%.3f  voltComp=%.3f", robot.getShooterAutoBaseCmd(), robot.getShooterAutoVoltageComp());
                 telemetry.addData("ShooterAutoRange", "raw=%.1f in  filt=%s in", range, filteredRangeText);
                 telemetry.addData("Battery", "%s", batteryText);
-                telemetry.addData("TuneCtrl", "R3=AUTO_TAG  RT/LT=trim  RT+LT=reset");
+                telemetry.addData("TuneCtrl", "RT/LT=trim  RT+LT=reset");
                 telemetry.addData("ShooterModelPercent", "=%.0f%%", shooterSpeedPercent);
                 telemetry.addData("StopperPower", "%.2f", stopperPower);
                 telemetry.addData("TransferPower", "%.2f", transferPower);
@@ -634,18 +619,13 @@ public class DriveTeleOp extends LinearOpMode {
     }
 
     /**
-     * Applies live operator trim adjustments to AUTO_TAG shooter command.
+     * Applies live operator trim adjustments to the auto shooter command.
      *
-     * <p>Controls:
-     * RT increases trim, LT decreases trim, RT+LT resets trim.
+     * <p>Controls: RT increases trim, LT decreases trim, RT+LT resets trim.
      */
     private void updateAutoShooterTrim(long nowMs, boolean trimIncPressed, boolean trimDecPressed, boolean trimResetPressed) {
         SHOOTER_AUTO_TRIM_CMD = Range.clip(SHOOTER_AUTO_TRIM_CMD,
                 -Math.abs(SHOOTER_TRIM_MAX_CMD), Math.abs(SHOOTER_TRIM_MAX_CMD));
-        if (!SHOOTER_AUTO_TAG) {
-            lastTrimStepMs = 0;
-            return;
-        }
         if (trimResetPressed) {
             if (!prevTrimReset) {
                 SHOOTER_AUTO_TRIM_CMD = 0.0;
