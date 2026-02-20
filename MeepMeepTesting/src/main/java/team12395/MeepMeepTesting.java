@@ -32,20 +32,17 @@ public class MeepMeepTesting {
         double deg = Math.atan2(target.position.y - example.position.y,
                 target.position.x - example.position.x) - example.heading.imag;
          */
-        Pose2d startPose = new Pose2d(-47, 50, Math.toRadians(126));
+        Pose2d startPose = new Pose2d(61, 14, Math.toRadians(90));
 
-        Pose2d shoot1 =  new Pose2d(-20, 22, Math.toRadians(90));
+        Pose2d shoot1 =  new Pose2d(58, 20, Math.toRadians(90));
 
-        Pose2d preIntake1 = new Pose2d(-11, 28, Math.toRadians(90));
+        Pose2d preIntake1 = new Pose2d(60, 20, Math.toRadians(90));
         Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 55, Math.toRadians(90));
 
-        Pose2d openGate = new Pose2d(-1, postIntake1.position.y, Math.toRadians(90));
-
-        Pose2d preIntake2 = new Pose2d(12, 28, Math.toRadians(90));
+        Pose2d preIntake2 = new Pose2d(36, 28, Math.toRadians(90));
         Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y, Math.toRadians(90));
 
-        Pose2d preIntake3 = new Pose2d(36, 28, Math.toRadians(90));
-        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y, Math.toRadians(90));
+        Pose2d postIntake3 = new Pose2d(shoot1.position.x, postIntake1.position.y, Math.toRadians(90));
 
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
@@ -58,38 +55,34 @@ public class MeepMeepTesting {
                                 //.lineToXLinearHeading(-28, Math.toRadians(180))
                                 .lineToXLinearHeading(shoot1.position.x, shoot1.heading)
                         // shoot
+
                                 .setTangent(0)
                                 .lineToX(preIntake1.position.x)
                         //start intake
                                 .setTangent(Math.toRadians(90))
                                 .lineToY(postIntake1.position.y)
-                        // stop intake
 
-                                .setTangent(Math.toRadians(-90))
-                                .splineToConstantHeading(openGate.position, Math.toRadians(90))
-                            .setTangent(Math.atan2(shoot1.position.y - openGate.position.y, shoot1.position.x - openGate.position.x))
-                        // wait for gate
-
-                                //.setTangent(Math.atan2(shoot1.position.y - postIntake1.position.y, shoot1.position.x - postIntake1.position.x))
+                                .setTangent(Math.atan2(shoot1.position.y - postIntake1.position.y, shoot1.position.x - postIntake1.position.x))
                                 .lineToX(shoot1.position.x)
                         // shoot
-                                .setTangent(0)
-                                .lineToX(preIntake2.position.x)
+
                         // start intake
+                                .setTangent(Math.atan2(preIntake2.position.y - shoot1.position.y, preIntake2.position.x - shoot1.position.x))
+                                .lineToX(preIntake2.position.x)
+
                                 .setTangent(Math.toRadians(90))
                                 .lineToY(postIntake2.position.y)
                         // stop intake
                                 .setTangent(Math.atan2(shoot1.position.y - postIntake2.position.y, shoot1.position.x - postIntake2.position.x))
                                 .lineToX(shoot1.position.x)
                         // shoot
-                                .setTangent(0)
-                                .lineToX(preIntake3.position.x)
                         // start intake
                                 .setTangent(Math.toRadians(90))
                                 .lineToY(postIntake3.position.y)
                         // stop intake
                                 .setTangent(Math.atan2(shoot1.position.y - postIntake3.position.y, shoot1.position.x - postIntake3.position.x))
-                                .lineToX(shoot1.position.x)
+                                .lineToY(shoot1.position.y)
+                        // shoot
                         .build());
 
 

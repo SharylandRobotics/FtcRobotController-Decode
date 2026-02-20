@@ -993,32 +993,22 @@ public class RobotHardware {
             public boolean run(@NonNull TelemetryPacket packet){
                 int[] solve = solvePattern();
                 if (solve != null) {
-                    spindexerHandler(120 * solve[0]);
+                    spindexerHandler((120 * solve[0]) - (spindexerTarget % 120));
                     packet.put("Turning left: ", solve[0]);
                 }
                 return false;
             }
         }
 
-        public class wiggleSpindexer implements Action{
-            private ElapsedTime timer = new ElapsedTime();
-            private int stage = 0;
-            public wiggleSpindexer(){
+        public class shootAllBallsSlow implements Action{
+            public shootAllBallsSlow(){
 
             }
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                if (stage == 0){
-                    spindexerHandler(20, 1000);
-                    stage++;
-                }
-
-                if (stage == 1 && (timer.seconds() >= 1 || !spindexer.isBusy())){
-                    spindexerHandler(-20,1000);
-                    stage++;
-                }
-                return (stage < 2);
+                spindexerHandler(-480, 800);
+                return false;
             }
         }
 
@@ -1065,8 +1055,8 @@ public class RobotHardware {
             }
         }
 
-        public Action wiggleSpindexer(){
-            return new wiggleSpindexer();
+        public Action shootAllBallsSlow(){
+            return new shootAllBallsSlow();
         }
         public Action scanColorToggle(){
             return new scanColorSensor();
