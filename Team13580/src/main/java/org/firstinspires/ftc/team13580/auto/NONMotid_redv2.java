@@ -159,26 +159,25 @@ public class NONMotid_redv2 extends LinearOpMode {
                         .build();
 
         Action path4_First_gate_intake = drive.actionBuilder(new Pose2d(-20,18, Math.toRadians(135)))
-                .setTangent(Math.atan2(20-18, 12+20))
-                .lineToYLinearHeading(20, Math.toRadians(115))
-                .setTangent(Math.atan2(58-20, 0))
-                .lineToYLinearHeading(58, Math.toRadians(115))
+                .setTangent(Math.atan2(20-18, 8+20))
+                .lineToYLinearHeading(20, Math.toRadians(90))
+                .setTangent(Math.atan2(54-20, 0))
+                .lineToYLinearHeading(52, Math.toRadians(90))
                 .build();
 
-        Action slide_to_intake = drive.actionBuilder(new Pose2d(12,58, Math.toRadians(115)))
-                .setTangent(Math.atan2(0, 19-13))
-                .lineToX(19, new TranslationalVelConstraint(60), new ProfileAccelConstraint(-60, 100))
-
+        Action slide_to_intake = drive.actionBuilder(new Pose2d(8,52, Math.toRadians(90)))
+                .setTangent(Math.atan2(56-52, 14-8))
+                .lineToYLinearHeading(59, Math.toRadians(90))
                         .build();
 
-        Action path5 = drive.actionBuilder(new Pose2d(19,58, Math.toRadians(115)))
-                .setTangent(Math.atan2(16-58, 12-19))
+        Action path5 = drive.actionBuilder(new Pose2d(14,56, Math.toRadians(90)))
+                .setTangent(Math.atan2(16-56, 12-12))
                 .lineToYLinearHeading(16, Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(18-16, -22-19))
-                .lineToYLinearHeading(18, Math.toRadians(145), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .lineToYLinearHeading(18, Math.toRadians(135), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                         .build();
 
-        Action path6_second_gate_intake = drive.actionBuilder(new Pose2d(-22,18, Math.toRadians(140)))
+        Action path6_second_gate_intake = drive.actionBuilder(new Pose2d(-22,18, Math.toRadians(135)))
                 .setTangent(Math.atan2(20-18, 12+22))
                 .lineToYLinearHeading(20, Math.toRadians(115))
                 .setTangent(Math.atan2(58-20, 0))
@@ -224,8 +223,8 @@ public class NONMotid_redv2 extends LinearOpMode {
                                 path1,
                                 shoot(1150)
                         ),
-                        new SleepAction(.4),
-                        spinUp(),
+                        new SleepAction(.5),
+                        spinUp2(.8),
                         rightkick(-1),
                         leftkick(-1),
                         new SleepAction(1.5),
@@ -249,7 +248,7 @@ public class NONMotid_redv2 extends LinearOpMode {
                         path4_First_gate_intake,
                         spinUp2(.9),
                                 shoot(1150),
-                                new SleepAction(.3),
+                                new SleepAction(.6),
                         slide_to_intake,
                         new SleepAction(1),
                         path5,

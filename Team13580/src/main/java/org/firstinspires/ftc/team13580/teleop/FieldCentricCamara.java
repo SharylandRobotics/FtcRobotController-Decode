@@ -72,6 +72,10 @@ public class FieldCentricCamara extends LinearOpMode {
             // Outtake toggle with X button
             if (gamepad1.xWasPressed()) {
                 outtakeManual = !outtakeManual;  // toggle on button press
+                // when turned off, set velocity to 0
+                if (!outtakeManual){
+                    outtake = 0;
+                }
             }
 
             // Set outtake speed
@@ -86,21 +90,7 @@ public class FieldCentricCamara extends LinearOpMode {
 
             // Kicker control
 
-            if (gamepad1.a ) {
-                robot.setKickerPower(kickerBackPos);
-            } else if (gamepad2.a){
-                robot.setKickerPower(kickerBackPos);
-            } else {
-                robot.setKickerPower(kickerForwardPos);
-            }
 
-            if (gamepad1.b ) {
-                robot.setKickerLeftPower(kickerLeftBackPos);
-            } else if (gamepad2.b){
-                robot.setKickerLeftPower(kickerLeftBackPos);
-            } else {
-                robot.setKickerLeftPower(kickerLeftForwardPos);
-            }
 
 
             if(gamepad2.y){
