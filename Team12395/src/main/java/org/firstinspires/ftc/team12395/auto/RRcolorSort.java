@@ -73,7 +73,7 @@ public class RRcolorSort extends LinearOpMode {
                         ),
                         new SleepAction(2),
                         actionLib.sortCurrentSpindexer(),
-                        new SleepAction(5)
+                        new SleepAction(3)
                 )
         );
     }

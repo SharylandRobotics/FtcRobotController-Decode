@@ -221,9 +221,9 @@ public class RobotHardware {
 
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        colorSensor0.setGain(100);
-        colorSensor1.setGain(100);
-        colorSensor2.setGain(100);
+        colorSensor0.setGain(50);
+        colorSensor1.setGain(50);
+        colorSensor2.setGain(40);
 
         // SERVO POSITIONS
 
@@ -377,9 +377,19 @@ public class RobotHardware {
         return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
     }
 
+    private double normalizeTo360deg(double deg){
+        return ((deg % 360) + 360 ) % 360;
+    }
+
+    private double wrapTo180deg(double deg){
+        return ((deg + 180) % 360 + 360) % 360 - 180;
+    }
     // 8192
     public void getSpindexerOffset(){
-        spindexerFudge = ((spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) % 360) - ((spindexer.getCurrentPosition()/spindexerTicksPerDegree) % 360);
+        double encoderDeg = normalizeTo360deg(spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree);
+        double motorDeg = normalizeTo360deg(spindexer.getCurrentPosition()/spindexerTicksPerDegree);
+
+        spindexerFudge = wrapTo180deg(encoderDeg - motorDeg);
     }
 
     public void spindexerHandler(int targetAdd){
@@ -826,7 +836,7 @@ public class RobotHardware {
             color = colorTypes.NONE;
         } else if (hsvValues[0] > 180 && hsvValues[0] <= 240){
             color = colorTypes.PURPLE;
-        } else if (hsvValues[1] > 0.5 && hsvValues[1] < 0.8){
+        } else if ((hsvValues[1] > 0.5 && hsvValues[1] < 0.8) && (hsvValues[0] >= 120 && hsvValues[0] <= 180)){
             color = colorTypes.GREEN;
         }
         return color;
@@ -984,6 +994,7 @@ public class RobotHardware {
                 int[] solve = solvePattern();
                 if (solve != null) {
                     spindexerHandler(120 * solve[0]);
+                    packet.put("Turning left: ", solve[0]);
                 }
                 return false;
             }
@@ -1047,6 +1058,9 @@ public class RobotHardware {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 scanColor();
+
+                packet.put(getMagPicture(), "");
+
                 return true;
             }
         }

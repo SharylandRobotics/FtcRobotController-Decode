@@ -54,7 +54,9 @@ public class ColorTest extends LinearOpMode {
 
     float[] hsvValues = new float[3];
 
-    public static float gain = 30;
+    public static float gain0 = 50;
+    public static float gain1 = 50;
+    public static float gain2 = 40;
 
     @Override
     public void runOpMode() {
@@ -77,9 +79,9 @@ public class ColorTest extends LinearOpMode {
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            robot.colorSensor0.setGain(gain);
-            robot.colorSensor1.setGain(gain);
-            robot.colorSensor2.setGain(gain);
+            robot.colorSensor0.setGain(gain0);
+            robot.colorSensor1.setGain(gain1);
+            robot.colorSensor2.setGain(gain2);
 
             NormalizedRGBA color = robot.colorSensor0.getNormalizedColors();
             float[] hsvValues = new float[3];
