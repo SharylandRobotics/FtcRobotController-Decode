@@ -39,7 +39,7 @@ public class RRcombinedAutoBlue extends LinearOpMode {
 
         Pose2d startPose = new Pose2d(61, -14, Math.toRadians(-90));
 
-        Pose2d shoot1 =  new Pose2d(58, -20, Math.toRadians(-90));
+        Pose2d shoot1 =  new Pose2d(61, -14, Math.toRadians(-90));
 
         Pose2d preIntake1 = new Pose2d(60, -20, Math.toRadians(-90));
         Pose2d postIntake1 = new Pose2d(preIntake1.position.x, -55, Math.toRadians(-90));
@@ -53,17 +53,19 @@ public class RRcombinedAutoBlue extends LinearOpMode {
 
         robot.setLocalizerPosition(startPose);
 
-        Action driveToPLShoot = drive.actionBuilder(startPose)
+        /*Action driveToPLShoot = drive.actionBuilder(startPose)
                 .setTangent(Math.atan2(shoot1.position.y - startPose.position.y, shoot1.position.x - startPose.position.x))
                 //.lineToXLinearHeading(-28, Math.toRadians(180))
                 .lineToXLinearHeading(shoot1.position.x, shoot1.heading)
                 .build();
 
+         */
+
         // init done
 
         telemetry.clearAll();
 
-        double turretAngle = Math.toDegrees(-robot.turretAngleToTarget(new Vector2d(-65, -59), shoot1));
+        double turretAngle = Math.toDegrees(-robot.turretAngleToTarget(new Vector2d(-65, -60), shoot1));
 
         waitForStart();
 
@@ -79,12 +81,12 @@ public class RRcombinedAutoBlue extends LinearOpMode {
                                 new SequentialAction(
                                         new RaceAction(
                                                 actionLib.setTurretPos(turretAngle),
-                                                new SleepAction(2)
+                                                new SleepAction(3)
                                         ),
                                         actionLib.stopTurretPower()
-                                ),
+                                )
 
-                                driveToPLShoot
+                                //driveToPLShoot
                         ),
                         new SleepAction(2),
                         actionLib.shootAllBallsSlow(),

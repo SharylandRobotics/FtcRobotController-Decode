@@ -34,7 +34,7 @@ public class MeepMeepTesting {
          */
         Pose2d startPose = new Pose2d(61, 14, Math.toRadians(90));
 
-        Pose2d shoot1 =  new Pose2d(58, 20, Math.toRadians(90));
+        Pose2d shoot1 =  new Pose2d(54, 14, Math.toRadians(90));
 
         Pose2d preIntake1 = new Pose2d(60, 20, Math.toRadians(90));
         Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 55, Math.toRadians(90));

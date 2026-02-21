@@ -41,13 +41,13 @@ public class RRautoRedSort extends LinearOpMode {
 
         Pose2d shoot1 =  new Pose2d(-22, 16, Math.toRadians(90));
 
-        Pose2d preIntake1 = new Pose2d(-8, 22, Math.toRadians(90));
-        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 42, Math.toRadians(90));
+        Pose2d preIntake1 = new Pose2d(-7, 22, Math.toRadians(90));
+        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 43.5, Math.toRadians(90));
 
         Pose2d openGate = new Pose2d(5.5, postIntake1.position.y, Math.toRadians(90));
 
         Pose2d preIntake2 = new Pose2d(17, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+5, Math.toRadians(90));
+        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+4.5, Math.toRadians(90));
 
         Pose2d preIntake3 = new Pose2d(39, preIntake1.position.y, Math.toRadians(90));
         Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+9, Math.toRadians(90));
@@ -69,6 +69,8 @@ public class RRautoRedSort extends LinearOpMode {
 
         telemetry.clearAll();
 
+        double angle = Math.toDegrees(-robot.turretAngleToTarget(new Vector2d(-65, 59), shoot1));
+
         waitForStart();
 
         if (isStopRequested()) return;
@@ -78,11 +80,11 @@ public class RRautoRedSort extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                actionLib.setHoodAng(0.9),
+                                actionLib.setHoodAng(0.75),
                                 actionLib.setShooterVel(1400),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(-38),
+                                                actionLib.setTurretPos(angle),
                                                 new SleepAction(1.5)
                                         ),
                                         actionLib.stopTurretPower()
@@ -102,7 +104,7 @@ public class RRautoRedSort extends LinearOpMode {
                 .lineToXConstantHeading(preIntake1.position.x)
                 //start intake
                 .setTangent(Math.toRadians(90))
-                .lineToYConstantHeading(postIntake1.position.y, new TranslationalVelConstraint(70))
+                .lineToYConstantHeading(postIntake1.position.y, new TranslationalVelConstraint(90))
                 .turnTo(postIntake1.heading)
                 .build();
 
@@ -122,7 +124,7 @@ public class RRautoRedSort extends LinearOpMode {
                                                 )
                                         ),
                                         new RaceAction(
-                                                actionLib.setTurretPos(-38),
+                                                actionLib.setTurretPos(angle),
                                                 new SleepAction(1.3)
                                         ),
                                         actionLib.stopTurretPower()

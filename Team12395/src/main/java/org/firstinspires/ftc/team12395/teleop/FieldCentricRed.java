@@ -42,7 +42,7 @@ import org.firstinspires.ftc.team12395.rr.Drawing;
 
 import java.lang.Math;
 
-@TeleOp(name="Field Centric Re: (Red Solo)", group="TeleOp")
+@TeleOp(name="Field Centric Re: (RED Solo)", group="TeleOp")
 @Config
 public class FieldCentricRed extends LinearOpMode {
 
@@ -53,12 +53,12 @@ public class FieldCentricRed extends LinearOpMode {
     public static double hoodAngle = 0.1;
 
     public static double slowFireRateVelocity = 1800;
-    public static int normalSpinVelocity = 1650;
+    public static int normalSpinVelocity = 1500;
     public static Vector2d baseTargetPoint = new Vector2d(-65, 59);
     public static double preSetAngleClose = 0.8;
     public static double preSetVelocityClose = 1400;
     public static boolean shiftGoal = false;
-    public static double intakeVel = 2000;
+    public static double intakeVel = 2600;
     public static double flyWheelConstant = 1;
     public static double servoAngleSlope = 1;
 
