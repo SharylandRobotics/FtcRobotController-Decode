@@ -670,7 +670,7 @@ public class RobotHardware {
     }
 
     public int[] solvePattern(){
-        if (!mag.contains("0") && mag.contains("G") && (mag.lastIndexOf('G') != mag.indexOf('G')) ){
+        if (!mag.contains("0") && mag.contains("G") && (mag.lastIndexOf('G') == mag.indexOf('G')) ){
             // if I have a full mag with Green and know the pattern
             int greenIndex = mag.indexOf("G");
             switch (pattern) {
@@ -968,7 +968,7 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480, 1500);
+                spindexerHandler(-480 - (spindexerTarget % 120), 1500);
                 return false;
             }
         }
@@ -1010,7 +1010,7 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480, 800);
+                spindexerHandler(-480 - (spindexerTarget % 120), 800);
                 return false;
             }
         }

@@ -56,16 +56,14 @@ public class RRcombinedAutoRed extends LinearOpMode {
         Action driveToPLShoot = drive.actionBuilder(startPose)
                 .setTangent(Math.atan2(shoot1.position.y - startPose.position.y, shoot1.position.x - startPose.position.x))
                 //.lineToXLinearHeading(-28, Math.toRadians(180))
-                .lineToXConstantHeading(shoot1.position.x)
-                // scan & sort
-                // shoot
+                .lineToXLinearHeading(shoot1.position.x, shoot1.heading)
                 .build();
 
         // init done
 
         telemetry.clearAll();
 
-        double turretAngle = robot.turretAngleToTarget(new Vector2d(-65, 59), shoot1);
+        double turretAngle = Math.toDegrees(-robot.turretAngleToTarget(new Vector2d(-65, 59), shoot1));
 
         waitForStart();
 
