@@ -17,7 +17,7 @@ public class RRcombinedAutoRed extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
     RobotHardware.RoadRunnerActions actionLib = robot.new RoadRunnerActions();
-    Pose2d initialPose = new Pose2d(-48.5, 49.5, Math.toRadians(126));
+    Pose2d initialPose = new Pose2d(61, 14, Math.toRadians(90));
     MecanumDrive drive;
     Pose2d latestPose = initialPose;
 
@@ -56,8 +56,7 @@ public class RRcombinedAutoRed extends LinearOpMode {
         Action driveToPLShoot = drive.actionBuilder(startPose)
                 .setTangent(Math.atan2(shoot1.position.y - startPose.position.y, shoot1.position.x - startPose.position.x))
                 //.lineToXLinearHeading(-28, Math.toRadians(180))
-                .lineToXLinearHeading(shoot1.position.x, shoot1.heading)
-                .turnTo(shoot1.heading)
+                .lineToXConstantHeading(shoot1.position.x)
                 // scan & sort
                 // shoot
                 .build();
@@ -65,6 +64,8 @@ public class RRcombinedAutoRed extends LinearOpMode {
         // init done
 
         telemetry.clearAll();
+
+        double turretAngle = robot.turretAngleToTarget(new Vector2d(-65, 59), shoot1);
 
         waitForStart();
 
@@ -79,9 +80,7 @@ public class RRcombinedAutoRed extends LinearOpMode {
                                 actionLib.setShooterVel(1900),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(robot.turretAngleToTarget(
-                                                        new Vector2d(-65, 59), shoot1
-                                                )),
+                                                actionLib.setTurretPos(turretAngle),
                                                 new SleepAction(2)
                                         ),
                                         actionLib.stopTurretPower()
@@ -102,7 +101,6 @@ public class RRcombinedAutoRed extends LinearOpMode {
                 //start intake
                 .setTangent(Math.toRadians(90))
                 .lineToYConstantHeading(postIntake1.position.y)
-                .turnTo(postIntake1.heading)
                 .build();
 
         Actions.runBlocking(

@@ -12,7 +12,7 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import java.lang.Math;
 
-@Autonomous(name="RR Red Shooting", group="Alliance")
+@Autonomous(name="RR Red SHOOTING", group="Alliance")
 public class RRautoRed extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
@@ -82,7 +82,7 @@ public class RRautoRed extends LinearOpMode {
                                 actionLib.setShooterVel(1400),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(-40),
+                                                actionLib.setTurretPos(-38),
                                                 new SleepAction(2)
                                         ),
                                         actionLib.stopTurretPower()

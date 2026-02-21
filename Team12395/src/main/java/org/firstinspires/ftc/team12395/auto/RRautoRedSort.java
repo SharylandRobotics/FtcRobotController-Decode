@@ -12,7 +12,7 @@ import org.firstinspires.ftc.team12395.RobotHardware;
 
 import java.lang.Math;
 
-@Autonomous(name="RR Red Sorting", group="Alliance")
+@Autonomous(name="RR Red SORTING", group="Alliance")
 public class RRautoRedSort extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
@@ -42,15 +42,15 @@ public class RRautoRedSort extends LinearOpMode {
         Pose2d shoot1 =  new Pose2d(-22, 16, Math.toRadians(90));
 
         Pose2d preIntake1 = new Pose2d(-8, 22, Math.toRadians(90));
-        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 42, Math.toRadians(90));
+        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 43, Math.toRadians(90));
 
         Pose2d openGate = new Pose2d(5, postIntake1.position.y, Math.toRadians(90));
 
         Pose2d preIntake2 = new Pose2d(17, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+5, Math.toRadians(90));
+        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+4, Math.toRadians(90));
 
         Pose2d preIntake3 = new Pose2d(39, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+9, Math.toRadians(90));
+        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+8, Math.toRadians(90));
 
         // return to volley pose
 
@@ -82,7 +82,7 @@ public class RRautoRedSort extends LinearOpMode {
                                 actionLib.setShooterVel(1400),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(-40),
+                                                actionLib.setTurretPos(-38),
                                                 new SleepAction(2)
                                         ),
                                         actionLib.stopTurretPower()
@@ -121,7 +121,7 @@ public class RRautoRedSort extends LinearOpMode {
                                                 )
                                         ),
                                         new RaceAction(
-                                                actionLib.setTurretPos(-40),
+                                                actionLib.setTurretPos(-38),
                                                 new SleepAction(2)
                                         ),
                                         actionLib.stopTurretPower()
@@ -162,16 +162,19 @@ public class RRautoRedSort extends LinearOpMode {
                                                 new ParallelAction(
                                                         actionLib.scanColorToggle(),
                                                         new SequentialAction(
+                                                                new SleepAction(0.5),
                                                                 actionLib.spindexerTargetAddVel(20, 1000),
-                                                                new SleepAction(1)
+                                                                new SleepAction(0.2)
                                                         )
                                                 ),
-                                                new SleepAction(3)
+                                                new SleepAction(1.5)
                                         ),
 
                                         // then sort
                                         actionLib.sortCurrentSpindexer(),
-                                        new SleepAction(2)
+                                        new SleepAction(1),
+                                        actionLib.spindexerTargetAddVel(-30,1000),
+                                        new SleepAction(0.7)
                                 )
                                 // sorting --
 
@@ -179,7 +182,7 @@ public class RRautoRedSort extends LinearOpMode {
 
                         actionLib.setIntakeVel(0),
                         //new SleepAction(1),
-                        actionLib.shootAllBalls(),
+                        actionLib.shootAllBallsSlow(),
                         new SleepAction(1.5),
                         updatePose()
                 )
@@ -220,22 +223,25 @@ public class RRautoRedSort extends LinearOpMode {
                                                 new ParallelAction(
                                                         actionLib.scanColorToggle(),
                                                         new SequentialAction(
+                                                                new SleepAction(0.5),
                                                                 actionLib.spindexerTargetAddVel(20, 1000),
-                                                                new SleepAction(1)
+                                                                new SleepAction(0.2)
                                                         )
                                                 ),
-                                                new SleepAction(3)
+                                                new SleepAction(1.5)
                                         ),
 
                                         // then sort
                                         actionLib.sortCurrentSpindexer(),
-                                        new SleepAction(2)
+                                        new SleepAction(1),
+                                        actionLib.spindexerTargetAddVel(-30, 1000),
+                                        new SleepAction(0.7)
                                 )
                                 // sorting --
                         ),
 
                         actionLib.setIntakeVel(0),
-                        actionLib.shootAllBalls(),
+                        actionLib.shootAllBallsSlow(),
                         new SleepAction(1.5),
                         updatePose()
                 )
@@ -279,22 +285,25 @@ public class RRautoRedSort extends LinearOpMode {
                                                 new ParallelAction(
                                                         actionLib.scanColorToggle(),
                                                         new SequentialAction(
+                                                                new SleepAction(0.5),
                                                                 actionLib.spindexerTargetAddVel(20, 1000),
-                                                                new SleepAction(1)
+                                                                new SleepAction(0.2)
                                                         )
                                                 ),
-                                                new SleepAction(3)
+                                                new SleepAction(1.5)
                                         ),
 
                                         // then sort
                                         actionLib.sortCurrentSpindexer(),
-                                        new SleepAction(2)
+                                        new SleepAction(1),
+                                        actionLib.spindexerTargetAddVel(-30, 1000),
+                                        new SleepAction(0.7)
                                 )
                                 // sorting --
                         ),
 
                         actionLib.setIntakeVel(0),
-                        actionLib.shootAllBalls(),
+                        actionLib.shootAllBallsSlow(),
                         new SleepAction(1.5),
                         new ParallelAction(
                                 driveOff,

@@ -671,14 +671,14 @@ public class RobotHardware {
     }
 
     public int[] solvePattern(){
-        if (!mag.contains("0") && mag.contains("G") ){
+        if (!mag.contains("0") && mag.contains("G") && (mag.lastIndexOf('G') != mag.indexOf('G')) ){
             // if I have a full mag with Green and know the pattern
             int greenIndex = mag.indexOf("G");
             switch (pattern) {
                 case "GPP":
-                    if (greenIndex == firingChamber) {// if green is selected
+                    if (greenIndex == chamber) {// if green is selected
                         return new int[]{0, -2};// don't move, turn right twice
-                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn left, then turn right twice
                         return new int[]{1, -2};
                     } else {
@@ -687,9 +687,9 @@ public class RobotHardware {
                     }
 
                 case "PGP":
-                    if (greenIndex == firingChamber) { // if green is selected
+                    if (greenIndex == chamber) { // if green is selected
                         return new int[]{1, -2}; //  turn left, then turn right twice
-                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn right (2x left), then turn right twice
                         return new int[]{2, -2};
                     } else {
@@ -698,9 +698,9 @@ public class RobotHardware {
                     }
 
                 case "PPG":
-                    if (greenIndex == firingChamber) { // if green is selected
+                    if (greenIndex == chamber) { // if green is selected
                         return new int[]{2, 2}; //  turn cw (2x ccw), then turn cw twice
-                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, don't move, turn cw twice
                         return new int[]{0, -2};
                     } else {
@@ -709,7 +709,7 @@ public class RobotHardware {
                     }
             }
         }
-        myOpMode.telemetry.addData(":", mag, pattern, firingChamber);
+        myOpMode.telemetry.addData(":", mag, pattern, chamber);
         return null;
     }
 
@@ -930,7 +930,10 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                return !processObelisk();
+
+                boolean save = !processObelisk();
+                packet.put("Pattern: ", pattern);
+                return save;
             }
         }
         public class setTurretPosition implements Action {
@@ -993,8 +996,9 @@ public class RobotHardware {
             public boolean run(@NonNull TelemetryPacket packet){
                 int[] solve = solvePattern();
                 if (solve != null) {
-                    spindexerHandler((120 * solve[0]) - (spindexerTarget % 120));
+                    spindexerHandler((120 * solve[0]) - (spindexerTarget % 120), 800);
                     packet.put("Turning left: ", solve[0]);
+                    packet.put("Pattern Used: ", pattern);
                 }
                 return false;
             }
@@ -1048,8 +1052,13 @@ public class RobotHardware {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 scanColor();
+                int[] solve = solvePattern();
 
                 packet.put(getMagPicture(), "");
+                if (solve != null) {
+                    packet.put("Turning left: ", solve[0]);
+                }
+                myOpMode.telemetry.update();
 
                 return true;
             }
