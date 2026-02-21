@@ -46,6 +46,7 @@ import static org.firstinspires.ftc.team12395.RobotHardware.*;
 
 @TeleOp(name="Color Test", group="TeleOp")
 @Config
+@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class ColorTest extends LinearOpMode {
 

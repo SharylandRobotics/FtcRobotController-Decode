@@ -234,17 +234,7 @@ public class RobotHardware {
         //pattern = "PPG";
         mag = "GPP";
 
-        SoundPlayer.getInstance().setMasterVolume(1.0f);
-        AudioManager am = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
-        int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
-
-
-
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
-        myOpMode.telemetry.addData("Sound Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb));
-        myOpMode.telemetry.addData("Sound2 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep));
-        myOpMode.telemetry.addData("Sound3 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break));
         //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
@@ -272,21 +262,6 @@ public class RobotHardware {
 
     public double getPinPointHeading(){
         return pinpointDriver.getHeading(AngleUnit.DEGREES);
-    }
-
-
-    public void playBeep(String file) {
-        if (Objects.equals(file, "orb")) {
-            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb);
-            SoundPlayer.getInstance().preload(appContext, R.raw.orb);
-        } else if (Objects.equals(file, "orbDeep")){
-            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb_deep);
-            SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep);
-        } else if (Objects.equals(file, "break")){
-            SoundPlayer.getInstance().startPlaying(appContext, R.raw.anvil_break);
-            SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break);
-        }
-
     }
 
     /**
@@ -447,19 +422,6 @@ public class RobotHardware {
         firingChamber = (chamber+2) % 3;
     }
 
-    private double[] getValuesToTarget(){
-        double tx = limelight.getLatestResult().getTx();
-        double ty = limelight.getLatestResult().getTy();
-        Position pose = limelight.getLatestResult().getBotpose_MT2().getPosition();
-
-        double yDistance = verticalTargetDistance /Math.tan(ty);
-        double xDistance = Math.tan(tx)*yDistance;
-
-        double groundDistance = yDistance/Math.cos(tx);
-
-        return new double[]{ xDistance, yDistance, groundDistance};
-    }
-
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
@@ -469,72 +431,6 @@ public class RobotHardware {
         result = limelight.getLatestResult();
         return ((result != null && result.isValid()) &&
                 (result.getFiducialResults() != null && !result.getFiducialResults().isEmpty()));
-    }
-
-    public double[] homeToAprilTagBlue(){
-        boolean check = processLLresult();
-        if (check){
-
-            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
-
-            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
-            myOpMode.telemetry.addData("Tags: ", fresult.size());
-
-
-            for (LLResultTypes.FiducialResult fiducial : fresultCC){
-                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 24){
-                    fresult.remove(fiducial);
-                }
-            }
-
-            if (!fresult.isEmpty()) {
-
-
-                double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
-                double skew  = fresult.get(0).getCameraPoseTargetSpace().getOrientation().getYaw();
-
-                myOpMode.telemetry.addData("turning deg: ", tx);
-                myOpMode.telemetry.addData("skew deg: ", skew);
-                return new double[]{tx, skew};
-
-            }
-
-        }
-        return new double[]{Double.NaN, Double.NaN};
-    }
-
-    public double[] homeToAprilTagRed(){
-        boolean check = processLLresult();
-        if (check){
-
-            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
-
-            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
-            myOpMode.telemetry.addData("Tags: ", fresult.size());
-
-
-            for (LLResultTypes.FiducialResult fiducial : fresultCC){
-                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 20){
-                    fresult.remove(fiducial);
-                }
-            }
-
-            if (!fresult.isEmpty()) {
-
-
-                double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
-                double skew  = fresult.get(0).getCameraPoseTargetSpace().getOrientation().getYaw();
-
-                myOpMode.telemetry.addData("turning deg: ", tx);
-                myOpMode.telemetry.addData("skew deg: ", skew);
-                return new double[]{tx, skew};
-
-            }
-
-        }
-        return new double[]{Double.NaN, Double.NaN};
     }
 
     public Pose2d fetchLocalizedPose(double headingOffset){
