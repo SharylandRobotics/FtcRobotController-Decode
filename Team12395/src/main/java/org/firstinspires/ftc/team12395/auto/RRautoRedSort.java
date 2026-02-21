@@ -42,15 +42,15 @@ public class RRautoRedSort extends LinearOpMode {
         Pose2d shoot1 =  new Pose2d(-22, 16, Math.toRadians(90));
 
         Pose2d preIntake1 = new Pose2d(-8, 22, Math.toRadians(90));
-        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 43, Math.toRadians(90));
+        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 42, Math.toRadians(90));
 
-        Pose2d openGate = new Pose2d(5, postIntake1.position.y, Math.toRadians(90));
+        Pose2d openGate = new Pose2d(7, postIntake1.position.y, Math.toRadians(90));
 
         Pose2d preIntake2 = new Pose2d(17, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+4, Math.toRadians(90));
+        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+5, Math.toRadians(90));
 
         Pose2d preIntake3 = new Pose2d(39, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+8, Math.toRadians(90));
+        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+9, Math.toRadians(90));
 
         // return to volley pose
 
@@ -145,7 +145,7 @@ public class RRautoRedSort extends LinearOpMode {
                 // wait for gate
                 .waitSeconds(0.5)
                 .setTangent(Math.atan2(shoot1.position.y - openGate.position.y, shoot1.position.x - openGate.position.x))
-                .lineToX(shoot1.position.x)
+                .lineToXConstantHeading(shoot1.position.x)
                 .build();
 
         // open gate
@@ -266,12 +266,12 @@ public class RRautoRedSort extends LinearOpMode {
 
         Action driveToShoot3 = drive.actionBuilder(latestPose)
                 .setTangent(Math.atan2(shoot1.position.y - postIntake3.position.y, shoot1.position.x - postIntake3.position.x))
-                .lineToX(shoot1.position.x)
+                .lineToXConstantHeading(shoot1.position.x)
                 .build();
 
         Action driveOff = drive.actionBuilder(shoot1)
                 .setTangent(0)
-                .lineToX(preIntake2.position.x)
+                .lineToXConstantHeading(preIntake2.position.x)
                 .build();
 
         Actions.runBlocking(

@@ -59,6 +59,7 @@ public class RRcolorSort extends LinearOpMode {
         if (isStopRequested()) return;
 
         robot.setMagManualBulk("000");
+        robot.pattern = "PGP";
 
         Actions.runBlocking(
                 new SequentialAction(

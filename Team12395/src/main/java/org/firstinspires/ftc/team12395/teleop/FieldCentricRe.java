@@ -243,6 +243,7 @@ public class FieldCentricRe extends LinearOpMode {
             }
 
             robot.getSpindexerOffset();
+            robot.scanColor();
 
             // Telemetry for drivers + debugging
             telemetry.addData(robot.getMagPicture(), "");
@@ -251,7 +252,9 @@ public class FieldCentricRe extends LinearOpMode {
             telemetry.addData("spindexerE heading? ", ((robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree) % 360));
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
             telemetry.addData("Distance to Target: ", distanceToTarget);
-            telemetry.addData("Effective Distance to Target: ", effectiveDistanceToTarget);
+            if (robot.solvePattern() != null) {
+                telemetry.addData("Turns To Solve: ", robot.solvePattern()[0]);
+            }
 
 
 

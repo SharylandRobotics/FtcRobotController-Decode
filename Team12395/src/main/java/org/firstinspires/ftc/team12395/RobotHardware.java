@@ -48,7 +48,6 @@ import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
 import org.firstinspires.ftc.team12395.rr.MecanumDrive;
@@ -676,9 +675,9 @@ public class RobotHardware {
             int greenIndex = mag.indexOf("G");
             switch (pattern) {
                 case "GPP":
-                    if (greenIndex == chamber) {// if green is selected
+                    if (greenIndex == firingChamber) {// if green is selected
                         return new int[]{0, -2};// don't move, turn right twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn left, then turn right twice
                         return new int[]{1, -2};
                     } else {
@@ -687,9 +686,9 @@ public class RobotHardware {
                     }
 
                 case "PGP":
-                    if (greenIndex == chamber) { // if green is selected
+                    if (greenIndex == firingChamber) { // if green is selected
                         return new int[]{1, -2}; //  turn left, then turn right twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, turn right (2x left), then turn right twice
                         return new int[]{2, -2};
                     } else {
@@ -698,9 +697,9 @@ public class RobotHardware {
                     }
 
                 case "PPG":
-                    if (greenIndex == chamber) { // if green is selected
+                    if (greenIndex == firingChamber) { // if green is selected
                         return new int[]{2, 2}; //  turn cw (2x ccw), then turn cw twice
-                    } else if (mag.charAt((chamber + 1) % mag.length()) != 'G') {
+                    } else if (mag.charAt((firingChamber + 1) % mag.length()) != 'G') {
                         // if the color to my ccw isn't green, don't move, turn cw twice
                         return new int[]{0, -2};
                     } else {
@@ -709,7 +708,7 @@ public class RobotHardware {
                     }
             }
         }
-        myOpMode.telemetry.addData(":", mag, pattern, chamber);
+        myOpMode.telemetry.addData(":", mag, pattern, firingChamber);
         return null;
     }
 
