@@ -107,7 +107,7 @@ public class FieldCentricRed extends LinearOpMode {
             telemetry.addData("Heading Velocity: ",  headingVelocity);
             TelemetryPacket packet = new TelemetryPacket();
 
-            Pose2d llpose = robot.fetchLocalizedPose(-90);
+            Pose2d llpose = robot.fetchLocalizedPose(90);
 
             if (!Double.isNaN(llpose.position.x) && !Double.isNaN(llpose.position.y)) {
                 packet.fieldOverlay().setStroke("#3F51B5");

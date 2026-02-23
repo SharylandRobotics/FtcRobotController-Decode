@@ -41,10 +41,9 @@ public class RRcombinedAutoBlue extends LinearOpMode {
 
         Pose2d shoot1 =  new Pose2d(61, -14, Math.toRadians(-90));
 
-        Pose2d preIntake1 = new Pose2d(60, -20, Math.toRadians(-90));
-        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, -55, Math.toRadians(-90));
+        Pose2d postIntake1 = new Pose2d(61, -55, Math.toRadians(-90));
 
-        Pose2d preIntake2 = new Pose2d(36, -28, Math.toRadians(-90));
+        Pose2d preIntake2 = new Pose2d(33, -20, Math.toRadians(-90));
         Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y, Math.toRadians(-90));
 
         Pose2d postIntake3 = new Pose2d(shoot1.position.x, postIntake1.position.y, Math.toRadians(-90));
@@ -53,19 +52,19 @@ public class RRcombinedAutoBlue extends LinearOpMode {
 
         robot.setLocalizerPosition(startPose);
 
-        /*Action driveToPLShoot = drive.actionBuilder(startPose)
-                .setTangent(Math.atan2(shoot1.position.y - startPose.position.y, shoot1.position.x - startPose.position.x))
+        Action driveToPLShoot = drive.actionBuilder(startPose)
+                .setTangent(Math.toRadians(-90))
                 //.lineToXLinearHeading(-28, Math.toRadians(180))
-                .lineToXLinearHeading(shoot1.position.x, shoot1.heading)
+                .lineToYConstantHeading(shoot1.position.y-2)
                 .build();
 
-         */
+
 
         // init done
 
         telemetry.clearAll();
 
-        double turretAngle = Math.toDegrees(-robot.turretAngleToTarget(new Vector2d(-65, -60), shoot1));
+        double turretAngle = Math.toDegrees(-robot.turretAngleToTarget(new Vector2d(-65, -56), shoot1));
 
         waitForStart();
 
@@ -76,30 +75,33 @@ public class RRcombinedAutoBlue extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                actionLib.setHoodAng(0.4),
+                                actionLib.setHoodAng(0.33),
                                 actionLib.setShooterVel(1900),
                                 new SequentialAction(
                                         new RaceAction(
                                                 actionLib.setTurretPos(turretAngle),
-                                                new SleepAction(3)
+                                                new SleepAction(2)
                                         ),
                                         actionLib.stopTurretPower()
-                                )
+                                ),
 
-                                //driveToPLShoot
+                                driveToPLShoot
                         ),
-                        new SleepAction(2),
+                        new SleepAction(0.2),
                         actionLib.shootAllBallsSlow(),
-                        new SleepAction(3),
+                        new SleepAction(2.5),
                         updatePose()
                 )
         );
 
         Action driveToRow1 = drive.actionBuilder(latestPose)
+                /*
                 .setTangent(0)
                 .lineToXConstantHeading(preIntake1.position.x)
+
+                 */
                 //start intake
-                .setTangent(Math.toRadians(90))
+                .setTangent(Math.toRadians(-90))
                 .lineToYConstantHeading(postIntake1.position.y)
                 .build();
 
@@ -109,14 +111,16 @@ public class RRcombinedAutoBlue extends LinearOpMode {
                                 driveToRow1,
                                 actionLib.setIntakeVel(2600)
                         ),
-                        new SleepAction(0.2),
+                        new SleepAction(1.5),
                         updatePose()
                 )
         );
 
+
         Action driveToShoot = drive.actionBuilder(latestPose)
-                .setTangent(Math.atan2(shoot1.position.y - latestPose.position.y, shoot1.position.x - latestPose.position.x))
-                .lineToXConstantHeading(shoot1.position.x)
+                .setTangent(Math.toRadians(-90))
+                .lineToY(shoot1.position.y)
+                .turnTo(shoot1.heading)
                 // shoot
                 .build();
 
@@ -126,7 +130,7 @@ public class RRcombinedAutoBlue extends LinearOpMode {
                         driveToShoot,
                         actionLib.setIntakeVel(0),
                         actionLib.shootAllBallsSlow(),
-                        new SleepAction(3),
+                        new SleepAction(2.5),
                         updatePose()
                 )
         );
@@ -136,7 +140,7 @@ public class RRcombinedAutoBlue extends LinearOpMode {
                 .setTangent(Math.atan2(preIntake2.position.y - latestPose.position.y, preIntake2.position.x - latestPose.position.x))
                 .lineToX(preIntake2.position.x)
 
-                .setTangent(Math.toRadians(90))
+                .setTangent(Math.toRadians(-90))
                 .lineToY(postIntake2.position.y)
                 .build();
 
@@ -151,8 +155,9 @@ public class RRcombinedAutoBlue extends LinearOpMode {
 
         Action driveToShoot2 = drive.actionBuilder(latestPose)
                 // stop intake
-                .setTangent(Math.atan2(shoot1.position.y - latestPose.position.y, shoot1.position.x - latestPose.position.x))
+                .setTangent(Math.atan2((shoot1.position.y - 2) - latestPose.position.y, shoot1.position.x - latestPose.position.x))
                 .lineToX(shoot1.position.x)
+                .turnTo(shoot1.heading)
                 .build();
 
         Actions.runBlocking(
@@ -160,7 +165,7 @@ public class RRcombinedAutoBlue extends LinearOpMode {
                         driveToShoot2,
                         actionLib.setIntakeVel(0),
                         actionLib.shootAllBallsSlow(),
-                        new SleepAction(3),
+                        new SleepAction(2.5),
                         updatePose()
                 )
         );
@@ -181,13 +186,14 @@ public class RRcombinedAutoBlue extends LinearOpMode {
         );
 
         Action driveToShoot3 = drive.actionBuilder(latestPose)
-                .setTangent(Math.atan2(shoot1.position.y - latestPose.position.y, shoot1.position.x - latestPose.position.x))
+                .setTangent(Math.atan2((shoot1.position.y - 2) - latestPose.position.y, shoot1.position.x - latestPose.position.x))
                 .lineToX(shoot1.position.x)
+                .turnTo(shoot1.heading)
                 .build();
 
         Action driveOff = drive.actionBuilder(shoot1)
                 .setTangent(0)
-                .lineToX(preIntake2.position.x+10)
+                .lineToXLinearHeading(preIntake2.position.x, preIntake2.heading)
                 .build();
 
         Actions.runBlocking(
@@ -195,7 +201,7 @@ public class RRcombinedAutoBlue extends LinearOpMode {
                         driveToShoot3,
                         actionLib.setIntakeVel(0),
                         actionLib.shootAllBallsSlow(),
-                        new SleepAction(3),
+                        new SleepAction(2),
                         new ParallelAction(
                                 driveOff,
                                 new RaceAction(
