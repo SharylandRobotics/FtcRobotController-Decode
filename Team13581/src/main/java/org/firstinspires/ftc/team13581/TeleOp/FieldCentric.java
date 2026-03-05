@@ -29,19 +29,12 @@
 
 package org.firstinspires.ftc.team13581.TeleOp;
 
-import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.SwitchableLight;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.team13581.RobotHardware;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.opencv.ImageRegion;
-import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 
 @TeleOp(name="Field Centric", group="TeleOp")
 
@@ -100,29 +93,18 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             telemetry.addData("Error Degree: ", robot.getGoalBearingDeg());
-            telemetry.addData("Turret Degree: ", robot.getTurretDegree());
-            telemetry.addData("Servo Angle: ", robot.getAimPos());
-            telemetry.addData("Turret Pos: ", robot.hAimRPos());
+            telemetry.addData("Hood Position: ", robot.getHoodPos());
             telemetry.addData("Power: ", robot.getBackPower());
             telemetry.addData("Vel: ", robot.getOuttakeRVel());
             telemetry.addData("Gain: ", gain);
-            //telemetry.addData("HSV: ", "H=%.3f S=%.3f V=%.3f", robot.getHSVColor()[0], robot.getHSVColor()[1], robot.getHSVColor()[2]);
-            //telemetry.addData("RGB: ", "R=%.3f G=%.3f B=%.3f", robot.getRGBColor()[0], robot.getRGBColor()[1], robot.getRGBColor()[2]);
 
             telemetry.update();
-/*
-            if (gamepad1.bWasPressed()){
-                runIntake = !runIntake;
-                if (runIntake){
-                    robot.setIntake1(1);
-                }
-            }
- */
+
             if (gamepad1.aWasPressed()){
                 runIntake = !runIntake;
                 if (runIntake){
                     robot.setIntake1(1);
-                    robot.setIntake2(.7);
+                    robot.setIntake2(1);
                 }
             }
             if (gamepad1.yWasPressed()){
@@ -147,15 +129,15 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (gamepad2.left_bumper) {
-                robot.setAimPos(0.6);
+                robot.setHoodPos(0.6);
                 velocity = 1300;
             }
             if (gamepad2.right_bumper) {
-                robot.setAimPos(0.3);
+                robot.setHoodPos(0.3);
                 velocity = 1500;
             }
             if (gamepad2.a) {
-                velocity = 2200;
+                velocity = 1925;
             }
             if (gamepad2.b) {
                 velocity = 0;
@@ -173,67 +155,46 @@ public class FieldCentric extends LinearOpMode {
             }
 
             if (gamepad2.dpad_up) {
-                double tempPos = robot.getAimPos();
+                double tempPos = robot.getHoodPos();
                 if (tempPos > 0.1) {
-                    robot.setAimPos(tempPos - 0.02);
+                    robot.setHoodPos(tempPos - 0.02);
                 }
             }
 
             if (gamepad2.dpad_left) {
-                robot.setAimPos(0.45);
+                robot.setHoodPos(0.45);
             }
 
             if (gamepad2.dpad_down) {
-                double tempPos = robot.getAimPos();
+                double tempPos = robot.getHoodPos();
                 if (tempPos < (0.75)) {
-                    robot.setAimPos(tempPos + 0.02);
+                    robot.setHoodPos(tempPos + 0.02);
                 }
             }
 
 
             if (gamepad2.right_trigger > 0) {
-                double tempPosR = robot.hAimRPos();
-
-                if (tempPosR > (0)) {
-                    robot.setTurretPos(tempPosR - 0.01);
-                }
+                robot.setTurretPower(0.2);
             }
             if (gamepad2.left_trigger > 0)    {
-                double tempPosR = robot.hAimRPos();
+                robot.setTurretPower(-0.2);
+            }
 
-                if (tempPosR < (1)) {
-                    robot.setTurretPos(tempPosR + 0.01);
-                }
-            }
-            if (gamepad2.dpad_right) {
-                robot.setTurretPos(0.5);
-            }
 /*
-            if (gamepad2.xWasPressed()){
+            if (gamepad2.yWasPressed()){
                 double scan = robot.getGoalBearingDeg();
-                double deg = 0.0;
                 double pos = 0.0;
                 if (!Double.isNaN(scan)) {
-                    deg = scan + robot.getTurretDegree();
-                    pos = robot.hAimRPos() + (scan / 300.0)/1.2;
-                    pos = Range.clip(pos, 0.2, 0.8);
+                    pos = robot.turretAimPos() + (scan / 300.0)/2;
+                    pos = Range.clip(pos, 0.35, 0.65);
                     robot.setTurretPos(pos);
-                    //robot.setTurretDegree(scan);
+                    robot.setTurretDegree(scan);
                     telemetry.addData("Correcting by :", scan);
-                    telemetry.addData("Absolute Target: ", deg);
                     telemetry.addData("Going to Pos: ", pos);
                     robot.updateAprilTagDetections();
                 }
             }
-*/
-            if (gamepad1.dpadUpWasPressed()){
-                gain++;
-            }
-            if (gamepad1.dpadDownWasPressed()){
-                gain--;
-            }
-
-            //robot.colorSensor.setGain((float) gain);
+ */
 
             sleep(50);
         }

@@ -1,24 +1,21 @@
 package org.firstinspires.ftc.team13581.Autonomous;
 
 import androidx.annotation.NonNull;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.team13581.RobotHardware;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.team13581.RobotHardware;
 import org.firstinspires.ftc.team13581.rr.MecanumDrive;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.SequentialAction;
 
 import java.lang.Math;
 
 @Config
-@Autonomous(name="RR Red Short Comp", group="Autonomous")
+@Autonomous(name="RR Red Short 12 Ball", group="Autonomous")
 
-public class RRRedShortGoal extends LinearOpMode {
+public class RRRedShortFast extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -46,7 +43,7 @@ public class RRRedShortGoal extends LinearOpMode {
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
             robot.setIntake1(1);
-            robot.setIntake2(1);
+            robot.setIntake2(.7);
             return false;
         }
     }
@@ -102,19 +99,6 @@ public class RRRedShortGoal extends LinearOpMode {
             return false;
         }
     }
-    class FirstShot implements Action {
-        private boolean initialized = false;
-        private double parameter = 0;
-        public FirstShot(double val){
-            parameter = val;
-        }
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setHoodPos(0.6);
-            robot.setShootSpeed(1250);
-            return false;
-        }
-    }
     public Action StopperUp(double value){
         return new StopperUp(value);
     }
@@ -133,7 +117,6 @@ public class RRRedShortGoal extends LinearOpMode {
     public Action StopShoot(double value){
         return new StopShoot(value);
     }
-    public Action FirstShot(double value){return new FirstShot(value);}
     @Override
     public void runOpMode(){
 
@@ -144,26 +127,26 @@ public class RRRedShortGoal extends LinearOpMode {
 
         Action Preload = drive.actionBuilder(initialPose)
                 .setTangent(Math.atan2(33.3-51,-32.4+49))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
+                .lineToYLinearHeading(33.3,Math.toRadians(130), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
 
         Action FirstRow = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
                 .setTangent(Math.atan2(22-33.3,-12+32.4))
-                .lineToYLinearHeading(22,Math.toRadians(90))
+                .lineToYLinearHeading(22,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(56-28,0))
-                .lineToYLinearHeading(56,Math.toRadians(90))
+                .lineToYLinearHeading(56,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 . build();
         Action FirstShoot = drive.actionBuilder(new Pose2d(-12,56,Math.toRadians(90)))
                 .setTangent(Math.atan2(33.3-56,-32.4+12))
                 .lineToYLinearHeading(33.3,Math.toRadians(130))
                 .build();
-        Action SecondRow = drive.actionBuilder(new Pose2d(1.4,58, Math.toRadians(90)))
+        Action SecondRow = drive.actionBuilder(new Pose2d(1.4,60, Math.toRadians(90)))
                 .setTangent(Math.atan2(28-55,0))
-                .lineToYLinearHeading(28,Math.toRadians(90))
+                .lineToYLinearHeading(28,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(0,12.2-1.4))
-                .lineToXLinearHeading(12.2,Math.toRadians(90))
+                .lineToXLinearHeading(12.2,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
+                .lineToYLinearHeading(55,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
         Action SecondShoot = drive.actionBuilder(new Pose2d(12.2,55, Math.toRadians(90)))
                 .setTangent(Math.atan2(33.3-55,-32.4-12.2))
@@ -171,23 +154,23 @@ public class RRRedShortGoal extends LinearOpMode {
                 .build();
         Action ClearGate = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
                 .setTangent((Math.atan2(46-33.3,1.4+32.4)))
-                .lineToYLinearHeading(46,Math.toRadians(90))
+                .lineToYLinearHeading(46,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent((Math.atan2(60-46,0)))
-                .lineToYLinearHeading(60,Math.toRadians(90))
+                .lineToYLinearHeading(60,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
         Action ThirdRow = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
                 .setTangent(Math.atan2(28-33.3,36+32.4))
-                .lineToYLinearHeading(28,Math.toRadians(90))
+                .lineToYLinearHeading(28,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
+                .lineToYLinearHeading(55,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
         Action ThirdShoot = drive.actionBuilder(new Pose2d(36,55, Math.toRadians(90)))
                 .setTangent(Math.atan2(33.3-55,-32.4-36))
                 .lineToYLinearHeading(33.3,Math.toRadians(130))
                 .build();
         Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-33.3,0+32.4))
-                .lineToYLinearHeading(28,Math.toRadians(90))
+                .setTangent(Math.atan2(28-33.3,-8+32.4))
+                .lineToYLinearHeading(28,Math.toRadians(90),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
         while(opModeInInit()) {
             // Display heading and status continuously during init loop
@@ -205,7 +188,7 @@ public class RRRedShortGoal extends LinearOpMode {
                     new SequentialAction(
                             new ParallelAction(
                                     StopperUp(1),
-                                    FirstShot(1),
+                                    nearShoot(1),
                                     Preload
                             ),
                             new SleepAction(.4),
@@ -216,7 +199,6 @@ public class RRRedShortGoal extends LinearOpMode {
                             new ParallelAction(
                                     StopperDown(1),
                                     Intake(1),
-                                    nearShoot(1),
                                     FirstRow
                             ),
                             StopIntake(1),
@@ -241,7 +223,6 @@ public class RRRedShortGoal extends LinearOpMode {
                                     SecondShoot
                             ),
                             Intake(1),
-                            Intake(1),
                             new SleepAction(.4),
                             new ParallelAction(
                                     StopperDown(1),
@@ -254,9 +235,6 @@ public class RRRedShortGoal extends LinearOpMode {
                             ),
                             Intake(1),
                             new SleepAction(.5),
-
-                            
-
 
 
                             TelePosition

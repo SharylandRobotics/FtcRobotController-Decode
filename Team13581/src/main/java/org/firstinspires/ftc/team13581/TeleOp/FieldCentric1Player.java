@@ -33,7 +33,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team13581.RobotHardware;
 
 @TeleOp(name="Field Centric 1 Player", group="TeleOp")
@@ -81,9 +80,9 @@ public class FieldCentric1Player extends LinearOpMode {
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             telemetry.addData("Error Degree: ", robot.getGoalBearingDeg());
-            telemetry.addData("Turret Degree: ", robot.getTurretDegree());
-            telemetry.addData("Servo Angle: ", robot.getAimPos());
-            telemetry.addData("Turret Pos: ", robot.hAimRPos());
+//            telemetry.addData("Turret Degree: ", robot.getTurretDegree());
+            telemetry.addData("Servo Angle: ", robot.getHoodPos());
+            telemetry.addData("Turret Pos: ", robot.turretAimPos());
             telemetry.addData("Power: ", robot.getBackPower());
             telemetry.addData("Vel: ", robot.getOuttakeRVel());
             telemetry.addData("Gain: ", gain);
@@ -121,11 +120,11 @@ public class FieldCentric1Player extends LinearOpMode {
             }
 
             if (gamepad1.left_bumper) {
-                robot.setAimPos(1);
+                robot.setHoodPos(1);
                 velocity = 1300;
             }
             if (gamepad1.right_bumper) {
-                robot.setAimPos(0.325);
+                robot.setHoodPos(0.325);
                 velocity = 1500;
             }
 
@@ -141,14 +140,14 @@ public class FieldCentric1Player extends LinearOpMode {
             }
 
             if (gamepad1.right_trigger > 0) {
-                double tempPosR = robot.hAimRPos();
+                double tempPosR = robot.turretAimPos();
 
                 if (tempPosR > (0)) {
                     robot.setTurretPos(tempPosR - 0.01);
                 }
             }
             if (gamepad1.left_trigger > 0)    {
-                double tempPosR = robot.hAimRPos();
+                double tempPosR = robot.turretAimPos();
 
                 if (tempPosR < (1)) {
                     robot.setTurretPos(tempPosR + 0.01);
@@ -157,14 +156,14 @@ public class FieldCentric1Player extends LinearOpMode {
             if (gamepad1.dpad_left) {
                 robot.setTurretPos(0.5);
             }
-
+/*
             if (gamepad1.dpadDownWasPressed()){
                 double scan = robot.getGoalBearingDeg();
                 double deg = 0.0;
                 double pos = 0.0;
                 if (!Double.isNaN(scan)) {
                     deg = scan + robot.getTurretDegree();
-                    pos = robot.hAimRPos() + (scan / 300.0)/1.2;
+                    pos = robot.turretAimPos() + (scan / 300.0)/1.2;
                     pos = Range.clip(pos, 0.2, 0.8);
                     robot.setTurretPos(pos);
                     //robot.setTurretDegree(scan);
@@ -174,7 +173,7 @@ public class FieldCentric1Player extends LinearOpMode {
                     robot.updateAprilTagDetections();
                 }
             }
-
+*/
             sleep(50);
         }
     }

@@ -13,9 +13,9 @@ import org.firstinspires.ftc.team13581.rr.MecanumDrive;
 import java.lang.Math;
 
 @Config
-@Autonomous(name="RR Blue Short Comp", group="Autonomous")
+@Autonomous(name="RR Blue Short 12 ball", group="Autonomous")
 
-public class RRBlueShort extends LinearOpMode {
+public class RRBlueShortFast extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -125,54 +125,52 @@ public class RRBlueShort extends LinearOpMode {
 
         robot.init();
 
-        Action Preload = drive.actionBuilder(new Pose2d(-49, -51, 180))
-                .setTangent(Math.atan2(-33.3+51,-32.4+49))
-                .lineToYLinearHeading(-33.3,Math.toRadians(-130))
+        Action Preload = drive.actionBuilder(new Pose2d(65, -1, 180))
+                .setTangent(Math.atan2(0,65-33))
+                .lineToXLinearHeading(-33,Math.toRadians(-90))
                 .build();
 
-        Action FirstRow = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(-130)))
-                .setTangent(Math.atan2(-20+33.3,-12+32.4))
-                .lineToYLinearHeading(-20,Math.toRadians(-90))
+        Action FirstRow = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(230)))
+                .setTangent(Math.atan2(-22+33.3,-12+32.4))
+                .lineToYLinearHeading(-22,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(-56+28,0))
-                .lineToYLinearHeading(-56,Math.toRadians(-90))
+                .lineToYLinearHeading(-56,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 . build();
-        Action FirstShoot = drive.actionBuilder(new Pose2d(-12,-56,Math.toRadians(-90)))
+        Action FirstShoot = drive.actionBuilder(new Pose2d(-12,-56,Math.toRadians(270)))
                 .setTangent(Math.atan2(-33.3+56,-32.4+12))
-                .lineToYLinearHeading(-33.3,Math.toRadians(-130))
+                .lineToYLinearHeading(-33.3,Math.toRadians(230))
                 .build();
-        Action SecondRow = drive.actionBuilder(new Pose2d(-1.4,-60, Math.toRadians(-90)))
-                .setTangent(Math.atan2(-24+55,6+1.4))
-                .lineToYLinearHeading(-24,Math.toRadians(-90))
-                .setTangent(Math.atan2(0,12.2-6))
-                .lineToXLinearHeading(12.2,Math.toRadians(-90))
-                .setTangent(Math.atan2(-55+28,0))
-                .lineToYLinearHeading(-55,Math.toRadians(-90))
+        Action SecondRow = drive.actionBuilder(new Pose2d(-2,-60, Math.toRadians(270)))
                 .setTangent(Math.atan2(-28+55,0))
-                .lineToYLinearHeading(-28,Math.toRadians(-90))
-                .build();
-        Action SecondShoot = drive.actionBuilder(new Pose2d(12.2,-28, Math.toRadians(-90)))
-                .setTangent(Math.atan2(-33.3+28,-32.4-12.2))
-                .lineToYLinearHeading(-33.3, Math.toRadians(-130))
-                .build();
-        Action ClearGate = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(-130)))
-                .setTangent((Math.atan2(-46+33.3,1.4+32.4)))
-                .lineToYLinearHeading(-46,Math.toRadians(-90))
-                .setTangent((Math.atan2(-60+46,0)))
-                .lineToYLinearHeading(-60,Math.toRadians(-90))
-                .build();
-        Action ThirdRow = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(-130)))
-                .setTangent(Math.atan2(-28+33.3,36+32.4))
-                .lineToYLinearHeading(-28,Math.toRadians(270))
+                .lineToYLinearHeading(-28,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(0,12.2-1.4))
+                .lineToXLinearHeading(12.2,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(-55+28,0))
-                .lineToYLinearHeading(-55,Math.toRadians(270))
+                .lineToYLinearHeading(-55,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .build();
+        Action SecondShoot = drive.actionBuilder(new Pose2d(12.2,-55, Math.toRadians(270)))
+                .setTangent(Math.atan2(-33.3+55,-32.4-12.2))
+                .lineToYLinearHeading(-33.3, Math.toRadians(230))
+                .build();
+        Action ClearGate = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(230)))
+                .setTangent((Math.atan2(-46+33.3,-2+32.4)))
+                .lineToYLinearHeading(-46,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent((Math.atan2(-60+46,0)))
+                .lineToYLinearHeading(-60,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .build();
+        Action ThirdRow = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(230)))
+                .setTangent(Math.atan2(-28+33.3,36+32.4))
+                .lineToYLinearHeading(-28,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(-55+28,0))
+                .lineToYLinearHeading(-55,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
         Action ThirdShoot = drive.actionBuilder(new Pose2d(36,-55, Math.toRadians(270)))
                 .setTangent(Math.atan2(-33.3+55,-32.4-36))
                 .lineToYLinearHeading(-33.3,Math.toRadians(220))
                 .build();
-        Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(-130)))
+        Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(230)))
                 .setTangent(Math.atan2(-28+33.3,-8+32.4))
-                .lineToYLinearHeading(-28,Math.toRadians(-90))
+                .lineToYLinearHeading(-28,Math.toRadians(270),new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
         while(opModeInInit()) {
             // Display heading and status continuously during init loop
@@ -188,46 +186,8 @@ public class RRBlueShort extends LinearOpMode {
         // Execute full autonomous path sequence once started
         Actions.runBlocking(
                     new SequentialAction(
-                            new ParallelAction(
-                                    StopperUp(1),
-                                    nearShoot(1),
-                                    Preload
-                            ),
-                            new SleepAction(.4),
-                            Intake(1),
-                            new SleepAction(1),
-                            StopIntake(1),
+                            Preload
 
-                            new ParallelAction(
-                                    StopperDown(1),
-                                    Intake(1),
-                                    FirstRow
-                            ),
-                            StopIntake(1),
-                            new ParallelAction(
-                                    StopperUp(1),
-                                    FirstShoot
-                            ),
-                            Intake(1),
-                            new SleepAction(.4),
-                            new ParallelAction(
-                                    StopperDown(1),
-                                    StopIntake(1),
-                                    ClearGate
-                            ),
-                            new ParallelAction(
-                                    Intake(1),
-                                    SecondRow
-                            ),
-                            StopIntake(1),
-                            new ParallelAction(
-                                    StopperUp(1),
-                                    SecondShoot
-                            ),
-                            Intake(1),
-                            new SleepAction(.4),
-
-                            TelePosition
 
 
 

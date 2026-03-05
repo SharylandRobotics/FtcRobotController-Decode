@@ -33,7 +33,7 @@ public class RobotCentricShootBlue extends LinearOpMode {
 
         if (opModeIsActive()) {
             robot.setShootSpeed(1300);
-            robot.setAimPos(0.75);
+            robot.setHoodPos(0.75);
             //robot.setTurretPos(0.5);
             sleep(1000);
             robot.turnToHeading(YAW_SPEED, GOAL_DEG);
@@ -68,7 +68,7 @@ public class RobotCentricShootBlue extends LinearOpMode {
 
             robot.setShootSpeed(1300);
             sleep(1000);
-            robot.setAimPos(0.45);
+            robot.setHoodPos(0.45);
             robot.turnToHeading(YAW_SPEED, GOAL_DEG); // turn to shoot
             robot.holdHeading(YAW_SPEED, GOAL_DEG, 0.5);
             robot.setIntake1(-0.2);
