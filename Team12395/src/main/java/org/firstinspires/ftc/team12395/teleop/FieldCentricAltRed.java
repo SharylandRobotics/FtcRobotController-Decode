@@ -197,11 +197,11 @@ public class FieldCentricAltRed extends LinearOpMode {
                 double errorDeg = tData[0];
 
                 if (!Double.isNaN(errorDeg) ) {
-                    tSkew = tData[1];
-                    double farFudge = 0;
-                    if (velocity == preSetVelocityFar){ farFudge = Math.copySign(4, errorDeg); }
+                    //tSkew = tData[1];
+                    //double farFudge = 0;
+                    //if (velocity == preSetVelocityFar){ farFudge = Math.copySign(4, errorDeg); }
 
-                    lastTargetTurretPos = errorDeg - 1*(robot.getHeading() - prevHeading) + farFudge;
+                    lastTargetTurretPos = errorDeg - (robot.getHeading() - prevHeading) ;
                     robot.setTurretHandlerRelative(lastTargetTurretPos);
                     lastTargetTurretPos += robot.getCurrentTurretDegreePos();
                     lastTargetHeading = robot.getHeading();

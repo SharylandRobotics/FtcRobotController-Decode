@@ -81,8 +81,7 @@ public class FieldCentric1Player extends LinearOpMode {
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             telemetry.addData("Error Degree: ", robot.getGoalBearingDeg());
 //            telemetry.addData("Turret Degree: ", robot.getTurretDegree());
-            telemetry.addData("Servo Angle: ", robot.getHoodPos());
-            telemetry.addData("Turret Pos: ", robot.turretAimPos());
+            telemetry.addData("Hood Position: ", robot.getHoodPos());
             telemetry.addData("Power: ", robot.getBackPower());
             telemetry.addData("Vel: ", robot.getOuttakeRVel());
             telemetry.addData("Gain: ", gain);
@@ -140,21 +139,10 @@ public class FieldCentric1Player extends LinearOpMode {
             }
 
             if (gamepad1.right_trigger > 0) {
-                double tempPosR = robot.turretAimPos();
-
-                if (tempPosR > (0)) {
-                    robot.setTurretPos(tempPosR - 0.01);
-                }
+                robot.setTurretPower(0.2);
             }
             if (gamepad1.left_trigger > 0)    {
-                double tempPosR = robot.turretAimPos();
-
-                if (tempPosR < (1)) {
-                    robot.setTurretPos(tempPosR + 0.01);
-                }
-            }
-            if (gamepad1.dpad_left) {
-                robot.setTurretPos(0.5);
+                robot.setTurretPower(-0.2);
             }
 /*
             if (gamepad1.dpadDownWasPressed()){

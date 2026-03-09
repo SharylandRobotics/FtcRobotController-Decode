@@ -82,7 +82,7 @@ public class RRBlueShortFast extends LinearOpMode {
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setStopper(0);
+            robot.setStopper(0.4);
             return false;
         }
     }

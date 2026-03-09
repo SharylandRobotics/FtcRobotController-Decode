@@ -32,6 +32,7 @@ package org.firstinspires.ftc.team13581;
 import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
+import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
@@ -65,11 +66,14 @@ public class RobotHardware {
     private DcMotor backRightDrive  = null;
     private DcMotor Intake1 = null;
     private DcMotor Intake2 = null;
-    private OverflowEncoder turretEncoder;
+    public servoDE turretHandler;
+    public static int maxTurnR = 90 ;
+    public static int maxTurnL = 90; // negative
     private DcMotorEx outtakeMotorR = null;
     private DcMotorEx outtakeMotorL = null;
     private CRServo turretAimR = null;
     private CRServo turretAimL = null;
+    public OverflowEncoder turretE;
     private Servo hoodAim = null;
 
     private Servo stopper = null;
@@ -172,7 +176,7 @@ public class RobotHardware {
 
         turretAimR = myOpMode.hardwareMap.get(CRServo.class, "turret_aim_r");
         turretAimL = myOpMode.hardwareMap.get(CRServo.class, "turret_aim_l");
-
+        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "intake1")));
 
         hoodAim = myOpMode.hardwareMap.get(Servo.class, "hood_aim");
 
@@ -232,6 +236,7 @@ public class RobotHardware {
         outtakeMotorL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
+        turretHandler = new servoDE(turretE, turretAimR, turretAimL);
 
         outtakeMotorR.setVelocityPIDFCoefficients(100, 1, 3, 1);
 
@@ -291,7 +296,7 @@ public class RobotHardware {
     public double getHoodPos() { return hoodAim.getPosition();}
 
     public void setStopper(double pos) {
-        stopper.setPosition(pos/10);
+        stopper.setPosition(pos);
     }
 
     public void setTurretPower(double p) {
@@ -299,21 +304,22 @@ public class RobotHardware {
         turretAimL.setPower(p);
 
     }
-/*
-    public void setTurretDegree(double deg){
-        if (!Double.isNaN(deg)) {
-            // 54:15 (3.6)
-            // 30:90 (0.33)
-            // left: - encoder, + servo
-            setTurretPos(Range.clip((deg * 1/300) + 0.5, 0.2, 0.8));
-            myOpMode.telemetry.addData("Going to Pos: ", (deg * 1/300) + 0.5);
-        } else {
-            myOpMode.telemetry.addData("Not a Number: ", deg);
-        }
+
+    public void setTurretPosRelative(double deg){
+        deg += turretHandler.getCurrentPosition()/turretTicksPerDegree;
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
+
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
     }
- */
-    public double getTurretDegree(){
-        return turretEncoder.getPositionAndVelocity().position/turretTicksPerDegree;
+
+    public void setTurretPosAbsolute(double deg){
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
+
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
+    }
+
+    public double getCurrentTurretDegreePos(){
+        return turretHandler.getCurrentPosition()/ turretTicksPerDegree;
     }
 
 

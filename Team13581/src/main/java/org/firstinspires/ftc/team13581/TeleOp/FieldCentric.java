@@ -33,7 +33,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.team13581.RobotHardware;
 
 @TeleOp(name="Field Centric", group="TeleOp")
@@ -60,7 +59,11 @@ public class FieldCentric extends LinearOpMode {
         boolean runOuttake = false;
         boolean fullSpeed = true;
 
-        double lastTargetTurretDeg = 0;
+        boolean turretToggle = false;
+
+        double prevHeading = 0;
+        int lastTrackingClock = 10;
+        double lastTargetTurretPos = 0;
         double lastTargetHeading = 0;
 
         double velocity = 0;
@@ -151,7 +154,7 @@ public class FieldCentric extends LinearOpMode {
             if (runOuttake) {
                 robot.setStopper(1);
             } else {
-                robot.setStopper(0);
+                robot.setStopper(0.4);
             }
 
             if (gamepad2.dpad_up) {
@@ -173,28 +176,43 @@ public class FieldCentric extends LinearOpMode {
             }
 
 
-            if (gamepad2.right_trigger > 0) {
-                robot.setTurretPower(0.2);
-            }
-            if (gamepad2.left_trigger > 0)    {
-                robot.setTurretPower(-0.2);
+            if (gamepad2.right_trigger > 0 && !turretToggle) {
+                robot.setTurretPower(-1);
+            } else if (gamepad2.left_trigger > 0 && !turretToggle) {
+                robot.setTurretPower(1);
+            } else if (!turretToggle) {
+                robot.setTurretPower(0);
             }
 
-/*
-            if (gamepad2.yWasPressed()){
-                double scan = robot.getGoalBearingDeg();
-                double pos = 0.0;
-                if (!Double.isNaN(scan)) {
-                    pos = robot.turretAimPos() + (scan / 300.0)/2;
-                    pos = Range.clip(pos, 0.35, 0.65);
-                    robot.setTurretPos(pos);
-                    robot.setTurretDegree(scan);
-                    telemetry.addData("Correcting by :", scan);
-                    telemetry.addData("Going to Pos: ", pos);
-                    robot.updateAprilTagDetections();
-                }
+
+            if (gamepad2.dpadRightWasPressed()){
+                turretToggle = !turretToggle;
             }
- */
+
+
+            if (turretToggle){
+                robot.updateAprilTagDetections();
+                double scan = robot.getGoalBearingDeg();
+                if (!Double.isNaN(scan)) {
+                    lastTargetTurretPos = scan - (robot.getHeading() - prevHeading);
+                    telemetry.addData("target deg: ", lastTargetTurretPos);
+                    robot.setTurretPosRelative(lastTargetTurretPos);
+                    lastTargetTurretPos += robot.getCurrentTurretDegreePos();
+                    lastTargetHeading = robot.getHeading();
+
+                    lastTrackingClock = 0;
+
+                } else if (lastTrackingClock < 2000) {
+                    robot.setTurretPosAbsolute(lastTargetTurretPos + (robot.getHeading() - lastTargetHeading));
+                } else {
+                    robot.setTurretPosAbsolute(0);
+                }
+            } else {
+                robot.setTurretPosAbsolute(0);
+            }
+
+            prevHeading = robot.getHeading();
+            robot.turretHandler.runToTarget();
 
             sleep(50);
         }
