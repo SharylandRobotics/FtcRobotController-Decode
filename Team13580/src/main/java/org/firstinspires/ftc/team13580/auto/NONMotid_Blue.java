@@ -175,10 +175,10 @@ public class NONMotid_Blue extends LinearOpMode {
                 .setTangent(Math.atan2(-22+58, 10.5-19))
                 .lineToYLinearHeading(-22, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
                 .setTangent(Math.atan2(-18+22, -22-10.5))
-                .lineToYLinearHeading(-18, Math.toRadians(-145), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                .lineToYLinearHeading(-18, Math.toRadians(-140), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .build();
 
-        Action path6_second_gate_intake = drive.actionBuilder(new Pose2d(-22,-18, Math.toRadians(-145)))
+        Action path6_second_gate_intake = drive.actionBuilder(new Pose2d(-22,-18, Math.toRadians(-140)))
                 .setTangent(Math.atan2(-20+18, 12+22))
                 .lineToYLinearHeading(-20, Math.toRadians(-115))
                 .setTangent(Math.atan2(-58+20, 0))

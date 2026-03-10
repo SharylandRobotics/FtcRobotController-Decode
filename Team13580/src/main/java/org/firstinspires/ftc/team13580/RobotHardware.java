@@ -31,6 +31,7 @@ package org.firstinspires.ftc.team13580;
 
 import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
@@ -194,8 +195,8 @@ public class RobotHardware {
         frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        outtakeDrive.setVelocityPIDFCoefficients(80, 3, 8,0);
-        outtakeDrive2.setVelocityPIDFCoefficients(80, 3, 8,0);
+        outtakeDrive.setVelocityPIDFCoefficients(120, 3, 3,0);
+        outtakeDrive2.setVelocityPIDFCoefficients(120, 3, 3,0);
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
@@ -399,8 +400,9 @@ public class RobotHardware {
             new double[]{50, 1100},
             new double[]{62, 1220},
             new double[]{87, 1270},
-            new double[]{91, 1170},
-            new double[]{98, 1320}
+            new double[]{91, 1290},
+            new double[]{98, 1320},
+            new double[]{134, 1500}
     ));
     private final double[] slopeList = initializeSlopeList();
 
@@ -467,6 +469,8 @@ public class RobotHardware {
         return true;
     }
 
+    public PIDFController pidfController = new PIDFController(1, 1,1,0);
+
     public double autoBearingToGoalCorrect(){
         if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
             return Double.NaN;
@@ -474,7 +478,11 @@ public class RobotHardware {
 
         double headingError =  goalBearingDeg;
 
-        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
+        pidfController.setSetPoint(0);
+        double power = pidfController.calculate(headingError);
+        myOpMode.telemetry.addData("Yaw Power: ", power);
+
+        double yaw = Range.clip(power, -0.8, 0.8);
 
         return yaw;
     }
@@ -500,4 +508,20 @@ public class RobotHardware {
         return outtakeDrive.getVelocity();
     }
 
+    //Pd Controller-----------------
+    double kP = 0.002;
+    double error = 0;
+    double lasterror = 0;
+    double goalX = 0;//offset here
+    double angleTolorance = 0.2;
+    double kD = 0.0001;
+    double cutTime = 0;
+    double lastTime = 0;
+
+    //driving set-up ----------------------
+    double foward, strafe, rotate;
+
+    //controller passed PD tunning ------------------
+     double[] stepSizes = {1.0, 0.1, 0.001, 0.0001};
+    int stepIndex = 2;
 }

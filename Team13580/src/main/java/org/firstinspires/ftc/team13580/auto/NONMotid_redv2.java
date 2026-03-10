@@ -141,7 +141,7 @@ public class NONMotid_redv2 extends LinearOpMode {
 
         Action path1 = drive.actionBuilder(new Pose2d(-49,51, Math.toRadians(126)))
                 .setTangent(Math.atan2(24-51, -30+49))
-                .lineToYLinearHeading(24, Math.toRadians(130))
+                .lineToYLinearHeading(24, Math.toRadians(130), new TranslationalVelConstraint(30), new ProfileAccelConstraint(-60, 100))
                 .build();
 
         Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
@@ -220,14 +220,15 @@ public class NONMotid_redv2 extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                path1,
-                                shoot(1150)
+                                (new SequentialAction(
+                                        path1
+                                )),
+                                shoot(1100),
+                                new SleepAction(.8),
+                                spinUp2(.8),
+                                rightkick(-1),
+                                leftkick(-1)
                         ),
-                        new SleepAction(.5),
-                        spinUp2(.8),
-                        rightkick(-1),
-                        leftkick(-1),
-                        new SleepAction(1.5),
                         rightkick(.3),
                         leftkick(.3),
                         new ParallelAction(
