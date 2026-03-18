@@ -31,7 +31,6 @@ package org.firstinspires.ftc.team12395;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.media.AudioManager;
 import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -39,7 +38,6 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
-import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -57,7 +55,6 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 @Config
 public class RobotHardware {
@@ -244,11 +241,63 @@ public class RobotHardware {
         pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
     }
 
-    public double tpsToBallisticVelocityIN(double tps, double efficiency) {
-        double rps = tps / 28;
-        double wheelRadiusInches = 2.5;
-        double velocity = rps * wheelRadiusInches;
+    public double tpsToLinearVelocityMETERS(double efficiency) {
+        double radsPerSecond = (shooter.getVelocity() / 28) * (2*Math.PI);
+        double wheelRadiusMeters = 0.072 /2;
+        double velocity = radsPerSecond * wheelRadiusMeters;
         return  velocity * efficiency;
+    }
+
+    public double hoodAngleToBallisticAngle(){
+        double startingReferenceAngle = 70; // deg, measured top hood line angle from plate
+        double servoAngleTraveled = 300 * (1 - hoodAngle.getPosition()); // 300 is ROM of servo
+        // starting reference is at 1, invert position
+
+        double hoodAngleTraveled =  startingReferenceAngle - (servoAngleTraveled  / (189/20.));
+        // decreases as servo travels to 0
+
+        double ballistic = 90-hoodAngleTraveled; // 180 - 90 - angle = x
+
+        return ballistic;
+    }
+
+    public double ballisticAngleToHoodAngle(double ballistic){
+        double startingReferenceAngle = 70;
+
+        double hoodAngleTraveled = 90 - ballistic;
+        double servoAngleTraveled = (startingReferenceAngle - hoodAngleTraveled) * (189/20.);
+        double hoodAngle = 1 - (servoAngleTraveled/300);
+
+        return hoodAngle;
+    }
+
+    public double solveForHoodAngle(double distanceToTest){
+        return Double.NaN;
+    }
+
+    public boolean isTargetReachable(double velocity, double angle, double distance){
+        double t = timeToTarget(velocity, angle);
+        double vX = velocity*Math.cos(Math.toRadians(angle));
+
+        double calculatedDistance = vX*t;
+
+        return (calculatedDistance > distance - 3 && calculatedDistance < distance + 3);
+    }
+
+    public double timeToTarget(double velocity, double angle){
+        double g = 9.81;
+        double vY = velocity*Math.sin(Math.toRadians(angle));
+
+        double peakHeight = (vY*vY) / (2*g);
+
+        double robotHeightMeters = 0.18775;
+        double relativeGoalHeightMeters = 0.9845 - robotHeightMeters;
+
+        double endArcHeight = peakHeight - relativeGoalHeightMeters;
+        double endArcTime = Math.sqrt( (2*endArcHeight) / g);
+        double startArcTime = vY / g;
+
+        return startArcTime + endArcTime;
     }
 
     public void setLocalizerPosition(Pose2d pose){
@@ -799,9 +848,7 @@ public class RobotHardware {
         return returnVal;
     }
 
-    public double timeToTarget(double velocity, double angle, double distance){
-        return distance / (velocity * Math.cos(Math.toRadians(angle)));
-    }
+
 
     public class RoadRunnerActions {
         public class setSpindexerTarget implements Action{

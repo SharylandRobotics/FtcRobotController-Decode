@@ -146,7 +146,7 @@ public class FieldCentricRed extends LinearOpMode {
             Vector2d worldVelocity = Rotation2d.fromDouble(currentPose.heading.log()).times(robotVelocityVector.linearVel);
             if (shiftGoal) {
                 // drift calculated with ideal values (velocity is not measured)
-                Vector2d drift = worldVelocity.times(robot.timeToTarget(robot.tpsToBallisticVelocityIN(velocity, flyWheelConstant), hoodAngle*servoAngleSlope,  distanceToTarget));
+                Vector2d drift = worldVelocity.times(robot.timeToTarget(robot.tpsToLinearVelocityMETERS(flyWheelConstant), robot.hoodAngleToBallisticAngle()));
                 // shift goal
                 effectiveTargetPoint = baseTargetPoint.minus(drift);
             } else {
