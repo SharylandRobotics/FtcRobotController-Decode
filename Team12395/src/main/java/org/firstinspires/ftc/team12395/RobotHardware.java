@@ -173,8 +173,8 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        shooter2.setDirection(DcMotorEx.Direction.REVERSE);
-        shooter.setDirection(DcMotorEx.Direction.FORWARD);
+        shooter2.setDirection(DcMotorEx.Direction.FORWARD);
+        shooter.setDirection(DcMotorEx.Direction.REVERSE);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.FORWARD);
 
@@ -747,7 +747,7 @@ public class RobotHardware {
             new double[]{63.2, 1500, 0.75},
             new double[]{82  , 1600, 0.6 },
             new double[]{95.5, 1700, 0.5 },
-            new double[]{130 , 1900, 0.4 }
+            new double[]{130 , 1900, 0.33 }
     ));
     private final double[] velocitySlopeList = initializeSlopeList(1);
     private final double[] angleSlopeList = initializeSlopeList(2);

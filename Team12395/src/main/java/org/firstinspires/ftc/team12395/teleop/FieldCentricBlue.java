@@ -119,6 +119,7 @@ public class FieldCentricBlue extends LinearOpMode {
             }
 
             robotVelocityVector = robot.standardDrive.updatePoseEstimate();
+            robot.standardDrive.localizer.update();
             Pose2d currentPose = robot.standardDrive.localizer.getPose();
             distanceToTarget = robot.getDistanceFromTarget(baseTargetPoint, currentPose);
 
@@ -193,7 +194,7 @@ public class FieldCentricBlue extends LinearOpMode {
                 robot.spindexerHandler(120);
             } else if (gamepad1.rightBumperWasPressed()) { // cw
                 if (velocity >= slowFireRateVelocity){
-                    robot.spindexerHandler(-480, 800);
+                    robot.spindexerHandler(-480, 700);
                 } else {
                     robot.spindexerHandler(-480, normalSpinVelocity);
                 }
