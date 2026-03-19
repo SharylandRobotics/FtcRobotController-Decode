@@ -105,6 +105,7 @@ public class FieldCentricRed extends LinearOpMode {
 
             headingVelocity = robot.getHeadingVelocity();
             telemetry.addData("Heading Velocity: ",  headingVelocity);
+            telemetry.addData("Heading: ", robot.getHeading()); // remove later
             TelemetryPacket packet = new TelemetryPacket();
 
             Pose2d llpose = robot.fetchLocalizedPose(90);
@@ -122,6 +123,9 @@ public class FieldCentricRed extends LinearOpMode {
             robot.standardDrive.localizer.update();
             Pose2d currentPose = robot.standardDrive.localizer.getPose();
             distanceToTarget = robot.getDistanceFromTarget(baseTargetPoint, currentPose);
+            double linearVelocity = robot.tpsToLinearVelocityMETERS() * flyWheelConstant;
+            telemetry.addData("Linear Veloctiy M/S: ", linearVelocity);
+
 
 
             if (gamepad1.xWasPressed()){
@@ -143,10 +147,10 @@ public class FieldCentricRed extends LinearOpMode {
 
 
             // THIS REMAINS IN INCHES
-            Vector2d worldVelocity = Rotation2d.fromDouble(currentPose.heading.log()).times(robotVelocityVector.linearVel);
+            Vector2d worldVelocity = currentPose.heading.times(robotVelocityVector.linearVel);
             if (shiftGoal) {
                 // drift calculated with ideal values (velocity is not measured)
-                Vector2d drift = worldVelocity.times(robot.timeToTarget(robot.tpsToLinearVelocityMETERS(flyWheelConstant), robot.hoodAngleToBallisticAngle()));
+                Vector2d drift = worldVelocity.times(robot.timeToTarget(linearVelocity, robot.hoodAngleToBallisticAngle()));
                 // shift goal
                 effectiveTargetPoint = baseTargetPoint.minus(drift);
             } else {
@@ -154,7 +158,6 @@ public class FieldCentricRed extends LinearOpMode {
             }
             // -----
 
-            effectiveDistanceToTarget = robot.getDistanceFromTarget(effectiveTargetPoint, currentPose);
             double angle = -robot.turretAngleToTarget(effectiveTargetPoint, currentPose);
             telemetry.addData("Angle: ", Math.toDegrees(angle));
 
@@ -167,7 +170,7 @@ public class FieldCentricRed extends LinearOpMode {
 
 
             robot.setShooterVelocity(velocity);
-            robot.setHoodAngle(hoodAngle);
+
 
 
             if (gamepad1.yWasPressed()){
@@ -195,6 +198,9 @@ public class FieldCentricRed extends LinearOpMode {
             } else if (gamepad1.rightBumperWasPressed()) { // cw
                 if (velocity >= slowFireRateVelocity){
                     robot.spindexerHandler(-480, 700);
+                    if (velocity - robot.shooter.getVelocity() >= 40 && !Double.isNaN(robot.compensatedHoodAngleSolve())){
+                        hoodAngle = robot.compensatedHoodAngleSolve();
+                    }
                 } else {
                     robot.spindexerHandler(-480, normalSpinVelocity);
                 }
@@ -208,6 +214,8 @@ public class FieldCentricRed extends LinearOpMode {
             if (gamepad1.dpadRightWasPressed()){
                 turretToggle = !turretToggle;
             }
+
+            robot.setHoodAngle(hoodAngle);
 
             // effective target
             packet.fieldOverlay().setStroke("#F2F527");
@@ -253,6 +261,7 @@ public class FieldCentricRed extends LinearOpMode {
             telemetry.addData("spindexerE heading? ", ((robot.spindexerE.getPositionAndVelocity().position/robot.spindexerETicksPerDegree) % 360));
             telemetry.addData("spindexer error: ", robot.spindexerFudge);
             telemetry.addData("Distance to Target: ", distanceToTarget);
+            telemetry.addData("Compensated Angle: ", robot.compensatedHoodAngleSolve());
             if (robot.solvePattern() != null) {
                 telemetry.addData("Turns To Solve: ", robot.solvePattern()[0]);
             }

@@ -42,7 +42,7 @@ public class RRautoRedSort extends LinearOpMode {
         Pose2d shoot1 =  new Pose2d(-22, 16, Math.toRadians(90));
 
         Pose2d preIntake1 = new Pose2d(-7, 22, Math.toRadians(90));
-        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 43.5, Math.toRadians(90));
+        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 43.5, Math.toRadians(92));
 
         Pose2d openGate = new Pose2d(5.5, postIntake1.position.y, Math.toRadians(90));
 
@@ -104,7 +104,7 @@ public class RRautoRedSort extends LinearOpMode {
                 .lineToXConstantHeading(preIntake1.position.x)
                 //start intake
                 .setTangent(Math.toRadians(90))
-                .lineToYConstantHeading(postIntake1.position.y, new TranslationalVelConstraint(90))
+                .lineToYLinearHeading(postIntake1.position.y, postIntake1.heading,new TranslationalVelConstraint(90))
                 .turnTo(postIntake1.heading)
                 .build();
 
@@ -145,9 +145,9 @@ public class RRautoRedSort extends LinearOpMode {
                 .setTangent(Math.toRadians(-90))
                 .splineToConstantHeading(openGate.position, Math.toRadians(90))
                 // wait for gate
-                .waitSeconds(0.5)
+                .waitSeconds(0.75)
                 .setTangent(Math.atan2(shoot1.position.y - openGate.position.y, shoot1.position.x - openGate.position.x))
-                .lineToXConstantHeading(shoot1.position.x, new TranslationalVelConstraint(70))
+                .lineToXConstantHeading(shoot1.position.x, new TranslationalVelConstraint(90))
                 .build();
 
         // open gate

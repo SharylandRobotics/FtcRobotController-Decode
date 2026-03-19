@@ -241,16 +241,21 @@ public class RobotHardware {
         pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
     }
 
-    public double tpsToLinearVelocityMETERS(double efficiency) {
+
+    public double tpsToLinearVelocityMETERS() {
         double radsPerSecond = (shooter.getVelocity() / 28) * (2*Math.PI);
         double wheelRadiusMeters = 0.072 /2;
         double velocity = radsPerSecond * wheelRadiusMeters;
         return  velocity * efficiency;
     }
 
+    private final double relativeGoalHeightMeters = 0.9845 - 0.18775; // goal - robot
+    private final double g = 9.81;
+    private final double efficiency = Math.hypot(2.7686/1.21, (0.5)*g*1.21) / 12.11; // 109 inches in 1.21 sec, 12.11 m/s
+
     public double hoodAngleToBallisticAngle(){
-        double startingReferenceAngle = 70; // deg, measured top hood line angle from plate
-        double servoAngleTraveled = 300 * (1 - hoodAngle.getPosition()); // 300 is ROM of servo
+        double startingReferenceAngle = 61.38954; // deg, measured top hood line angle from plate
+        double servoAngleTraveled = 300 * (hoodAngle.getPosition()); // 300 is ROM of servo
         // starting reference is at 1, invert position
 
         double hoodAngleTraveled =  startingReferenceAngle - (servoAngleTraveled  / (189/20.));
@@ -261,17 +266,21 @@ public class RobotHardware {
         return ballistic;
     }
 
-    public double ballisticAngleToHoodAngle(double ballistic){
-        double startingReferenceAngle = 70;
+    public double ballisticAngleToHoodAngle(double ballisticAngle){
+        double startingReferenceAngle = 61.38954;
 
-        double hoodAngleTraveled = 90 - ballistic;
+        double hoodAngleTraveled = 90 - ballisticAngle;
         double servoAngleTraveled = (startingReferenceAngle - hoodAngleTraveled) * (189/20.);
-        double hoodAngle = 1 - (servoAngleTraveled/300);
+        double hoodAngle =  (servoAngleTraveled/300);
 
         return hoodAngle;
     }
 
-    public double solveForHoodAngle(double distanceToTest){
+    public double compensatedHoodAngleSolve(){
+        double ballisticAngle = Math.asin( (Math.sqrt(2*g*(relativeGoalHeightMeters + 0.18775))) / tpsToLinearVelocityMETERS());
+        if (!Double.isNaN(ballisticAngle) && ballisticAngle > 0 && ballisticAngle < 90){
+            return ballisticAngleToHoodAngle(ballisticAngle);
+        }
         return Double.NaN;
     }
 
@@ -285,13 +294,9 @@ public class RobotHardware {
     }
 
     public double timeToTarget(double velocity, double angle){
-        double g = 9.81;
         double vY = velocity*Math.sin(Math.toRadians(angle));
 
         double peakHeight = (vY*vY) / (2*g);
-
-        double robotHeightMeters = 0.18775;
-        double relativeGoalHeightMeters = 0.9845 - robotHeightMeters;
 
         double endArcHeight = peakHeight - relativeGoalHeightMeters;
         double endArcTime = Math.sqrt( (2*endArcHeight) / g);
