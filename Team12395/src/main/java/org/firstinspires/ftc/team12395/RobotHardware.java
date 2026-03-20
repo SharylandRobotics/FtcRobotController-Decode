@@ -826,7 +826,7 @@ public class RobotHardware {
             returnVal = 1400;
             slopeList = velocitySlopeList;
         } else {
-            returnVal = 0.6;
+            returnVal = 0.9;
             slopeList = angleSlopeList;
         }
 

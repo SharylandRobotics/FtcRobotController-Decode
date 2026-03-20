@@ -196,9 +196,6 @@ public class FieldCentricBlue extends LinearOpMode {
             } else if (gamepad1.rightBumperWasPressed()) { // cw
                 if (velocity >= slowFireRateVelocity){
                     robot.spindexerHandler(-480, 700);
-                    if (velocity - robot.shooter.getVelocity() >= 40 && !Double.isNaN(robot.compensatedHoodAngleSolve())){
-                        hoodAngle = robot.compensatedHoodAngleSolve();
-                    }
                 } else {
                     robot.spindexerHandler(-480, normalSpinVelocity);
                 }

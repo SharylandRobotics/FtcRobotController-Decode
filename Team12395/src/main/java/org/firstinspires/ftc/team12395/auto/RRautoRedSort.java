@@ -105,7 +105,7 @@ public class RRautoRedSort extends LinearOpMode {
                 //start intake
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(postIntake1.position.y, postIntake1.heading,new TranslationalVelConstraint(90))
-                .turnTo(postIntake1.heading)
+                //.turnTo(postIntake1.heading)
                 .build();
 
         Actions.runBlocking(
