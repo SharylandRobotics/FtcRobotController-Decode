@@ -1,24 +1,21 @@
 package org.firstinspires.ftc.team13581.Autonomous;
 
 import androidx.annotation.NonNull;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.team13581.RobotHardware;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.team13581.RobotHardware;
 import org.firstinspires.ftc.team13581.rr.MecanumDrive;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.SequentialAction;
 
 import java.lang.Math;
 
 @Config
-@Autonomous(name="RR Red Short Comp", group="Autonomous")
+@Autonomous(name="Red Gate", group="Autonomous")
 
-public class RRRedShortGoal extends LinearOpMode {
+public class RedFromGate extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -60,7 +57,7 @@ public class RRRedShortGoal extends LinearOpMode {
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setStopper(.9);
+            robot.setStopper(1);
             return false;
         }
     }
@@ -143,50 +140,41 @@ public class RRRedShortGoal extends LinearOpMode {
         robot.init();
 
         Action Preload = drive.actionBuilder(initialPose)
-                .setTangent(Math.atan2(33.3-51,-32.4+49))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
+                .setTangent(Math.atan2(27.7-51,-27+49))
+                .lineToYLinearHeading(27.7,Math.toRadians(130))
                 .build();
 
-        Action FirstRow = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(22-33.3,-12+32.4))
+        Action SecondRow = drive.actionBuilder(new Pose2d(-27,27.7, Math.toRadians(130)))
+                .setTangent(Math.atan2(24-27.7,12.2+27))
+                .lineToYLinearHeading(24,Math.toRadians(90))
+                .setTangent(Math.atan2(56-24,0))
+                .lineToYLinearHeading(56,Math.toRadians(90))
+                . build();
+        Action SecondRowShoot = drive.actionBuilder(new Pose2d(12.2,56,Math.toRadians(90)))
+                .lineToY(30)
+                .setTangent(Math.atan2(27.7-30,-27-12.2))
+                .lineToYLinearHeading(27.7, Math.toRadians(130))
+                .build();
+        Action ClearGate = drive.actionBuilder(new Pose2d(-27,27.7, Math.toRadians(130)))
+                .splineToConstantHeading(new Vector2d(13,38),Math.toRadians(130))
+                .splineToConstantHeading(new Vector2d(12.2,63),Math.toRadians(130))
+                .build();
+        Action GateShoot = drive.actionBuilder(new Pose2d(12.2,63, Math.toRadians(130)))
+                .splineToConstantHeading(new Vector2d(13,38),Math.toRadians(130))
+                .splineToConstantHeading(new Vector2d(-27,27.7),Math.toRadians(130))
+                .build();
+        Action FirstRow = drive.actionBuilder(new Pose2d(-27,27.7, Math.toRadians(130)))
+                .setTangent(Math.atan2(22-27.7,-12+27))
                 .lineToYLinearHeading(22,Math.toRadians(90))
                 .setTangent(Math.atan2(56-28,0))
                 .lineToYLinearHeading(56,Math.toRadians(90))
-                . build();
-        Action FirstShoot = drive.actionBuilder(new Pose2d(-12,56,Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-56,-32.4+12))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
                 .build();
-        Action SecondRow = drive.actionBuilder(new Pose2d(1.4,58, Math.toRadians(90)))
-                .setTangent(Math.atan2(28-55,0))
-                .lineToYLinearHeading(28,Math.toRadians(90))
-                .setTangent(Math.atan2(0,12.2-1.4))
-                .lineToXLinearHeading(12.2,Math.toRadians(90))
-                .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
+        Action FirstShoot = drive.actionBuilder(new Pose2d(-12,56, Math.toRadians(90)))
+                .setTangent(Math.atan2(27.7-56,-27+12))
+                .lineToYLinearHeading(27.7,Math.toRadians(130))
                 .build();
-        Action SecondShoot = drive.actionBuilder(new Pose2d(12.2,55, Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-55,-32.4-12.2))
-                .lineToYLinearHeading(33.3, Math.toRadians(130))
-                .build();
-        Action ClearGate = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent((Math.atan2(46-33.3,1.4+32.4)))
-                .lineToYLinearHeading(46,Math.toRadians(90))
-                .setTangent((Math.atan2(60-46,0)))
-                .lineToYLinearHeading(60,Math.toRadians(90))
-                .build();
-        Action ThirdRow = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-33.3,36+32.4))
-                .lineToYLinearHeading(28,Math.toRadians(90))
-                .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
-                .build();
-        Action ThirdShoot = drive.actionBuilder(new Pose2d(36,55, Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-55,-32.4-36))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
-                .build();
-        Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-33.3,0+32.4))
+        Action TelePosition = drive.actionBuilder(new Pose2d(-27,27.7, Math.toRadians(130)))
+                .setTangent(Math.atan2(28-27.7,0+27))
                 .lineToYLinearHeading(28,Math.toRadians(90))
                 .build();
         while(opModeInInit()) {
@@ -217,48 +205,52 @@ public class RRRedShortGoal extends LinearOpMode {
                                     StopperDown(1),
                                     Intake(1),
                                     nearShoot(1),
-                                    FirstRow
-                            ),
-                            StopIntake(1),
-                            new ParallelAction(
-                                    StopperUp(1),
-                                    FirstShoot
-                            ),
-                            Intake(1),
-                            new SleepAction(.4),
-                            new ParallelAction(
-                                    StopperDown(1),
-                                    StopIntake(1),
-                                    ClearGate
-                            ),
-                            new ParallelAction(
-                                    Intake(1),
                                     SecondRow
                             ),
                             StopIntake(1),
                             new ParallelAction(
                                     StopperUp(1),
-                                    SecondShoot
+                                    SecondRowShoot
                             ),
-                            Intake(1),
                             Intake(1),
                             new SleepAction(.4),
                             new ParallelAction(
                                     StopperDown(1),
-                                    ThirdRow
+                                    Intake(1),
+                                    ClearGate
+                            ),
+                            new SleepAction(.5),
+                            new ParallelAction(
+                                    StopIntake(1),
+                                    StopperUp(1),
+                                    GateShoot
+                            ),
+                            Intake(1),
+                            new SleepAction(.4),
+                            new ParallelAction(
+                                    StopperDown(1),
+                                    ClearGate
+                            ),
+                            new SleepAction(.5),
+
+                            new ParallelAction(
+                                    StopIntake(1),
+                                    StopperUp(1),
+                                    GateShoot
+                            ),
+                            Intake(1),
+                            new SleepAction(.4),
+                            new ParallelAction(
+                                    StopperDown(1),
+                                    FirstRow
                             ),
                             new ParallelAction(
                                     StopIntake(1),
-                                    StopperUp (1),
-                                    ThirdShoot
+                                    StopperUp(1),
+                                    FirstShoot
                             ),
                             Intake(1),
-                            new SleepAction(.5),
-
-                            
-
-
-
+                            new SleepAction(.4),
                             TelePosition
 
 

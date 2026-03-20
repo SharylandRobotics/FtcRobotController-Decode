@@ -34,6 +34,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13581.RobotHardware;
+import org.firstinspires.ftc.team13581.servoDE;
 
 @TeleOp(name="Field Centric", group="TeleOp")
 
@@ -44,6 +45,8 @@ public class FieldCentric extends LinearOpMode {
     public static double powerTFar = 0.58;
     public static double powerTNear = 0.5;
     public static double gain = 0.5;
+    public static double angle = 0;
+    public static double velocity = 0;
 
     @Override
     public void runOpMode() {
@@ -52,6 +55,8 @@ public class FieldCentric extends LinearOpMode {
         double axial    = 0;
         double lateral  = 0;
         double yaw      = 0;
+
+        boolean fieldCentric = true;
 
         boolean runIntake = false;
         boolean runIntake2 = false;
@@ -66,9 +71,7 @@ public class FieldCentric extends LinearOpMode {
         double lastTargetTurretPos = 0;
         double lastTargetHeading = 0;
 
-        double velocity = 0;
-
-
+        //angle = robot.getHoodPos();
 
         robot.init();
 
@@ -77,21 +80,18 @@ public class FieldCentric extends LinearOpMode {
         while (opModeIsActive()) {
             robot.updateAprilTagDetections();
 
-            if (gamepad1.b) {
-                fullSpeed = !fullSpeed;
-            }
-            if (fullSpeed) {
-                axial = -gamepad1.left_stick_y;
-                lateral = gamepad1.left_stick_x;
-                yaw = gamepad1.right_stick_x;
+            axial = -gamepad1.left_stick_y;
+            lateral = gamepad1.left_stick_x;
+            yaw = gamepad1.right_stick_x;
+
+            if (fieldCentric) {
+                robot.teleOpFieldCentric(axial, lateral, yaw);
             } else {
-                axial = -gamepad1.left_stick_y * 0.5;
-                lateral = gamepad1.left_stick_x * 0.5;
-                yaw = gamepad1.right_stick_x * 0.5;
+                robot.teleOpRobotCentric(axial, lateral, yaw);
             }
-
-
-            robot.teleOpFieldCentric(axial, lateral, yaw);
+            if (gamepad1.dpadUpWasPressed()) {
+                fieldCentric = !fieldCentric;
+            }
 
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
@@ -100,6 +100,8 @@ public class FieldCentric extends LinearOpMode {
             telemetry.addData("Power: ", robot.getBackPower());
             telemetry.addData("Vel: ", robot.getOuttakeRVel());
             telemetry.addData("Gain: ", gain);
+            telemetry.addData("Current Degree: ", robot.getCurrentTurretDegreePos());
+            telemetry.addData("Distance: ", robot.getFloorDistance());
 
             telemetry.update();
 
@@ -121,11 +123,10 @@ public class FieldCentric extends LinearOpMode {
                 robot.setIntake1(0);
                 robot.setIntake2(0);
             }
-
             if (gamepad1.x){
                 robot.setIntake2(0.5);
+                robot.setIntake1(0.5);
             }
-
 
             if (gamepad1.right_bumper) {
                 robot.setIntake2(0);
@@ -146,13 +147,18 @@ public class FieldCentric extends LinearOpMode {
                 velocity = 0;
             }
 
+            if (!Double.isNaN(robot.getGoalRangeIn())){
+                velocity = (robot.getRegressionValue(robot.getFloorDistance(), 1));
+            }
             robot.setShootSpeed(velocity);
 
-            if (gamepad2.xWasPressed()) {
+            if (gamepad1.bWasPressed()) {
+                runOuttake = !runOuttake;
+            } else if (gamepad2.xWasPressed()) {
                 runOuttake = !runOuttake;
             }
             if (runOuttake) {
-                robot.setStopper(1);
+                robot.setStopper(.9);
             } else {
                 robot.setStopper(0.4);
             }
@@ -174,6 +180,12 @@ public class FieldCentric extends LinearOpMode {
                     robot.setHoodPos(tempPos + 0.02);
                 }
             }
+
+            angle = robot.getHoodPos();
+            if (!Double.isNaN(robot.getGoalRangeIn())) {
+                angle = (robot.getRegressionValue(robot.getFloorDistance(), 2));
+            }
+            robot.setHoodPos(angle);
 
 
             if (gamepad2.right_trigger > 0 && !turretToggle) {
@@ -211,10 +223,14 @@ public class FieldCentric extends LinearOpMode {
                 robot.setTurretPosAbsolute(0);
             }
 
+
+
+
+
             prevHeading = robot.getHeading();
             robot.turretHandler.runToTarget();
 
-            sleep(50);
+            sleep(20);
         }
     }
 }

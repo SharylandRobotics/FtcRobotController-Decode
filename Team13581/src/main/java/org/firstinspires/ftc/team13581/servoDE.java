@@ -19,9 +19,9 @@ public class servoDE {
     double lastVelocity;
 
 
-    public static double P = 0.00035;
+    public static double P = 0.00025;
     public static double I = 0.00002;
-    public static double D = 0.00004;
+    public static double D = 0.00003;
 
     PIDFCustomLoop controller = new PIDFCustomLoop(P, I, D, 0);
 

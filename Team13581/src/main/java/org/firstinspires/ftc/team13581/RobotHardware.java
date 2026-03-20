@@ -48,6 +48,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -55,11 +57,10 @@ public class RobotHardware {
 
     private LinearOpMode myOpMode = null;
 
-    private double spoolToTurretRatio = 30/60.;
-    private final double driveToTurretRatio = 2; // 3 rotations to 1, 90/30 teeth
+    private final double driveToTurretRatio = 60.0/26.0; // 2 rotations to 1, 60/26 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio * 8192;// RevCoder CPR * ratio per 1 turret rev
     private final double turretTicksPerDegree = turretTicksPerRevolution/360;
-
+    public static double turretTrackingOffsetDegrees = 0;
     private DcMotor frontLeftDrive  = null;
     private DcMotor backLeftDrive   = null;
     private DcMotor frontRightDrive = null;
@@ -192,9 +193,9 @@ public class RobotHardware {
         imu.resetYaw();
 
         frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
         Intake1.setDirection(DcMotor.Direction.FORWARD);
         Intake2.setDirection(DcMotor.Direction.REVERSE);
 
@@ -614,5 +615,68 @@ public class RobotHardware {
 
         teleOpRobotCentric(axial, lateral, yaw);
         return true;
+    }
+    private ArrayList<double[]> dataPoints = new ArrayList<>(Arrays.asList(
+            // distance, rpm, hood angle
+            new double[]{32, 1300,0.58},
+            new double[]{38, 1375,0.575},
+            new double[]{50, 1450,0.525},
+            new double[]{70, 1550,0.435},
+            new double[]{80, 1600,0.45},
+            new double[]{120,2000,0.425}
+    ));
+    private final double[] velocitySlopeList = initializeSlopeList(1);
+    private final double[] angleSlopeList = initializeSlopeList(2);
+
+    private double[] initializeSlopeList(int valueIndex){
+        int maxIndex = dataPoints.size();
+        double[] list = new double[maxIndex];
+        for (int i=0; i<maxIndex-1; i++){
+            list[i] = (
+                    (dataPoints.get(i+1)[valueIndex] - dataPoints.get(i)[valueIndex]) /
+                            (dataPoints.get(i+1)[0] - dataPoints.get(i)[0])
+            );
+        }
+
+        return list;
+    }
+
+    public double getRegressionValue(double distance, int valueIndex){
+        double returnVal;
+        double[] slopeList;
+        if (valueIndex == 1){
+            returnVal = 1300;
+            slopeList = velocitySlopeList;
+        } else {
+            returnVal = 0.7;
+            slopeList = angleSlopeList;
+        }
+
+        double velZeroIntercept = dataPoints.get(0)[valueIndex] - (slopeList[0]* dataPoints.get(0)[0]);
+
+        if (distance <= dataPoints.get(0)[0]){
+            myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(0)[0] +", " + dataPoints.get(0)[valueIndex]);
+            myOpMode.telemetry.addData("Slope Reference: ", slopeList[0]);
+            returnVal = velZeroIntercept + (distance* slopeList[0]);
+            return returnVal;
+        }
+
+        for (int i = 1; i< slopeList.length; i++){
+            if ((i == slopeList.length-1 && distance >= dataPoints.get(i)[0]) ||
+                    distance > dataPoints.get(i)[0] && distance <= dataPoints.get(i+1)[0]){
+
+                myOpMode.telemetry.addData("Bottom Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
+                myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                returnVal = dataPoints.get(i)[valueIndex] + (distance- dataPoints.get(i)[0])* slopeList[i];
+                return returnVal;
+            }
+        }
+
+        return returnVal;
+    }
+
+    public double getFloorDistance(){
+        // Math.pow(height from camera to center AprilTag, 2)
+        return Math.sqrt(Math.pow(getGoalRangeIn(), 2) - Math.pow(16,2));
     }
 }

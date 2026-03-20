@@ -1,37 +1,47 @@
 package org.firstinspires.ftc.team13581.Autonomous;
 
 import androidx.annotation.NonNull;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.team13581.RobotHardware;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.team13581.RobotHardware;
 import org.firstinspires.ftc.team13581.rr.MecanumDrive;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.SequentialAction;
 
 import java.lang.Math;
 
 @Config
-@Autonomous(name="RR Red Short Comp", group="Autonomous")
+@Autonomous(name="Red Backside", group="Autonomous")
 
-public class RRRedShortGoal extends LinearOpMode {
+public class BackRed extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
-    class NearShoot implements Action {
+    class Shoot implements Action {
         private boolean initialized = false;
         private double parameter = 0;
-        public NearShoot(double val){
+        public Shoot(double val){
             parameter = val;
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setHoodPos(0.6);
-            robot.setShootSpeed(1300);
+            robot.setHoodPos(0.45);
+            robot.setShootSpeed(1925);
+            return false;
+        }
+    }
+    class FirstShot implements Action {
+        private boolean initialized = false;
+        private double parameter = 0;
+        public FirstShot(double val){
+            parameter = val;
+        }
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            robot.setHoodPos(0.55);
+            robot.setShootSpeed(1925);
             return false;
         }
     }
@@ -72,7 +82,7 @@ public class RRRedShortGoal extends LinearOpMode {
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setHoodPos(0.6);
+            robot.setHoodPos(0.45);
             robot.setShootSpeed(0);
             return false;
         }
@@ -102,10 +112,10 @@ public class RRRedShortGoal extends LinearOpMode {
             return false;
         }
     }
-    class FirstShot implements Action {
+    class None implements Action {
         private boolean initialized = false;
         private double parameter = 0;
-        public FirstShot(double val){
+        public None(double val){
             parameter = val;
         }
         @Override
@@ -118,8 +128,8 @@ public class RRRedShortGoal extends LinearOpMode {
     public Action StopperUp(double value){
         return new StopperUp(value);
     }
-    public Action nearShoot(double value){
-        return new NearShoot(value);
+    public Action Shoot(double value){
+        return new Shoot(value);
     }
     public Action Intake(double value){
         return new Intake(value);
@@ -137,57 +147,46 @@ public class RRRedShortGoal extends LinearOpMode {
     @Override
     public void runOpMode(){
 
-        Pose2d initialPose = new Pose2d(-49, 51, -180);
+        Pose2d initialPose = new Pose2d(62, 15, Math.toRadians(180));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
 
         robot.init();
 
         Action Preload = drive.actionBuilder(initialPose)
-                .setTangent(Math.atan2(33.3-51,-32.4+49))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
+                //.turn(Math.toRadians(-20))
+                .setTangent(Math.atan2(19.5-15,55-62))
+                .lineToYLinearHeading(19.5,Math.toRadians(157))
                 .build();
 
-        Action FirstRow = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(22-33.3,-12+32.4))
-                .lineToYLinearHeading(22,Math.toRadians(90))
-                .setTangent(Math.atan2(56-28,0))
-                .lineToYLinearHeading(56,Math.toRadians(90))
+        Action HumanZone = drive.actionBuilder(new Pose2d(55,19.5, Math.toRadians(160)))
+                .setTangent(Math.atan2(60-19.5,58-55))
+                .lineToYLinearHeading(60,Math.toRadians(75))
                 . build();
-        Action FirstShoot = drive.actionBuilder(new Pose2d(-12,56,Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-56,-32.4+12))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
+        Action HumanShoot = drive.actionBuilder(new Pose2d(58,60,Math.toRadians(75)))
+                .setTangent(Math.atan2(19.5-60,55-58))
+                .lineToYLinearHeading(19.5,Math.toRadians(160))
                 .build();
-        Action SecondRow = drive.actionBuilder(new Pose2d(1.4,58, Math.toRadians(90)))
-                .setTangent(Math.atan2(28-55,0))
-                .lineToYLinearHeading(28,Math.toRadians(90))
-                .setTangent(Math.atan2(0,12.2-1.4))
-                .lineToXLinearHeading(12.2,Math.toRadians(90))
-                .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
+        Action ThirdRow = drive.actionBuilder(new Pose2d(55,19.5, Math.toRadians(157)))
+                .setTangent(Math.atan2(30-19.5,25-55))
+                .lineToYLinearHeading(30,Math.toRadians(90))
+                .setTangent(Math.atan2(58,0))
+                .lineToYLinearHeading(58,Math.toRadians(90))
                 .build();
-        Action SecondShoot = drive.actionBuilder(new Pose2d(12.2,55, Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-55,-32.4-12.2))
-                .lineToYLinearHeading(33.3, Math.toRadians(130))
+        Action ThirdShoot = drive.actionBuilder(new Pose2d(25,58, Math.toRadians(90)))
+                .setTangent(Math.atan2(19.5-58,55-25))
+                .lineToYLinearHeading(19.5,Math.toRadians(166))
                 .build();
-        Action ClearGate = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent((Math.atan2(46-33.3,1.4+32.4)))
-                .lineToYLinearHeading(46,Math.toRadians(90))
-                .setTangent((Math.atan2(60-46,0)))
+        Action BLueTape = drive.actionBuilder(new Pose2d(55,19.5, Math.toRadians(160)))
+                .setTangent((Math.atan2(60-19.5,47-55)))
                 .lineToYLinearHeading(60,Math.toRadians(90))
                 .build();
-        Action ThirdRow = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-33.3,36+32.4))
-                .lineToYLinearHeading(28,Math.toRadians(90))
-                .setTangent(Math.atan2(55-28,0))
-                .lineToYLinearHeading(55,Math.toRadians(90))
+        Action TapeShoot = drive.actionBuilder(new Pose2d(47,60, Math.toRadians(90)))
+                .setTangent(Math.atan2(19.5-60,55-47))
+                .lineToYLinearHeading(19.5,Math.toRadians(160))
                 .build();
-        Action ThirdShoot = drive.actionBuilder(new Pose2d(36,55, Math.toRadians(90)))
-                .setTangent(Math.atan2(33.3-55,-32.4-36))
-                .lineToYLinearHeading(33.3,Math.toRadians(130))
-                .build();
-        Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,33.3, Math.toRadians(130)))
-                .setTangent(Math.atan2(28-33.3,0+32.4))
-                .lineToYLinearHeading(28,Math.toRadians(90))
+        Action TelePosition = drive.actionBuilder(new Pose2d(55,19.5, Math.toRadians(160)))
+                .setTangent(Math.atan2(22-19.5,46-55))
+                .lineToYLinearHeading(22,Math.toRadians(90))
                 .build();
         while(opModeInInit()) {
             // Display heading and status continuously during init loop
@@ -208,58 +207,47 @@ public class RRRedShortGoal extends LinearOpMode {
                                     FirstShot(1),
                                     Preload
                             ),
-                            new SleepAction(.4),
-                            Intake(1),
-                            new SleepAction(1),
-                            StopIntake(1),
-
-                            new ParallelAction(
-                                    StopperDown(1),
-                                    Intake(1),
-                                    nearShoot(1),
-                                    FirstRow
-                            ),
-                            StopIntake(1),
-                            new ParallelAction(
-                                    StopperUp(1),
-                                    FirstShoot
-                            ),
-                            Intake(1),
-                            new SleepAction(.4),
-                            new ParallelAction(
-                                    StopperDown(1),
-                                    StopIntake(1),
-                                    ClearGate
-                            ),
-                            new ParallelAction(
-                                    Intake(1),
-                                    SecondRow
-                            ),
-                            StopIntake(1),
-                            new ParallelAction(
-                                    StopperUp(1),
-                                    SecondShoot
-                            ),
-                            Intake(1),
-                            Intake(1),
-                            new SleepAction(.4),
-                            new ParallelAction(
-                                    StopperDown(1),
-                                    ThirdRow
-                            ),
-                            new ParallelAction(
-                                    StopIntake(1),
-                                    StopperUp (1),
-                                    ThirdShoot
-                            ),
+                            new SleepAction(2),
                             Intake(1),
                             new SleepAction(.5),
+                            StopperDown(1),
 
-                            
+                            new ParallelAction(
+                                    Shoot(1),
+                                    ThirdRow,
+                                    Intake(1)
+                            ),
+                            StopIntake(1),
+                            new ParallelAction(
+                                    ThirdShoot,
+                                    StopperUp(1)
+                            ),
+                            Intake(1),
+                            new SleepAction(.4),
+                            new ParallelAction(
+                                    StopperDown(1),
+                                    HumanZone
+                            ),
+                            StopIntake(1),
+                            new ParallelAction(
+                                    StopperUp(1),
+                                    HumanShoot
+                            ),
+                            Intake(1),
+                            new SleepAction(.4)
+                            //new ParallelAction(
+                                    //StopperDown(1)
 
 
 
-                            TelePosition
+
+
+
+
+
+
+
+
 
 
 

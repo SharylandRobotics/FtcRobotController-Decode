@@ -57,7 +57,7 @@ public class RRBlueShort extends LinearOpMode {
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setStopper(1);
+            robot.setStopper(.9);
             return false;
         }
     }
@@ -99,6 +99,19 @@ public class RRBlueShort extends LinearOpMode {
             return false;
         }
     }
+    class FirstShot implements Action {
+        private boolean initialized = false;
+        private double parameter = 0;
+        public FirstShot(double val){
+            parameter = val;
+        }
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            robot.setHoodPos(0.6);
+            robot.setShootSpeed(1250);
+            return false;
+        }
+    }
     public Action StopperUp(double value){
         return new StopperUp(value);
     }
@@ -117,6 +130,7 @@ public class RRBlueShort extends LinearOpMode {
     public Action StopShoot(double value){
         return new StopShoot(value);
     }
+    public Action FirstShot(double value){return new FirstShot(value);}
     @Override
     public void runOpMode(){
 
@@ -140,7 +154,7 @@ public class RRBlueShort extends LinearOpMode {
                 .setTangent(Math.atan2(-33.3+56,-32.4+12))
                 .lineToYLinearHeading(-33.3,Math.toRadians(-130))
                 .build();
-        Action SecondRow = drive.actionBuilder(new Pose2d(-1.4,-60, Math.toRadians(-90)))
+        Action SecondRow = drive.actionBuilder(new Pose2d(1.4,-60, Math.toRadians(-90)))
                 .setTangent(Math.atan2(-24+55,6+1.4))
                 .lineToYLinearHeading(-24,Math.toRadians(-90))
                 .setTangent(Math.atan2(0,12.2-6))
@@ -162,13 +176,13 @@ public class RRBlueShort extends LinearOpMode {
                 .build();
         Action ThirdRow = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(-130)))
                 .setTangent(Math.atan2(-28+33.3,36+32.4))
-                .lineToYLinearHeading(-28,Math.toRadians(270))
+                .lineToYLinearHeading(-28,Math.toRadians(-90))
                 .setTangent(Math.atan2(-55+28,0))
-                .lineToYLinearHeading(-55,Math.toRadians(270))
+                .lineToYLinearHeading(-55,Math.toRadians(-90))
                 .build();
-        Action ThirdShoot = drive.actionBuilder(new Pose2d(36,-55, Math.toRadians(270)))
+        Action ThirdShoot = drive.actionBuilder(new Pose2d(36,-55, Math.toRadians(-90)))
                 .setTangent(Math.atan2(-33.3+55,-32.4-36))
-                .lineToYLinearHeading(-33.3,Math.toRadians(220))
+                .lineToYLinearHeading(-33.3,Math.toRadians(-130))
                 .build();
         Action TelePosition = drive.actionBuilder(new Pose2d(-32.4,-33.3, Math.toRadians(-130)))
                 .setTangent(Math.atan2(-28+33.3,-8+32.4))
@@ -190,7 +204,7 @@ public class RRBlueShort extends LinearOpMode {
                     new SequentialAction(
                             new ParallelAction(
                                     StopperUp(1),
-                                    nearShoot(1),
+                                    FirstShot(1),
                                     Preload
                             ),
                             new SleepAction(.4),
@@ -200,6 +214,7 @@ public class RRBlueShort extends LinearOpMode {
 
                             new ParallelAction(
                                     StopperDown(1),
+                                    nearShoot(1),
                                     Intake(1),
                                     FirstRow
                             ),
@@ -226,6 +241,17 @@ public class RRBlueShort extends LinearOpMode {
                             ),
                             Intake(1),
                             new SleepAction(.4),
+                            new ParallelAction(
+                                    StopperDown(1),
+                                    ThirdRow
+                            ),
+                            StopIntake(1),
+                            new ParallelAction(
+                                    StopperUp(1),
+                                    ThirdShoot
+                            ),
+                            Intake(1),
+                            new SleepAction(.5),
 
                             TelePosition
 
