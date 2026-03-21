@@ -158,9 +158,9 @@ public class FieldCentric extends LinearOpMode {
                 runOuttake = !runOuttake;
             }
             if (runOuttake) {
-                robot.setStopper(.9);
+                robot.setStopper(.7);
             } else {
-                robot.setStopper(0.4);
+                robot.setStopper(0.2);
             }
 
             if (gamepad2.dpad_up) {
@@ -197,7 +197,7 @@ public class FieldCentric extends LinearOpMode {
             }
 
 
-            if (gamepad2.dpadRightWasPressed()){
+            if (gamepad2.dpadRightWasPressed() || gamepad1.dpadRightWasPressed()){
                 turretToggle = !turretToggle;
             }
 
@@ -222,10 +222,6 @@ public class FieldCentric extends LinearOpMode {
             } else {
                 robot.setTurretPosAbsolute(0);
             }
-
-
-
-
 
             prevHeading = robot.getHeading();
             robot.turretHandler.runToTarget();

@@ -70,7 +70,7 @@ public class BackRedV2 extends LinearOpMode {
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setStopper(.9);
+            robot.setStopper(.7);
             return false;
         }
     }
@@ -95,7 +95,7 @@ public class BackRedV2 extends LinearOpMode {
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setStopper(0.4);
+            robot.setStopper(0.2);
             return false;
         }
     }

@@ -30,7 +30,7 @@ public class RRRedShortGoal extends LinearOpMode {
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setHoodPos(0.6);
+            robot.setHoodPos(0.8);
             robot.setShootSpeed(1300);
             return false;
         }
@@ -60,7 +60,7 @@ public class RRRedShortGoal extends LinearOpMode {
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setStopper(.9);
+            robot.setStopper(.7);
             return false;
         }
     }
@@ -72,7 +72,7 @@ public class RRRedShortGoal extends LinearOpMode {
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setHoodPos(0.6);
+            robot.setHoodPos(0.8);
             robot.setShootSpeed(0);
             return false;
         }
@@ -85,7 +85,7 @@ public class RRRedShortGoal extends LinearOpMode {
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setStopper(0.4);
+            robot.setStopper(0.2);
             return false;
         }
     }
@@ -110,7 +110,7 @@ public class RRRedShortGoal extends LinearOpMode {
         }
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            robot.setHoodPos(0.6);
+            robot.setHoodPos(0.8);
             robot.setShootSpeed(1250);
             return false;
         }

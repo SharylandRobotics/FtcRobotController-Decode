@@ -30,14 +30,14 @@ public class MeepMeepTesting {
                 .setTangent(Math.atan2(-33.3+56,-32.4+12))
                 .lineToYLinearHeading(-33.3,Math.toRadians(-130))
                 //Clear Gate
-                .setTangent((Math.atan2(-46+33.3,1.4+32.4)))
+                .setTangent((Math.atan2(-46+33.3,-1+32.4)))
                 .lineToYLinearHeading(-46,Math.toRadians(-90))
                 .setTangent((Math.atan2(-60+46,0)))
                 .lineToYLinearHeading(-60,Math.toRadians(-90))
                 //Second Row
                 .setTangent(Math.atan2(-28+55,0))
                 .lineToYLinearHeading(-28,Math.toRadians(-90))
-                .setTangent(Math.atan2(0,12.2-1.4))
+                .setTangent(Math.atan2(0,12.2+1))
                 .lineToXLinearHeading(12.2,Math.toRadians(-90))
                 .setTangent(Math.atan2(-55+28,0))
                 .lineToYLinearHeading(-55,Math.toRadians(-90))
