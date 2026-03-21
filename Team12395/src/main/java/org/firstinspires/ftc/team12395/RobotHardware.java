@@ -61,6 +61,7 @@ public class RobotHardware {
 
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
+    public VoltageSensor voltageSensor;
 
     public Limelight3A limelight;
     public MecanumDrive standardDrive;
@@ -258,7 +259,7 @@ public class RobotHardware {
         double servoAngleTraveled = 300 * (hoodAngle.getPosition()); // 300 is ROM of servo
         // starting reference is at 1, invert position
 
-        double hoodAngleTraveled =  startingReferenceAngle - (servoAngleTraveled  / (189/20.));
+        double hoodAngleTraveled =  startingReferenceAngle - ((servoAngleTraveled)  / (189/20.));
         // decreases as servo travels to 0
 
         double ballistic = 90-hoodAngleTraveled; // 180 - 90 - angle = x
@@ -296,13 +297,22 @@ public class RobotHardware {
     public double timeToTarget(double velocity, double angle){
         double vY = velocity*Math.sin(Math.toRadians(angle));
 
-        double peakHeight = (vY*vY) / (2*g);
+        double peakHeight = (vY*vY ) / (2*g);
 
-        double endArcHeight = peakHeight - relativeGoalHeightMeters;
+        double endArcHeight = (peakHeight - relativeGoalHeightMeters);
+        if (endArcHeight < 0){
+            endArcHeight = 0;
+        }
+        myOpMode.telemetry.addData("calculated height: ", peakHeight);
+        myOpMode.telemetry.addData("cut height: ", endArcHeight);
         double endArcTime = Math.sqrt( (2*endArcHeight) / g);
         double startArcTime = vY / g;
 
-        return startArcTime + endArcTime;
+        double totalTime = startArcTime + endArcTime;
+        if (totalTime < 0){
+            totalTime = 0;
+        }
+        return totalTime;
     }
 
     public void setLocalizerPosition(Pose2d pose){
@@ -801,7 +811,7 @@ public class RobotHardware {
             new double[]{63.2, 1500, 0.75},
             new double[]{82  , 1600, 0.6 },
             new double[]{95.5, 1700, 0.5 },
-            new double[]{130 , 1900, 0.33 }
+            new double[]{130 , 1900, 0.27 }
     ));
     private final double[] velocitySlopeList = initializeSlopeList(1);
     private final double[] angleSlopeList = initializeSlopeList(2);
@@ -916,7 +926,7 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480 - (spindexerTarget % 120), 1500);
+                spindexerHandler(-480 - (spindexerTarget % 120), 1300);
                 return false;
             }
         }
@@ -959,6 +969,18 @@ public class RobotHardware {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 spindexerHandler(-480 - (spindexerTarget % 120), 700);
+                return false;
+            }
+        }
+
+        public class shootAllBallsSlowFar implements Action{
+            public shootAllBallsSlowFar(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(-480 - (spindexerTarget % 120), 600);
                 return false;
             }
         }
@@ -1013,6 +1035,10 @@ public class RobotHardware {
 
         public Action shootAllBallsSlow(){
             return new shootAllBallsSlow();
+        }
+
+        public Action shootAllBalsFar(){
+            return new shootAllBallsSlowFar();
         }
         public Action scanColorToggle(){
             return new scanColorSensor();

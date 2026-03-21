@@ -43,7 +43,7 @@ public class RRcombinedAutoRed extends LinearOpMode {
 
         Pose2d postIntake1 = new Pose2d(61, 55, Math.toRadians(90));
 
-        Pose2d preIntake2 = new Pose2d(30, 20, Math.toRadians(90));
+        Pose2d preIntake2 = new Pose2d(28, 18, Math.toRadians(90));
         Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y, Math.toRadians(90));
 
         Pose2d postIntake3 = new Pose2d(shoot1.position.x, postIntake1.position.y, Math.toRadians(90));
@@ -75,26 +75,25 @@ public class RRcombinedAutoRed extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                actionLib.setHoodAng(0.33),
+                                actionLib.setHoodAng(0.27),
                                 actionLib.setShooterVel(1900),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(turretAngle),
+                                                actionLib.setTurretPos(turretAngle - 5),
                                                 new SleepAction(2)
                                         ),
                                         actionLib.stopTurretPower()
                                 ),
-
                                 driveToPLShoot
                         ),
                         new SleepAction(0.2),
-                        actionLib.shootAllBallsSlow(),
+                        actionLib.shootAllBalsFar(),
                         new SleepAction(3),
                         updatePose()
                 )
         );
 
-        Action driveToRow1 = drive.actionBuilder(startPose)
+        Action driveToRow1 = drive.actionBuilder(latestPose)
                 /*
                 .setTangent(0)
                 .lineToXConstantHeading(preIntake1.position.x)
@@ -119,8 +118,8 @@ public class RRcombinedAutoRed extends LinearOpMode {
 
         Action driveToShoot = drive.actionBuilder(latestPose)
                 .setTangent(Math.toRadians(90))
-                .lineToY(shoot1.position.y)
-                .turnTo(shoot1.heading)
+                .lineToYConstantHeading(shoot1.position.y)
+                //.turnTo(shoot1.heading)
                 // shoot
                 .build();
 
@@ -129,7 +128,7 @@ public class RRcombinedAutoRed extends LinearOpMode {
                 new SequentialAction(
                         driveToShoot,
                         actionLib.setIntakeVel(0),
-                        actionLib.shootAllBallsSlow(),
+                        actionLib.shootAllBalsFar(),
                         new SleepAction(3),
                         updatePose()
                 )
@@ -138,16 +137,25 @@ public class RRcombinedAutoRed extends LinearOpMode {
         Action driveToRow2 = drive.actionBuilder(latestPose)
                 // start intake
                 .setTangent(Math.atan2(preIntake2.position.y - latestPose.position.y, preIntake2.position.x - latestPose.position.x))
-                .lineToX(preIntake2.position.x)
+                .lineToXConstantHeading(preIntake2.position.x)
 
                 .setTangent(Math.toRadians(90))
-                .lineToY(postIntake2.position.y)
+                .lineToYConstantHeading(postIntake2.position.y)
                 .build();
 
         Actions.runBlocking(
                 new SequentialAction(
                         actionLib.setIntakeVel(2600),
-                        driveToRow2,
+                        new ParallelAction(
+                                new SequentialAction(
+                                        new RaceAction(
+                                                actionLib.setTurretPos(turretAngle - 3),
+                                                new SleepAction(1.2)
+                                        ),
+                                        actionLib.stopTurretPower()
+                                ),
+                                driveToRow2
+                        ),
                         new SleepAction(0.2),
                         updatePose()
                 )
@@ -155,16 +163,16 @@ public class RRcombinedAutoRed extends LinearOpMode {
 
         Action driveToShoot2 = drive.actionBuilder(latestPose)
                 // stop intake
-                .setTangent(Math.atan2((shoot1.position.y + 2) - latestPose.position.y, shoot1.position.x - latestPose.position.x))
-                .lineToX(shoot1.position.x)
-                .turnTo(shoot1.heading)
+                .setTangent(Math.atan2(shoot1.position.y - latestPose.position.y, shoot1.position.x - latestPose.position.x))
+                .lineToXConstantHeading(shoot1.position.x)
+                //.turnTo(shoot1.heading)
                 .build();
 
         Actions.runBlocking(
                 new SequentialAction(
                         driveToShoot2,
                         actionLib.setIntakeVel(0),
-                        actionLib.shootAllBallsSlow(),
+                        actionLib.shootAllBalsFar(),
                         new SleepAction(3),
                         updatePose()
                 )
@@ -186,12 +194,12 @@ public class RRcombinedAutoRed extends LinearOpMode {
         );
 
         Action driveToShoot3 = drive.actionBuilder(latestPose)
-                .setTangent(Math.atan2((shoot1.position.y + 2) - latestPose.position.y, shoot1.position.x - latestPose.position.x))
-                .lineToX(shoot1.position.x)
-                .turnTo(shoot1.heading)
+                .setTangent(Math.atan2(shoot1.position.y - latestPose.position.y, shoot1.position.x - latestPose.position.x))
+                .lineToXConstantHeading(shoot1.position.x)
+                //.turnTo(shoot1.heading)
                 .build();
 
-        Action driveOff = drive.actionBuilder(shoot1)
+        Action driveOff = drive.actionBuilder(latestPose)
                 .setTangent(0)
                 .lineToXLinearHeading(preIntake2.position.x, preIntake2.heading)
                 .build();
@@ -200,7 +208,7 @@ public class RRcombinedAutoRed extends LinearOpMode {
                 new SequentialAction(
                         driveToShoot3,
                         actionLib.setIntakeVel(0),
-                        actionLib.shootAllBallsSlow(),
+                        actionLib.shootAllBalsFar(),
                         new SleepAction(3),
                         new ParallelAction(
                                 driveOff,

@@ -41,16 +41,16 @@ public class RRautoRed extends LinearOpMode {
 
         Pose2d shoot1 =  new Pose2d(-22, 16, Math.toRadians(90));
 
-        Pose2d preIntake1 = new Pose2d(-8, 22, Math.toRadians(90));
-        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 42, Math.toRadians(90));
+        Pose2d preIntake1 = new Pose2d(-7, 22, Math.toRadians(90));
+        Pose2d postIntake1 = new Pose2d(preIntake1.position.x, 43.5, Math.toRadians(92));
 
-        Pose2d openGate = new Pose2d(7, postIntake1.position.y, Math.toRadians(90));
+        Pose2d openGate = new Pose2d(5.5, postIntake1.position.y, Math.toRadians(90));
 
         Pose2d preIntake2 = new Pose2d(17, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+5, Math.toRadians(90));
+        Pose2d postIntake2 = new Pose2d(preIntake2.position.x, postIntake1.position.y+4.5, Math.toRadians(90));
 
-        Pose2d preIntake3 = new Pose2d(39, preIntake1.position.y, Math.toRadians(90));
-        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+9, Math.toRadians(90));
+        Pose2d preIntake3 = new Pose2d(16, preIntake1.position.y, Math.toRadians(90));
+        Pose2d postIntake3 = new Pose2d(preIntake3.position.x, postIntake1.position.y+6, Math.toRadians(100));
 
         // return to volley pose
 
@@ -60,7 +60,6 @@ public class RRautoRed extends LinearOpMode {
                 .setTangent(Math.atan2(shoot1.position.y - startPose.position.y, shoot1.position.x - startPose.position.x))
                 //.lineToXLinearHeading(-28, Math.toRadians(180))
                 .lineToXLinearHeading(shoot1.position.x, shoot1.heading)
-                .turnTo(shoot1.heading)
                 // scan & sort
                 // shoot
                 .build();
@@ -68,6 +67,8 @@ public class RRautoRed extends LinearOpMode {
         // init done
 
         telemetry.clearAll();
+
+        double angle = Math.toDegrees(-robot.turretAngleToTarget(new Vector2d(-65, 59), shoot1));
 
         waitForStart();
 
@@ -78,11 +79,11 @@ public class RRautoRed extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                actionLib.setHoodAng(0.9),
+                                actionLib.setHoodAng(0.75),
                                 actionLib.setShooterVel(1400),
                                 new SequentialAction(
                                         new RaceAction(
-                                                actionLib.setTurretPos(-38),
+                                                actionLib.setTurretPos(angle),
                                                 new SleepAction(2)
                                         ),
                                         actionLib.stopTurretPower()
@@ -99,11 +100,11 @@ public class RRautoRed extends LinearOpMode {
 
         Action driveToRow1 = drive.actionBuilder(latestPose)
                 .setTangent(0)
-                .lineToXConstantHeading(preIntake1.position.x)
-                //start intake
+                .lineToXConstantHeading(preIntake2.position.x)
+                // start intake
                 .setTangent(Math.toRadians(90))
-                .lineToYConstantHeading(postIntake1.position.y)
-                .turnTo(postIntake1.heading)
+                .lineToYConstantHeading(postIntake2.position.y, new TranslationalVelConstraint(90))
+
                 .build();
 
         Actions.runBlocking(
@@ -142,12 +143,19 @@ public class RRautoRed extends LinearOpMode {
         );
 
         Action driveToGate = drive.actionBuilder(latestPose)
+                // stop intake
+                .setTangent(Math.toRadians(-90))
+                .lineToYConstantHeading(postIntake2.position.y -3)
+
                 .setTangent(Math.toRadians(-90))
                 .splineToConstantHeading(openGate.position, Math.toRadians(90))
-                // wait for gate
-                .waitSeconds(0.5)
-                .setTangent(Math.atan2(shoot1.position.y - openGate.position.y, shoot1.position.x - openGate.position.x))
-                .lineToXConstantHeading(shoot1.position.x)
+                .waitSeconds(0.75)
+
+
+                .lineToYConstantHeading(openGate.position.y - 7)
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(shoot1.position, Math.toRadians(180), new TranslationalVelConstraint(90))
+                // shoot
                                 .build();
 
         // open gate
@@ -164,11 +172,13 @@ public class RRautoRed extends LinearOpMode {
         );
 
         Action driveToRow2 = drive.actionBuilder(latestPose)
-                .setTangent(0)
-                .lineToXConstantHeading(preIntake2.position.x)
-                // start intake
-                .setTangent(Math.toRadians(90))
-                .lineToYConstantHeading(postIntake2.position.y)
+                .setTangent(Math.toRadians(0))
+                .lineToX(shoot1.position.x + 5)
+                .setTangent(Math.toRadians(0))
+                .splineToLinearHeading(new Pose2d(postIntake2.position.x -0.5, openGate.position.y + 3, Math.toRadians(105)),Math.toRadians(90),
+                        new TranslationalVelConstraint(100))
+                // intake from gate
+                .waitSeconds(1)
                 .build();
 
         Actions.runBlocking(
@@ -182,8 +192,11 @@ public class RRautoRed extends LinearOpMode {
 
         Action driveToShoot2 = drive.actionBuilder(latestPose)
                 // stop intake
-                .setTangent(Math.atan2(shoot1.position.y - postIntake2.position.y, shoot1.position.x - postIntake2.position.x))
-                .lineToX(shoot1.position.x)
+                .setTangent(Math.toRadians(-90))
+                .lineToY(openGate.position.y -3)
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(shoot1, Math.toRadians(180), new TranslationalVelConstraint(90))
+                // shoot
                 .build();
 
         Actions.runBlocking(
@@ -198,10 +211,10 @@ public class RRautoRed extends LinearOpMode {
 
         Action driveToRow3 = drive.actionBuilder(latestPose)
                 .setTangent(0)
-                .lineToXConstantHeading(preIntake3.position.x)
-                // start intake
+                .splineToConstantHeading(preIntake1.position, Math.toRadians(90))
+                //start intake
                 .setTangent(Math.toRadians(90))
-                .lineToYConstantHeading(postIntake3.position.y)
+                .splineToConstantHeading(postIntake1.position, Math.toRadians(90),new TranslationalVelConstraint(90))
                 .build();
 
         Actions.runBlocking(
@@ -214,8 +227,8 @@ public class RRautoRed extends LinearOpMode {
         );
 
         Action driveToShoot3 = drive.actionBuilder(latestPose)
-                .setTangent(Math.atan2(shoot1.position.y - postIntake3.position.y, shoot1.position.x - postIntake3.position.x))
-                .lineToXConstantHeading(shoot1.position.x)
+                .setTangent(Math.atan2(shoot1.position.y - postIntake1.position.y, shoot1.position.x - postIntake1.position.x))
+                .lineToXConstantHeading(shoot1.position.x, new TranslationalVelConstraint(90))
                 .build();
 
         Action driveOff = drive.actionBuilder(shoot1)

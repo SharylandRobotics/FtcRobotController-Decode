@@ -53,13 +53,13 @@ public class FieldCentricBlue extends LinearOpMode {
     public static double hoodAngle = 0.1;
 
     public static double slowFireRateVelocity = 1800;
-    public static int normalSpinVelocity = 1500;
+    public static int normalSpinVelocity = 1300;
     public static Vector2d baseTargetPoint = new Vector2d(-65, -59);
     public static double preSetAngleClose = 0.8;
     public static double preSetVelocityClose = 1400;
     public static boolean shiftGoal = false;
     public static double intakeVel = 2600;
-    public static double flyWheelConstant = 1;
+    public static double flyWheelConstant = 1.1;
     public static double servoAngleSlope = 1;
 
     @Override
@@ -122,7 +122,7 @@ public class FieldCentricBlue extends LinearOpMode {
             robot.standardDrive.localizer.update();
             Pose2d currentPose = robot.standardDrive.localizer.getPose();
             distanceToTarget = robot.getDistanceFromTarget(baseTargetPoint, currentPose);
-            double linearVelocity = robot.tpsToLinearVelocityMETERS() * flyWheelConstant;
+            double linearVelocity = robot.tpsToLinearVelocityMETERS();
             telemetry.addData("Linear Veloctiy M/S: ", linearVelocity);
 
 
@@ -146,14 +146,11 @@ public class FieldCentricBlue extends LinearOpMode {
 
             // THIS REMAINS IN INCHES
             Vector2d worldVelocity = Rotation2d.fromDouble(currentPose.heading.log()).times(robotVelocityVector.linearVel);
-            if (shiftGoal) {
                 // drift calculated with ideal values (velocity is not measured)
-                Vector2d drift = worldVelocity.times(robot.timeToTarget(linearVelocity, robot.hoodAngleToBallisticAngle()));
+            Vector2d drift = worldVelocity.times(flyWheelConstant*robot.timeToTarget(linearVelocity, robot.hoodAngleToBallisticAngle()));
                 // shift goal
-                effectiveTargetPoint = baseTargetPoint.minus(drift);
-            } else {
-                effectiveTargetPoint = baseTargetPoint;
-            }
+            effectiveTargetPoint = baseTargetPoint.minus(drift);
+
             // -----
 
             double angle = -robot.turretAngleToTarget(effectiveTargetPoint, currentPose);
@@ -191,13 +188,13 @@ public class FieldCentricBlue extends LinearOpMode {
 
 
             // gamepad 2 (g1 cuz solo)--
-            if (gamepad1.leftBumperWasPressed()) { // ccw
-                robot.spindexerHandler(120);
+            if (gamepad1.leftBumperWasPressed() && (robot.spindexerTarget % 120) == 0) { // ccw
+                robot.spindexerHandler(-20);
             } else if (gamepad1.rightBumperWasPressed()) { // cw
                 if (velocity >= slowFireRateVelocity){
-                    robot.spindexerHandler(-480, 700);
+                    robot.spindexerHandler(-480 - (robot.spindexerTarget % 120), 700);
                 } else {
-                    robot.spindexerHandler(-480, normalSpinVelocity);
+                    robot.spindexerHandler(-480 - (robot.spindexerTarget % 120), normalSpinVelocity);
                 }
                 robot.setMagManualBulk("000");
             }
