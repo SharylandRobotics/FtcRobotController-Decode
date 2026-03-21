@@ -123,7 +123,7 @@ public class FieldCentricCamara extends LinearOpMode {
             if (gamepad1.a || rightKickerTimer) {
                 if (!rightKickerTimer){
                     leftKickerTimer = true;
-                    leftKickerClock = 15;
+                    leftKickerClock = 25;
                 }
                 robot.setKickerPower(kickerBackPos);
             } else if (gamepad1.y) {
@@ -135,7 +135,7 @@ public class FieldCentricCamara extends LinearOpMode {
             if (gamepad1.b || leftKickerTimer) {
                 if (!leftKickerTimer){
                     rightKickerTimer = true;
-                    rightKickerClock = 15;
+                    rightKickerClock = 25;
                 }
                 robot.setKickerLeftPower(kickerLeftBackPos);
             } else if (gamepad1.y) {

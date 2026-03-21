@@ -167,12 +167,12 @@ public class RobotHardware {
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        intakeDrive.setDirection(DcMotor.Direction.FORWARD);
+        intakeDrive.setDirection(DcMotor.Direction.REVERSE);
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
         outtakeDrive2.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -402,7 +402,8 @@ public class RobotHardware {
             new double[]{87, 1270},
             new double[]{91, 1290},
             new double[]{98, 1320},
-            new double[]{134, 1500}
+            new double[]{134, 1500},
+            new double[]{148, 1550}
     ));
     private final double[] slopeList = initializeSlopeList();
 

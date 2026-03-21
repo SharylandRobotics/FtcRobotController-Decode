@@ -141,7 +141,7 @@ public class NONMotid_redv2 extends LinearOpMode {
 
         Action path1 = drive.actionBuilder(new Pose2d(-49,51, Math.toRadians(126)))
                 .setTangent(Math.atan2(24-51, -30+49))
-                .lineToYLinearHeading(24, Math.toRadians(130), new TranslationalVelConstraint(30), new ProfileAccelConstraint(-60, 100))
+                .lineToYLinearHeading(24, Math.toRadians(130))
                 .build();
 
         Action path2 = drive.actionBuilder(new Pose2d(-30,24, Math.toRadians(130)))
@@ -159,14 +159,14 @@ public class NONMotid_redv2 extends LinearOpMode {
                         .build();
 
         Action path4_First_gate_intake = drive.actionBuilder(new Pose2d(-20,18, Math.toRadians(135)))
-                .setTangent(Math.atan2(20-18, 8+20))
+                .setTangent(Math.atan2(20-18, 10+20))
                 .lineToYLinearHeading(20, Math.toRadians(90))
                 .setTangent(Math.atan2(54-20, 0))
                 .lineToYLinearHeading(52, Math.toRadians(90))
                 .build();
 
-        Action slide_to_intake = drive.actionBuilder(new Pose2d(8,52, Math.toRadians(90)))
-                .setTangent(Math.atan2(56-52, 14-8))
+        Action slide_to_intake = drive.actionBuilder(new Pose2d(10,52, Math.toRadians(90)))
+                .setTangent(Math.atan2(56-52, 14-10))
                 .lineToYLinearHeading(59, Math.toRadians(90))
                         .build();
 
@@ -220,15 +220,14 @@ public class NONMotid_redv2 extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                (new SequentialAction(
-                                        path1
-                                )),
-                                shoot(1100),
-                                new SleepAction(.8),
-                                spinUp2(.8),
-                                rightkick(-1),
-                                leftkick(-1)
+                                path1,
+                                shoot(1050)
                         ),
+                        new SleepAction(.5),
+                        spinUp2(.8),
+                        rightkick(-1),
+                        leftkick(-1),
+                        new SleepAction(1.5),
                         rightkick(.3),
                         leftkick(.3),
                         new ParallelAction(

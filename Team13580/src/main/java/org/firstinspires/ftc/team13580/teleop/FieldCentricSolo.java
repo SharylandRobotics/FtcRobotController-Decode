@@ -1,27 +1,44 @@
 package org.firstinspires.ftc.team13580.teleop;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name = "Field Centric Solo", group = "opMode")
+@TeleOp(name = "Field Centric solo", group = "opMode")
+@Config
 public class FieldCentricSolo extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
+    public static double kP = 0.03;
+    public static double kI = 0;
+    public static double kD = 0.0001;
+    public static double kF = 1;
+
     @Override
     public void runOpMode() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
         double kickerBackPos = -1;
-        double kickerForwardPos = .3;
+        double kickerForwardPos = .2;
         double kickerLeftBackPos = -1;
-        double kickerLeftForwardPos = .3;
+        double kickerLeftForwardPos = .2;
 
         double axial, lateral, yaw;
         double intake, outtake = 0;  // Initialize outtake here
 
         // Toggle variables
         boolean outtakeManual = false;
-        double yawCorrection = 0;
+        boolean outtakeFarToggle = false;
+
+        boolean leftKickerTimer = false;
+        boolean rightKickerTimer = false;
+
+        double leftKickerClock = 0;
+        double rightKickerClock = 0;
 
         robot.init();
 
@@ -42,20 +59,28 @@ public class FieldCentricSolo extends LinearOpMode {
             robot.updateAprilTagDetections();
 
             // Precision mode
-           // boolean slow = gamepad1.left_bumper;
-           // double scale = slow ? 0.4 : 1.0;
+            //  boolean slow = gamepad1.left_bumper;
+            // double scale = slow ? 0.4 : 1.0;
 
             // Joystick input
-            axial = -gamepad1.left_stick_y ;
-           lateral = gamepad1.left_stick_x ;
-            yaw = gamepad1.right_stick_x ;
+            axial = -gamepad1.left_stick_y;
+            lateral = gamepad1.left_stick_x;
+            yaw = gamepad1.right_stick_x;
 
+            // Auto-drive using camera
+            boolean autoTurn = gamepad1.left_bumper;
 
-      // }
+            robot.pidfController.setP(kP);
+            robot.pidfController.setI(kI);
+            robot.pidfController.setD(kD);
+            robot.pidfController.setF(kF);
 
             // Drive robot if not auto-driving
+            if (autoTurn && !Double.isNaN(robot.getGoalBearingDeg())) {
+                yaw = robot.autoBearingToGoalCorrect();
+            }
 
-
+            robot.driveFieldCentric(axial, lateral, yaw);
 
             // Intake control
             if (gamepad1.right_trigger == 1) {
@@ -72,6 +97,14 @@ public class FieldCentricSolo extends LinearOpMode {
             // Outtake toggle with X button
             if (gamepad1.xWasPressed()) {
                 outtakeManual = !outtakeManual;  // toggle on button press
+                // when turned off, set velocity to 0
+                if (!outtakeManual) {
+                    outtake = 0;
+                }
+            }
+
+            if (gamepad1.dpad_down) {
+                outtakeFarToggle = !outtakeFarToggle;
             }
 
             // Set outtake speed
@@ -79,48 +112,51 @@ public class FieldCentricSolo extends LinearOpMode {
                 if (!Double.isNaN(robot.getGoalRangeIn())) {
                     outtake = robot.getCalculatedVelocity(robot.getFloorDistance());  // manual toggle speed
                 }
-            } else {
-                outtake = gamepad1.left_trigger * 2000;
+            }
+            if (outtakeFarToggle) {
+                outtake = 1500;
             }
             robot.setOuttakeVelocity((int) outtake);
 
             // Kicker control
 
+            if (gamepad1.a) {
+                robot.setKickerPower(kickerBackPos);
+                }
+             else if (gamepad1.y) {
+                robot.setKickerPower(kickerBackPos);
+            } else {
+                robot.setKickerPower(kickerForwardPos);
+            }
+
             if (gamepad1.b) {
                 robot.setKickerLeftPower(kickerLeftBackPos);
-            } else {
-                robot.setKickerLeftPower(kickerLeftForwardPos);
-            }
-
-            if (gamepad2.a) {
-                robot.setKickerPower(kickerBackPos);
-            } else {
-                robot.setKickerPower(kickerForwardPos);
-            }
-
-            if(gamepad1.y){
+                }
+             else if (gamepad1.y) {
                 robot.setKickerLeftPower(kickerLeftBackPos);
-                robot.setKickerPower(kickerBackPos);
             } else {
                 robot.setKickerLeftPower(kickerLeftForwardPos);
-                robot.setKickerPower(kickerForwardPos);
             }
 
-
-
-            if (gamepad2.aWasPressed()){
-                robot.setOuttakeVelocity(1700);
-            }
+            //if(gamepad2.y){
+            // robot.setKickerLeftPower(kickerLeftBackPos);
+            //   robot.setKickerPower(kickerBackPos);
+            //  } else if (gamepad1.y) {
+            // robot.setKickerLeftPower(kickerLeftBackPos);
+            //  robot.setKickerPower(kickerBackPos);
+            //  } else {
+            //  robot.setKickerLeftPower(kickerLeftForwardPos);
+            //  robot.setKickerPower(kickerForwardPos);
+            // }
 
             // Telemetry
-           // telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+            // telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Outtake Toggle", outtakeManual ? "ON (1300)" : "OFF");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
-            telemetry.addData("Camera Values: ", "dist=%.2f  bearing=%.2f  yaw=%.2f", robot.getFloorDistance(), robot.getGoalBearingDeg(), robot.getTagYawDeg());
             telemetry.update();
 
-            sleep(50);
+            sleep(20);
         }
     }
 }
