@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.team13581;
 
-import android.graphics.Color;
 import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
@@ -49,6 +48,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -56,25 +57,27 @@ public class RobotHardware {
 
     private LinearOpMode myOpMode = null;
 
-    private double spoolToTurretRatio = 92/24.;
-    // 54:15 (3.6)
-    // 30:90 (0.33)
-    private final double driveToTurretRatio = 3; // 3 rotations to 1, 90/30 teeth
+    private final double driveToTurretRatio = 60.0/26.0; // 2 rotations to 1, 60/26 teeth
     private final double turretTicksPerRevolution = driveToTurretRatio * 8192;// RevCoder CPR * ratio per 1 turret rev
     private final double turretTicksPerDegree = turretTicksPerRevolution/360;
-
+    public static double turretTrackingOffsetDegrees = 0;
     private DcMotor frontLeftDrive  = null;
     private DcMotor backLeftDrive   = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive  = null;
     private DcMotor Intake1 = null;
     private DcMotor Intake2 = null;
-    private OverflowEncoder turretEncoder;
+    public servoDE turretHandler;
+    public static int maxTurnR = 90 ;
+    public static int maxTurnL = 90; // negative
     private DcMotorEx outtakeMotorR = null;
     private DcMotorEx outtakeMotorL = null;
-    private Servo hAimR = null;
-    private Servo hAimL = null;
-    private Servo vAim = null;
+    private CRServo turretAimR = null;
+    private CRServo turretAimL = null;
+    public OverflowEncoder turretE;
+    private Servo hoodAim = null;
+
+    private Servo stopper = null;
 
     private IMU imu = null;
 
@@ -167,16 +170,18 @@ public class RobotHardware {
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
 
         Intake1 = myOpMode.hardwareMap.get(DcMotor.class, "intake1");
-        turretEncoder = new OverflowEncoder(new RawEncoder(myOpMode.hardwareMap.get(DcMotorEx.class, "intake1")));
         Intake2 = myOpMode.hardwareMap.get(DcMotor.class, "intake2");
 
         outtakeMotorR = myOpMode.hardwareMap.get(DcMotorEx.class, "outtake_motor_r");
         outtakeMotorL = myOpMode.hardwareMap.get(DcMotorEx.class, "outtake_motor_l");
 
-        hAimR = myOpMode.hardwareMap.get(Servo.class, "h_aim_r");
-        hAimL = myOpMode.hardwareMap.get(Servo.class, "h_aim_l");
+        turretAimR = myOpMode.hardwareMap.get(CRServo.class, "turret_aim_r");
+        turretAimL = myOpMode.hardwareMap.get(CRServo.class, "turret_aim_l");
+        turretE = new OverflowEncoder( new RawEncoder( myOpMode.hardwareMap.get(DcMotorEx.class, "intake1")));
 
-        vAim = myOpMode.hardwareMap.get(Servo.class, "v_aim");
+        hoodAim = myOpMode.hardwareMap.get(Servo.class, "hood_aim");
+
+        stopper = myOpMode.hardwareMap.get(Servo.class, "stopper");
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
@@ -187,21 +192,24 @@ public class RobotHardware {
 
         imu.resetYaw();
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
         Intake1.setDirection(DcMotor.Direction.FORWARD);
         Intake2.setDirection(DcMotor.Direction.REVERSE);
 
+
         outtakeMotorR.setDirection(DcMotor.Direction.FORWARD);
         outtakeMotorL.setDirection(DcMotor.Direction.REVERSE);
 
-
+/*
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+ */
 
         outtakeMotorR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         outtakeMotorL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -219,18 +227,19 @@ public class RobotHardware {
         Intake2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
 
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         outtakeMotorR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         outtakeMotorL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        outtakeMotorR.setVelocityPIDFCoefficients(50, 1, 3, 1);
 
-        hAimR.setPosition(0.5);
-        hAimL.setPosition(0.5);
+        turretHandler = new servoDE(turretE, turretAimR, turretAimL);
+
+        outtakeMotorR.setVelocityPIDFCoefficients(100, 1, 3, 1);
 
         initAprilTag();
 
@@ -261,7 +270,7 @@ public class RobotHardware {
 
         double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
                 Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-        if (max > 1.0) {
+        if (max > 0.9) {
             frontLeftPower  /= max;
             frontRightPower /= max;
             backLeftPower   /= max;
@@ -283,40 +292,35 @@ public class RobotHardware {
         outtakeMotorL.setVelocity(v);
     }
 
-    public void setAimPos(double pos) {vAim.setPosition(pos);}
-    public double getAimPos() { return vAim.getPosition();}
-    public double hAimRPos(){
-        return hAimR.getPosition();
-    }
-    public double hAimLPos(){return hAimL.getPosition();}
+    public void setHoodPos(double pos) {
+        hoodAim.setPosition(pos);}
+    public double getHoodPos() { return hoodAim.getPosition();}
 
-    public void setTurretPos(double posR) {
-        hAimR.setPosition(posR);
-        hAimL.setPosition(posR);
-
+    public void setStopper(double pos) {
+        stopper.setPosition(pos);
     }
 
-    public void setTurretDegree(double deg){
-        if (!Double.isNaN(deg)) {
-            // 54:15 (3.6)
-            // 30:90 (0.33)
-            // left: - encoder, + servo
-            setTurretPos(Range.clip((deg * 1/300) + 0.5, 0.2, 0.8));
-            myOpMode.telemetry.addData("Going to Pos: ", (deg * 1/300) + 0.5);
-        } else {
-            myOpMode.telemetry.addData("Not a Number: ", deg);
-        }
+    public void setTurretPower(double p) {
+        turretAimR.setPower(p);
+        turretAimL.setPower(p);
+
     }
 
-    public void setTurretRelative(double deg){
-        deg += getTurretDegree();
-        deg = Range.clip(deg, -90, 90);
+    public void setTurretPosRelative(double deg){
+        deg += turretHandler.getCurrentPosition()/turretTicksPerDegree;
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
 
-        setTurretPos((int) (deg*turretTicksPerDegree));
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
     }
 
-    public double getTurretDegree(){
-        return turretEncoder.getPositionAndVelocity().position/turretTicksPerDegree;
+    public void setTurretPosAbsolute(double deg){
+        deg = Range.clip(deg, -maxTurnL, maxTurnR);
+
+        turretHandler.setTargetPos((int) (deg*turretTicksPerDegree));
+    }
+
+    public double getCurrentTurretDegreePos(){
+        return turretHandler.getCurrentPosition()/ turretTicksPerDegree;
     }
 
 
@@ -334,7 +338,7 @@ public class RobotHardware {
 
         double max = Math.max(Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
                 Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)));
-        if (max > 1.0) {
+        if (max > 0.9) {
             frontLeftPower  /= max;
             frontRightPower /= max;
             backLeftPower   /= max;
@@ -611,5 +615,68 @@ public class RobotHardware {
 
         teleOpRobotCentric(axial, lateral, yaw);
         return true;
+    }
+    private ArrayList<double[]> dataPoints = new ArrayList<>(Arrays.asList(
+            // distance, rpm, hood angle
+            new double[]{32, 1300,0.58},
+            new double[]{38, 1375,0.575},
+            new double[]{50, 1450,0.525},
+            new double[]{70, 1550,0.435},
+            new double[]{80, 1600,0.45},
+            new double[]{120,2000,0.425}
+    ));
+    private final double[] velocitySlopeList = initializeSlopeList(1);
+    private final double[] angleSlopeList = initializeSlopeList(2);
+
+    private double[] initializeSlopeList(int valueIndex){
+        int maxIndex = dataPoints.size();
+        double[] list = new double[maxIndex];
+        for (int i=0; i<maxIndex-1; i++){
+            list[i] = (
+                    (dataPoints.get(i+1)[valueIndex] - dataPoints.get(i)[valueIndex]) /
+                            (dataPoints.get(i+1)[0] - dataPoints.get(i)[0])
+            );
+        }
+
+        return list;
+    }
+
+    public double getRegressionValue(double distance, int valueIndex){
+        double returnVal;
+        double[] slopeList;
+        if (valueIndex == 1){
+            returnVal = 1300;
+            slopeList = velocitySlopeList;
+        } else {
+            returnVal = 0.7;
+            slopeList = angleSlopeList;
+        }
+
+        double velZeroIntercept = dataPoints.get(0)[valueIndex] - (slopeList[0]* dataPoints.get(0)[0]);
+
+        if (distance <= dataPoints.get(0)[0]){
+            myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(0)[0] +", " + dataPoints.get(0)[valueIndex]);
+            myOpMode.telemetry.addData("Slope Reference: ", slopeList[0]);
+            returnVal = velZeroIntercept + (distance* slopeList[0]);
+            return returnVal;
+        }
+
+        for (int i = 1; i< slopeList.length; i++){
+            if ((i == slopeList.length-1 && distance >= dataPoints.get(i)[0]) ||
+                    distance > dataPoints.get(i)[0] && distance <= dataPoints.get(i+1)[0]){
+
+                myOpMode.telemetry.addData("Bottom Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
+                myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                returnVal = dataPoints.get(i)[valueIndex] + (distance- dataPoints.get(i)[0])* slopeList[i];
+                return returnVal;
+            }
+        }
+
+        return returnVal;
+    }
+
+    public double getFloorDistance(){
+        // Math.pow(height from camera to center AprilTag, 2)
+        return Math.sqrt(Math.pow(getGoalRangeIn(), 2) - Math.pow(16,2));
     }
 }

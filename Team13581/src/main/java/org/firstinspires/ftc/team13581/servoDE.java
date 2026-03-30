@@ -1,18 +1,14 @@
-package org.firstinspires.ftc.team12395;
+package org.firstinspires.ftc.team13581;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
-import com.arcrobotics.ftclib.controller.PDController;
-import com.arcrobotics.ftclib.controller.PIDController;
-import com.arcrobotics.ftclib.controller.PIDFController;
-import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.Range;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 @Config
-public class servoDrivenEncoder {
+public class servoDE {
 
 
     OverflowEncoder encoder;
@@ -23,13 +19,13 @@ public class servoDrivenEncoder {
     double lastVelocity;
 
 
-    public static double P = 0.00035;
+    public static double P = 0.00025;
     public static double I = 0.00002;
-    public static double D = 0.00004;
+    public static double D = 0.00003;
 
     PIDFCustomLoop controller = new PIDFCustomLoop(P, I, D, 0);
 
-    public servoDrivenEncoder(OverflowEncoder encoder, CRServo servo1, CRServo servo2){
+    public servoDE(OverflowEncoder encoder, CRServo servo1, CRServo servo2){
         controller.reset();
 
         this.encoder = encoder;
