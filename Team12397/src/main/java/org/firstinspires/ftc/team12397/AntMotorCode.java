@@ -4,8 +4,6 @@ package org.firstinspires.ftc.team12397;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.team12397.teleop.RobotCentric;
 
 
 // Drivetrain motors for a mecanum chassis
@@ -21,7 +19,9 @@ public class AntMotorCode extends LinearOpMode {
         double axial = 0; // forward/back (+ forward)
         double lateral = 0; // strafe left/right (+ right)
         double yaw = 0; // rotation (+ CCW/left turn)
-
+        double currentVelocity=0;
+        double maxVelocity=0;
+        Boolean on = false;
         // --- INIT PHASE ---
         // WHY: Centralized initialization (motor directions, encoders, IMU) lives in RobotHardware.init()
         // TODO(STUDENTS): Confirm motor names, directions, and zero-power modes in RobotHardware.init()
@@ -37,13 +37,28 @@ public class AntMotorCode extends LinearOpMode {
             axial = -gamepad1.left_stick_y;
             lateral = gamepad1.left_stick_x;
             yaw = gamepad1.right_stick_x;
-
-            if (gamepad1.right_trigger != 0){
-                robot.turretPower(0.8);
-            };
-
             robot.driveFieldCentric(axial, lateral, yaw);
+            if (gamepad1.right_trigger >0.5){
+                on = !on;
+            }
+            if (on){
+                robot.turretVelocity(100);
+
+                currentVelocity= robot.getVelocity();
+                if (currentVelocity > maxVelocity) {
+                    maxVelocity = currentVelocity;
+                }
+
+
+            }
+            else{
+                robot.turretPower(0);
+            }
+            telemetry.addData("current velocity", currentVelocity);
+            telemetry.addData("maximum velocity", maxVelocity);
             telemetry.update();
+
+
 
         }
     }

@@ -31,131 +31,241 @@ package org.firstinspires.ftc.team12397.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.team12397.RobotHardware;
 
-@TeleOp(name="Robot Centric", group="TeleOp")
+@TeleOp(name = "Robot Centric", group = "TeleOp")
 // TODO(STUDENTS): You may rename this OpMode in the annotation for clarity (e.g., "Robot-Centric - Practice Bot")
 public class RobotCentric extends LinearOpMode {
+
 
     // NOTE: One RobotHardware instance per OpMode keeps mapping/telemetry simple.
     RobotHardware robot = new RobotHardware(this);
 
+    enum TurretState {
+        Start, HoldWait, Fire, ResetIntake, End
+
+    }
+
+    TurretState turretState = TurretState.Start;
+    ElapsedTime turretTimer = new ElapsedTime();
+    String statusMsg = "";
+
+
+    public boolean isTimeUp(double seconds) {
+        if (turretTimer.milliseconds() >= seconds * 1000) {
+            turretTimer.reset(); // Auto-reset for the next state
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void runOpMode() {
-        // Driver inputs (range about [-1, 1])
-        double axial    = 0; // forward/back (+ forward)
-        double lateral  = 0; // strafe left/right (+ right)
-        double yaw      = 0; // rotation (+ CCW/left turn)
+        // Driver inputs (range roughly [-1, 1])
+        double axial = 0; // forward/back (+ forward)
+        double lateral = 0; // strafe left/right (+ right)
+        double yaw = 0; // rotation (+ CCW/left turn)
+
+        boolean servoOn = false;
+        boolean lastServoState = false;
+
+        boolean shooterOn = false;
+        boolean lastShooterState = false;
+
+        boolean intakeOn = false;
+        boolean lastIntakeState = false;
+
+
         // --- INIT PHASE ---
-        // WHY: Centralized initialization (motor directions, encoders, IMU) lives in RobotHardware.init()
-        // TODO(STUDENTS): Confirm motor names, directions, and zero-power modes in RobotHardware.init()
+        // WHY: Centralized init in RobotHardware sets motor directions, encoder modes, IMU orientation, etc.
+        // TODO(STUDENTS): Confirm IMU orientation & Motor names in RobotHardware.init()
         robot.init();
 
-        // Wait for START on the Diver Station
-        waitForStart();
+        while (opModeInInit()) {
 
+            // Student Note: Pre‑start check — rotate robot by hand; heading should change.
+            // "Vision: Ready (AprilTag)" means camera + processor initialized.
+            telemetry.addData("Status", "Hardware Initialized");
+            telemetry.addData("Vision", "Ready (AprilTag)");
+            telemetry.addData("Mode", "INIT");
+//            telemetry.addData("Obelisk", robot.hasObeliskMotif() ? String.format("%s (ID %s)",
+//                    robot.getObeliskMotif(), robot.getObeliskTagId()) : "–");
+            telemetry.addData("Heading", "%4.0f", robot.getHeading());
+            telemetry.update();
+        }
+
+        // Wait for driver to press START on Driver Station
+        waitForStart();
+        if (isStopRequested()) return;
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-
-            // Read sticks (FTC gamepads: pushing left_stick_y forward is negative → invert it)
-            axial   = -gamepad1.left_stick_y;
-            lateral =  gamepad1.left_stick_x;
-            yaw     =  gamepad1.right_stick_x;
+            //shooting mechanism
 
 
-            //servo Hood stuff starts here
-            // old code
-            /*if (gamepad1.right_bumper)
-                robot.setHoodPositions(.5);
+            switch (turretState) {
+                case Start:
+                    if (gamepad1.right_trigger > .5) {
+                        statusMsg = "RUNNING AUTO SHOOTER"; //telementry
 
-            if (gamepad1.left_bumper)
-                robot.setHoodPositions(0.0);
+                        // Set velocity based on hood. 1 = high arch, 0 = low arch
+                        robot.turretVelocity(robot.getHoodPosition() <= .5 ? 150 : 150);
 
-             */
-            //servo hood
-            boolean servoOn = false;
-            boolean lastServoState = false;
-            boolean currentServoState = (gamepad1.bWasPressed());
-            if(currentServoState && !lastServoState){
-                servoOn = !servoOn;
-            }
-            if(servoOn){
-                robot.setHoodPositions(.5);
-            }
-            else{
-                robot.setHoodPositions(0.0);
-            }
-            lastServoState = currentServoState;
+                        turretTimer.reset(); // RESET TIMER HERE (Only once!)
+                        turretState = TurretState.HoldWait;
+                    }
+                    break;
 
-            // Pace this loop so hands move at a reasonable speed.
-            sleep(50);
+                case HoldWait:
+                    if (isTimeUp(4)) { // Wait 1 second (1000ms)
+                        //robot.setIntakeServo(0);
+                        robot.intakePower(-1);
+                        // Timer is auto-reset by your isTimeUp method!
+                        turretState = TurretState.Fire;
+                    }
+                    break;
 
-            boolean intakeservoOn = false;
-            boolean intakelastServoState = false;
-            boolean intakecurrentServoState = (gamepad1.y);
-            if(intakecurrentServoState && !intakelastServoState){
-                intakeservoOn = !intakeservoOn;
+                case Fire:
+                    if (isTimeUp(2)) {
+                        //robot.intakePower(-0.5);
+                        //robot.setIntakeServo(1);
+                        turretState = TurretState.End;
+                    }
+                    break;
+                /*
+                case ResetIntake:
+                    if (isTimeUp(2)) {
+                        robot.setIntakeServo(0);
+                        turretState = TurretState.End;
+                    }
+                    break;
+                   */
+                case End:
+                    statusMsg = "";
+                    //robot.setIntakeServo(1);
+                    robot.turretVelocity(0);
+                    robot.intakePower(0);
+                    turretState = TurretState.Start; // Go back to start so you can shoot again!
+                    break;
             }
-            if(intakeservoOn){
-                robot.setIntakeServo(.5);
-            }
-            else{
-                robot.setIntakeServo(0.0);
-            }
-            intakelastServoState = intakecurrentServoState;
 
-            // Pace this loop so hands move at a reasonable speed.
-            sleep(50);
-            // turret motor
-            boolean turretOn = false;
-            boolean lastTriggerState = false;
-            boolean currentTriggerState = (gamepad1.right_trigger > .5);
-            if(currentTriggerState && !lastTriggerState){
-                turretOn = !turretOn;
-            }
-            if(turretOn){
-                robot.turretPower(1);
-            }
-            else{
-                robot.turretPower(0);
-            }
-            lastTriggerState = currentTriggerState;
-            //intake motor
-            boolean intakeMotorOn = false;
-            boolean intakeMotorlastTriggerState = false;
-            boolean intakeMotorcurrentTriggerState = (gamepad1.rightBumperWasPressed());
-            if(intakeMotorcurrentTriggerState && !intakeMotorlastTriggerState){
-                intakeMotorOn = !intakeMotorOn;
-            }
-            if(intakeMotorOn){
-                robot.intakePower(-1);
-            }
-            else{
+                //############ CONTROLS ##############
+            //kill switch for auto shooter
+            if (gamepad1.y && turretState != turretState.Start) {
+                robot.setIntakeServo(1);
+                robot.turretVelocity(0);
                 robot.intakePower(0);
+                turretState = TurretState.Start;
+                //telementry
+                turretTimer.reset();
+                statusMsg = "KILLED";
+
+
             }
-            intakeMotorlastTriggerState = intakeMotorcurrentTriggerState;
-           /* if (gamepad1.right_trigger > 0){
-                robot.turretPower(1);
+            if (turretState == TurretState.Start) {
+
+                // Manual Intake Power (Trigger/X)
+                if (gamepad1.left_trigger > .5) {
+                    robot.intakePower(-1);
+                } else if (gamepad1.x) {
+                    robot.intakePower(1);
+                } else {
+                    robot.intakePower(0);
+                }
+
+                // Manual Intake Servo (A Button)
+                if (gamepad1.a) {
+                    robot.setIntakeServo(0);
+                } else {
+                    robot.setIntakeServo(1);
+                }
+                // Manual Hood  0 = High arch
+                if (gamepad1.b) {
+
+                    servoOn = !servoOn;
+
+                }
+                if(servoOn){
+                    robot.setHoodPositions(1);
+                }
+                else {
+                    robot.setHoodPositions(.4);
+                }
+                // manual turret shooter #note same as slow mode camera
+                if(gamepad1.left_bumper){
+                    robot.turretVelocity(150);
+                }
+                else{
+                    robot.turretVelocity(0);
+                }
             }
-              if(gamepad1.left_trigger > 0){
-                robot.turretPower(0);
+            // Keep vision fresh before using pose values each loop
+            robot.updateAprilTagDetections();
+
+
+            // Student Note: Hold LB for precision (slow) mode.
+            boolean slow = gamepad1.left_bumper;
+            double scale = slow ? 0.4 : 1.0;
+
+            axial = -gamepad1.left_stick_y * scale;
+            lateral = gamepad1.left_stick_x * scale;
+            yaw = gamepad1.right_stick_x * scale;
+
+            // --- Vision helpers for concise telemetry ---
+            Integer goalId = robot.getGoalTagId();
+            double range = robot.getGoalRangeIn();
+            double bearing = robot.getGoalBearingDeg();
+            double elevation = robot.getGoalElevationDeg();
+
+            // Approx horizontal distance and aim-above-horizontal (camera pitched up 15°)
+            double horiz = (Double.isNaN(range) || Double.isNaN(bearing))
+                    ? Double.NaN
+                    : range * Math.cos(Math.toRadians(bearing));
+            double aimAboveHorizontal = (Double.isNaN(elevation) ? Double.NaN : (15.0 + elevation));
+
+            // Driver Assist: hold RB to auto-drive toward the visible goal tag (range->drive, yaw->strafe, bearing->turn).
+            boolean autoAssist = gamepad1.right_bumper;
+            boolean didAuto = false;
+            if (autoAssist) {
+                robot.updateAprilTagDetections();
+                didAuto = robot.autoDriveToGoalStep();
             }
-             */
-            // Optional: Deadband to filter tiny stick noise (uncomment to use)
-            // double dead = 0.05; // TODO(STUDENTS): tune
-            // axial   = (Math.abs(axial)   < dead) ? 0 : axial;
-            // lateral = (Math.abs(lateral) < dead) ? 0 : lateral;
-            // yaw     = (Math.abs(yaw)     < dead) ? 0 : yaw;
 
-            // Optional: Precision/slow mode (hold Left Trigger to reduce overall sensitivity)
-            // double slow = 1.0 - (0.6 * gamepad1.left_trigger); // 1.0 → 0.4 as LT goes 0→1
-            // axial *= slow; lateral *= slow; yaw *= slow;
-
-            // WHY: Robot-centric uses the driver’s frame (no IMU rotation); great for quick testing.
-            robot.driveRobotCentric(axial, lateral, yaw);
-
-
-            // Telemetry for drivers + debugging
+            // Student Note: Field‑centric drive call (mixing happens in RobotHardware) unless auto applied.
+            if (!didAuto) {
+                robot.driveRobotCentric(axial, lateral, yaw);
+            }
+            // ############### Controls ################
+            if (statusMsg.equals("KILLED") && turretTimer.milliseconds() < 3000) {
+                telemetry.addLine("-----------------------------");
+                telemetry.addLine("      SYSTEM KILLED          ");
+                telemetry.addLine("-----------------------------");
+            }
+            if (statusMsg.equals("RUNNING AUTO SHOOTER")) {
+                telemetry.addLine("-----------------------------");
+                telemetry.addLine(statusMsg);
+                telemetry.addLine("-----------------------------");
+            }
+            telemetry.addLine("Right Trigger Toggle = Auto Turret");
+            telemetry.addLine("Y = Auto shooter kill switch");
+            telemetry.addData("Turn to tag", "Hold Right Bumper");
+            telemetry.addLine("Left Bumper Hold = Manual Turret (Auto Off)");
+            telemetry.addLine("Left Trigger Hold = Intake");
+            telemetry.addLine("B = Hood Servo");
+            telemetry.addLine("A = Intake Servo");
+            telemetry.addLine("X = Reverse Intake");
+            // ############### Camera Data ################
+            telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+            telemetry.addData("Assist", autoAssist ? (didAuto ? "AUTO→TAG" : "NO TAG") : "MANUAL");
+            telemetry.addData("Heading", "%4.0f°", robot.getHeading());
+            telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
+            String motif = robot.hasObeliskMotif() ? String.format("%s (ID %s)", robot.getObeliskMotif(), robot.getObeliskTagId()) : "–";
+            telemetry.addData("Pose", "rng=%.1f in  brg=%.1f°  elev=%.1f°", range, bearing, elevation);
+            telemetry.addData("Aim", "horiz=%.1f in  aboveHoriz=%s",
+                    horiz,
+                    Double.isNaN(aimAboveHorizontal) ? "–" : String.format("%.1f°", aimAboveHorizontal));
+            telemetry.addData("TagYaw", "%.1f°", robot.getTagYawDeg());
+            // non tag code
             telemetry.addData("Controls", "Drive/Strafe: Left Stick | Turn: Right Stick");
             telemetry.addData("Inputs", "axial=%.2f   lateral=%.2f   yaw=%.2f", axial, lateral, yaw);
             // Optional: expose heading during tuning
@@ -163,20 +273,17 @@ public class RobotCentric extends LinearOpMode {
             //servo stuff
             telemetry.addData("Drive", "Left Stick");
             telemetry.addData("Turn", "Right Stick");
-            telemetry.addData("Hood Servo Up/Down", "Button B toggle");
-            telemetry.addData("intake Servo Up/Down", "Button Y toggle");
 
-
-            telemetry.addData("-", "-------");
-            telemetry.addData("Turret motor shooter", "Right Bumper toggle");
-            telemetry.addData("intake motor", "Right Trigger Hold");
-
-
+            telemetry.addData("Obelisk", motif);
+            telemetry.addData("Goal", (goalId != null) ? goalId : "–");
             telemetry.update();
 
-            // Pace loop-helps with readability and prevents spamming the DS
-            sleep(50); // ~20 Hz; TODO(STUDENTS): adjust for your robot feel (e.g., 20-30 ms for snappier control)
+            sleep(50);
+
+
         }
+
     }
+
 }
 

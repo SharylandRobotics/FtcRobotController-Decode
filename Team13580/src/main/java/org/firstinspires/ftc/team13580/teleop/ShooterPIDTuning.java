@@ -27,82 +27,84 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.team12395.tests; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
+package org.firstinspires.ftc.team13580.teleop; // TODO(STUDENTS): Change to your team package (e.g., org.firstinspires.ftc.team12345.teleop)
 
-import android.graphics.Color;
-import android.telephony.IccOpenLogicalChannelResponse;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import org.firstinspires.ftc.team12395.RobotHardware;
+import org.firstinspires.ftc.team13580.RobotHardware;
 
-import static org.firstinspires.ftc.team12395.RobotHardware.*;
-
-@TeleOp(name="Turret Test", group="TeleOp")
+@TeleOp(name="Tuning Test", group="TeleOp")
 @Config
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
-public class ServoTurretTest extends LinearOpMode {
+public class ShooterPIDTuning extends LinearOpMode {
 
     // NOTE: One hardware instance per OpMode keeps mapping/IMU use simple and testable
     RobotHardware robot = new RobotHardware(this);
 
-    public static int target = 0;
-    public static boolean run = false;
+    public static double targetVel = 700;
+    public static double targetVel2 = 400;
+    public static double currentVel;
+    public static double cycles = 20;
+    public static double P;
+    public static double I;
+    public static double D;
+    public static double F;
+
+    public static double TelemVel;
+
 
     @Override
     public void runOpMode() {
 
+        double clock = 0;
+        boolean slow = true;
         // Driver inputs (range roughly [-1, 1])
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.init();
 
+        P = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).p;
+        I = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).i;
+        D = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).d;
+        F = robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f;
+
         waitForStart();
+
+        robot.setOuttakeVelocity((int) targetVel);
 
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            if (run) {
-                robot.setTurretHandlerAbsolute(target);
-                if (robot.turretHandler.runToTarget()){
-                    run = false;
-                    telemetry.addData("DONE", "");
-                }
+            if (clock > cycles){
+                slow = !slow;
+                clock = 0;
+            }
+
+            if (slow) {
+                robot.setOuttakeVelocity((int) targetVel);
+                currentVel = robot.outtakeDrive.getVelocity();
+                TelemVel = targetVel;
             } else {
-                if (gamepad1.x){
-                    robot.turretR.setPower(0.5);
-                    robot.turretL.setPower(0.5);
-                } else if (gamepad1.b) {
-                    robot.turretL.setPower(-0.5);
-                    robot.turretR.setPower(-0.5);
-                } else {
-                    robot.turretL.setPower(0);
-                    robot.turretR.setPower(0);
-                }
-
-
+                robot.setOuttakeVelocity((int) targetVel2);
+                currentVel = robot.outtakeDrive.getVelocity();
+                TelemVel = targetVel2;
             }
-            if (gamepad1.a){
-                run = false;
-            } else if (gamepad1.dpad_up){
-                run = true;
-            }
-            robot.turretHandler.setPGain();
-            robot.turretHandler.setIGain();
-            robot.turretHandler.setDGain();
 
+            robot.outtakeDrive.setVelocityPIDFCoefficients(P, I, D, F);
+
+            telemetry.addData("target Velocity: ", TelemVel);
+            telemetry.addData("current Velocity: ", currentVel);
+            telemetry.addData("PIDF: ", robot.outtakeDrive.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
             telemetry.update();
 
             // Pace loop-helps with readability and prevents spamming the DS
-            telemetry.addData("Pos: ", robot.turretHandler.getCurrentPosition());
-            telemetry.addData("Power: ", robot.turretHandler.getServoPower());
-            telemetry.addData("Error Deg: ", robot.turretHandler.getCurrentError()/robot.turretTicksPerDegree);
-            telemetry.addData("Output: ", robot.turretHandler.getOutput());
             sleep(50); // ~20 Hz;
+            if (clock <= cycles) {
+                clock++;
+            }
         }
     }
 }
