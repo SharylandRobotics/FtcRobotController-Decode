@@ -48,19 +48,24 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
 
-// Shared hardware and service layer used by Team00000 OpModes.
+/**
+ * Shared hardware + robot services layer for Team00000.
+ *
+ * <p>This class is intentionally reusable from both TeleOp and Autonomous so students can learn
+ * one API surface for drivetrain, shooter, and vision-assisted behaviors.
+ */
 public class RobotHardware {
 
-    // Owning OpMode context.
+    // Owning OpMode context (hardwareMap + telemetry + opMode lifecycle).
     private final LinearOpMode myOpMode;
 
-    // Mecanum drivetrain motors.
+    // Mecanum drivetrain.
     private DcMotor frontLeftDrive;
     private DcMotor backLeftDrive;
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
 
-    // Shooter motors in velocity-control mode.
+    // Dual-wheel shooter in velocity-control mode.
     private DcMotorEx topShooter;
     private DcMotorEx bottomShooter;
 
@@ -72,10 +77,10 @@ public class RobotHardware {
     private CRServo backLeftTransfer;
     private CRServo backRightTransfer;
 
-    // IMU provides yaw for field-centric drive and heading control.
+    // IMU yaw is used for field-centric drive and heading hold.
     private IMU imu = null;
 
-    // Cached control and telemetry state.
+    // Cached control/telemetry values.
     private double headingError;
     private double targetHeading;
     private double yawSpeed;
@@ -103,35 +108,42 @@ public class RobotHardware {
     // Tag yaw (degrees) from FTC pose estimate, used for lateral alignment.
     private double tagYawDeg = Double.NaN;
 
-    // AprilTag assist tuning (units: inches and degrees).
+    // AprilTag assist tuning (units: inches/degrees).
     private static final double DESIRED_DISTANCE = 140.0; // Camera-to-tag range target.
     private static double DESIRED_YAW_DEG = 0;
     private static double DESIRED_BEARING_DEG = 0;
-    private static final double AXIAL_GAIN = 0.020; // rangeError -> forward/back command
-    private static final double LATERAL_GAIN = 0.015; // yawError -> strafe command
-    private static final double YAW_GAIN = 0.010; // bearingError -> turn command
+    private static final double AXIAL_GAIN = 0.020; // range error -> forward/back command
+    private static final double LATERAL_GAIN = 0.015; // tag yaw error -> strafe command
+    private static final double YAW_GAIN = 0.015; // bearing error -> turn command
     public static final double MAX_AUTO_AXIAL = 0.90;
     public static final double MAX_AUTO_LATERAL = 0.90;
-    public static final double MAX_AUTO_YAW = 0.70;
+    public static final double MAX_AUTO_YAW = 0.85;
     public static final double HEADING_THRESHOLD = 1.0;
     public static final double TOLERANCE_TICKS = 10.0;
 
-    // Shooter velocity target used for telemetry and at-speed logic.
+    // Shooter target used by readiness checks and telemetry.
     private double shooterTargetTicksPerSec = 0.0;
 
-    // Camera intrinsics in pixels; calibrate per camera/resolution.
+    // Cached shooter auto-model state (range filter + voltage compensation).
+    private double shooterAutoFilteredRangeIn = Double.NaN;
+    private long shooterAutoLastValidRangeMs = 0;
+    private double shooterAutoVoltageComp = 1.0;
+    private double shooterAutoBaseCmd = 0.0;
+    private double shooterAutoBatteryVoltage = Double.NaN;
+
+    // Camera intrinsics in pixels; re-calibrate if camera/resolution changes.
     private static final double LENS_FX = 921.31;
     private static final double LENS_FY = 917.70;
     private static final double LENS_CX = 689.03;
     private static final double LENS_CY = 372.06;
 
-    // Obelisk tags are non-goal landmarks for this autonomous/assist logic.
+    // Obelisk tags are landmarks, not scoring targets for this assist behavior.
     private boolean isObelisk(AprilTagDetection d) {
         String name = (d != null && d.metadata != null) ? d.metadata.name : "";
         return name != null && name.toLowerCase().contains("obelisk");
     }
 
-    // Drive encoder model for distance conversion (inches).
+    // Drive encoder model for inches conversion.
     // Update if wheel diameter, gearing, or motor model changes.
     static final double COUNTS_PER_MOTOR_REV = 537.7;
     static final double DRIVE_GEAR_REDUCTION = 1.0;
@@ -139,10 +151,18 @@ public class RobotHardware {
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * Math.PI);
 
+    /**
+     * @param opmode owning OpMode, used for hardware map access and lifecycle checks
+     */
     public RobotHardware(LinearOpMode opmode) {
         myOpMode = opmode;
     }
 
+    /**
+     * Maps all configured hardware devices and applies baseline run modes/directions.
+     *
+     * <p>This should be called once in each OpMode before start.
+     */
     public void init() {
 
         frontLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_left_drive");
@@ -205,10 +225,18 @@ public class RobotHardware {
 
         // Zero yaw so heading control starts from a known reference.
         imu.resetYaw();
+        resetShooterAutoModel(0.0);
         initAprilTag();
     }
 
-    // Drive a field-relative vector for a fixed distance while holding heading.
+    /**
+     * Drives a field-relative vector for a fixed distance while holding heading.
+     *
+     * @param maxSpeed wheel power limit [0..1]
+     * @param distance distance in inches (negative moves opposite travelHeading)
+     * @param travelHeading field heading in degrees (0 = +X field forward)
+     * @param robotHeading heading to hold in degrees
+     */
     public void driveOmni(double maxSpeed, double distance, double travelHeading, double robotHeading) {
 
         if (myOpMode.opModeIsActive()) {
@@ -295,6 +323,12 @@ public class RobotHardware {
         }
     }
 
+    /**
+     * Turns in place until heading error is within {@link #HEADING_THRESHOLD}.
+     *
+     * @param maxYawSpeed absolute turn power cap [0..1]
+     * @param heading target heading in degrees
+     */
     public void turnToHeading(double maxYawSpeed, double heading) {
 
         getSteeringCorrection(heading, YAW_GAIN);
@@ -322,6 +356,13 @@ public class RobotHardware {
         driveFieldCentric(0, 0, 0);
     }
 
+    /**
+     * Holds heading for a timed window, typically after a move.
+     *
+     * @param maxYawSpeed absolute turn power cap [0..1]
+     * @param heading target heading in degrees
+     * @param holdTime hold duration in seconds
+     */
     public void holdHeading(double maxYawSpeed, double heading, double holdTime) {
 
         ElapsedTime holdTimer = new ElapsedTime();
@@ -350,7 +391,15 @@ public class RobotHardware {
         driveFieldCentric(0, 0, 0);
     }
 
-    // Positive output commands CCW turn. Error is wrapped to [-180, 180).
+    /**
+     * Computes proportional turn correction from current yaw error.
+     *
+     * <p>Positive return value commands CCW turn. Error is wrapped to [-180, 180).
+     *
+     * @param desiredHeading target heading in degrees
+     * @param proportionalGain P gain applied to wrapped heading error
+     * @return clipped turn command in [-1, 1]
+     */
     public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
         targetHeading = desiredHeading;
 
@@ -362,8 +411,15 @@ public class RobotHardware {
         return Range.clip(headingError * proportionalGain, -1.0, 1.0);
     }
 
+    /**
+     * Robot-centric mecanum drive command.
+     *
+     * @param axial forward/back command (+forward)
+     * @param lateral left/right strafe command (+left)
+     * @param yaw turn command (+CCW)
+     */
     public void driveRobotCentric(double axial, double lateral, double yaw) {
-        // Robot-centric mecanum mix.
+        // Standard mecanum inverse kinematics in robot frame.
         double frontLeftPower = axial + lateral + yaw;
         double frontRightPower = axial - lateral - yaw;
         double backLeftPower = axial - lateral + yaw;
@@ -381,8 +437,18 @@ public class RobotHardware {
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
 
+    /**
+     * Field-centric mecanum drive command.
+     *
+     * <p>Input translation is rotated by robot yaw so drivers can push "up field" regardless of
+     * robot orientation.
+     *
+     * @param axial forward/back command in field frame (+forward)
+     * @param lateral left/right command in field frame (+left)
+     * @param yaw turn command (+CCW)
+     */
     public void driveFieldCentric(double axial, double lateral, double yaw) {
-        // Field-centric mecanum mix (rotate input by current robot yaw).
+        // Rotate field-frame command into robot frame before mecanum mixing.
         double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
         double lateralRotation = lateral * Math.cos(-botHeading) - axial * Math.sin(-botHeading);
@@ -405,6 +471,9 @@ public class RobotHardware {
         setDrivePower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
 
+    /**
+     * Directly applies wheel powers after normalization by caller.
+     */
     public void setDrivePower(double frontLeftWheel, double frontRightWheel, double backLeftWheel, double backRightWheel) {
         frontLeftSpeed = frontLeftWheel;
         backLeftSpeed = backLeftWheel;
@@ -417,6 +486,12 @@ public class RobotHardware {
         backRightDrive.setPower(backRightWheel);
     }
 
+    /**
+     * Commands shooter target speed as a percent of a supplied max RPM model.
+     *
+     * @param power command percent [0..1]
+     * @param maxRpm max RPM reference used for conversion to ticks/sec
+     */
     public void setShooterVelocityPercent(double power, double maxRpm) {
         power = Range.clip(power, 0.0, 1.0);
         final double targetRpm = power * maxRpm;
@@ -428,6 +503,11 @@ public class RobotHardware {
         bottomShooter.setVelocity(shooterTargetTicksPerSec);
     }
 
+    /**
+     * Configures REV velocity PIDF terms for shooter motors.
+     *
+     * <p>kF is derived from modeled max speed and adjusted by battery voltage.
+     */
     public void configureShooterVelocityPIDFForMaxRpm(double maxRpm, double kP, double kI, double kD) {
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         final double maxTicksPerSec = (maxRpm * ticksPerRev) / 60.0;
@@ -444,6 +524,9 @@ public class RobotHardware {
         bottomShooter.setVelocityPIDFCoefficients(kP, kI, kD, kF);
     }
 
+    /**
+     * @return model-based max shooter speed in ticks/second from motor metadata
+     */
     public double getShooterMaxTicksPerSec() {
         // Derived from configured motor model metadata.
         final double maxRpm = topShooter.getMotorType().getMaxRPM();
@@ -451,29 +534,48 @@ public class RobotHardware {
         return (maxRpm * ticksPerRev) / 60.0;
     }
 
+    /**
+     * @return current shooter target in ticks/second
+     */
     public double getShooterTargetTicksPerSec() { return shooterTargetTicksPerSec; }
 
-    // Signed velocity in ticks/sec; apply abs() for magnitude where needed.
+    /**
+     * @return signed shooter velocity in ticks/second (use abs() for magnitude)
+     */
     public double getShooterVelocityPerSecond() { return topShooter.getVelocity(); }
 
+    /**
+     * @return shooter velocity in RPM from encoder tick rate
+     */
     public double getShooterVelocityRpm() {
         final double ticksPerRev = topShooter.getMotorType().getTicksPerRev();
         return topShooter.getVelocity() * 60.0 / ticksPerRev;
     }
 
-    // Shooter encoder/model diagnostics.
+    /**
+     * @return shooter encoder position in ticks
+     */
     public int getShooterEncoderPosition() {
         return topShooter.getCurrentPosition();
     }
 
+    /**
+     * @return shooter motor model ticks/revolution
+     */
     public double getShooterEncoderTicksPerRevolution() {
         return topShooter.getMotorType().getTicksPerRev();
     }
 
+    /**
+     * @return shooter motor model max RPM
+     */
     public double getShooterMaxRpm() {
         return topShooter.getMotorType().getMaxRPM();
     }
 
+    /**
+     * @return minimum positive hub voltage seen across all voltage sensors, or NaN if unavailable
+     */
     public double getBatteryVoltage () {
         double min = Double.POSITIVE_INFINITY;
         for (VoltageSensor vs : myOpMode.hardwareMap.voltageSensor) {
@@ -483,6 +585,151 @@ public class RobotHardware {
         return (min == Double.POSITIVE_INFINITY) ? Double.NaN : min;
     }
 
+    /**
+     * Resets cached shooter auto-model state.
+     *
+     * @param fallbackCmd command to use until valid range data is available
+     */
+    public void resetShooterAutoModel(double fallbackCmd) {
+        shooterAutoFilteredRangeIn = Double.NaN;
+        shooterAutoLastValidRangeMs = 0;
+        shooterAutoVoltageComp = 1.0;
+        shooterAutoBatteryVoltage = Double.NaN;
+        shooterAutoBaseCmd = fallbackCmd;
+    }
+
+    /**
+     * Updates the distance + voltage compensated shooter command model.
+     *
+     * <p>This is stateless from the caller's perspective but keeps internal cached filter state.
+     * It is intentionally reusable from TeleOp and Autonomous.
+     */
+    public void updateShooterAutoModel(
+            double rawRangeIn,
+            long nowMs,
+            double rangeAlpha,
+            int rangeHoldMs,
+            double referenceRangeIn,
+            double referenceCmd,
+            double cmdPerIn,
+            double fallbackCmd,
+            double minCmd,
+            double maxCmd,
+            double nominalVoltage,
+            double voltageCompWeight,
+            double voltageCompMin,
+            double voltageCompMax,
+            double trimCmd) {
+
+        updateShooterAutoRangeFilter(rawRangeIn, nowMs, rangeAlpha, rangeHoldMs);
+        shooterAutoBatteryVoltage = getBatteryVoltage();
+        shooterAutoVoltageComp = computeShooterVoltageCompFactor(
+                shooterAutoBatteryVoltage,
+                nominalVoltage,
+                voltageCompWeight,
+                voltageCompMin,
+                voltageCompMax);
+        shooterAutoBaseCmd = computeShooterAutoBaseCommand(
+                shooterAutoFilteredRangeIn,
+                referenceRangeIn,
+                referenceCmd,
+                cmdPerIn,
+                fallbackCmd,
+                minCmd,
+                maxCmd,
+                shooterAutoVoltageComp,
+                trimCmd);
+    }
+
+    private void updateShooterAutoRangeFilter(double rawRangeIn, long nowMs, double rangeAlpha, int rangeHoldMs) {
+        if (Double.isFinite(rawRangeIn)) {
+            double alpha = Range.clip(rangeAlpha, 0.0, 1.0);
+            shooterAutoFilteredRangeIn = Double.isFinite(shooterAutoFilteredRangeIn)
+                    ? alpha * rawRangeIn + (1.0 - alpha) * shooterAutoFilteredRangeIn
+                    : rawRangeIn;
+            shooterAutoLastValidRangeMs = nowMs;
+            return;
+        }
+        if (shooterAutoLastValidRangeMs == 0 || nowMs - shooterAutoLastValidRangeMs > Math.max(0, rangeHoldMs)) {
+            shooterAutoFilteredRangeIn = Double.NaN;
+        }
+    }
+
+    /**
+     * Computes a multiplicative feedforward correction from battery voltage.
+     *
+     * @return voltage compensation factor, clipped into [voltageCompMin, voltageCompMax]
+     */
+    public double computeShooterVoltageCompFactor(
+            double batteryVoltage,
+            double nominalVoltage,
+            double voltageCompWeight,
+            double voltageCompMin,
+            double voltageCompMax) {
+
+        double minComp = Math.min(voltageCompMin, voltageCompMax);
+        double maxComp = Math.max(voltageCompMin, voltageCompMax);
+        if (!Double.isFinite(batteryVoltage) || batteryVoltage <= 1.0) {
+            return Range.clip(1.0, minComp, maxComp);
+        }
+        double nominal = (nominalVoltage > 1.0) ? nominalVoltage : 12.0;
+        double weight = Range.clip(voltageCompWeight, 0.0, 2.0);
+        double ratio = nominal / batteryVoltage;
+        double comp = 1.0 + (ratio - 1.0) * weight;
+        return Range.clip(comp, minComp, maxComp);
+    }
+
+    /**
+     * Computes final base shooter command from distance model + voltage compensation + trim.
+     *
+     * @return clipped shooter command in [minCmd, maxCmd]
+     */
+    public double computeShooterAutoBaseCommand(
+            double rangeIn,
+            double referenceRangeIn,
+            double referenceCmd,
+            double cmdPerIn,
+            double fallbackCmd,
+            double minCmd,
+            double maxCmd,
+            double voltageCompFactor,
+            double trimCmd) {
+
+        double cmdMin = Math.min(minCmd, maxCmd);
+        double cmdMax = Math.max(minCmd, maxCmd);
+        double modeledBase = Double.isFinite(rangeIn)
+                ? referenceCmd + (rangeIn - referenceRangeIn) * cmdPerIn
+                : fallbackCmd;
+        modeledBase = Range.clip(modeledBase, cmdMin, cmdMax);
+        double cmd = modeledBase * voltageCompFactor + trimCmd;
+        return Range.clip(cmd, cmdMin, cmdMax);
+    }
+
+    /**
+     * @return filtered tag range in inches used by the shooter auto model
+     */
+    public double getShooterAutoFilteredRangeIn() { return shooterAutoFilteredRangeIn; }
+
+    /**
+     * @return latest voltage compensation factor applied by shooter auto model
+     */
+    public double getShooterAutoVoltageComp() { return shooterAutoVoltageComp; }
+
+    /**
+     * @return latest shooter base command computed by shooter auto model
+     */
+    public double getShooterAutoBaseCmd() { return shooterAutoBaseCmd; }
+
+    /**
+     * @return latest battery voltage sample used by shooter auto model
+     */
+    public double getShooterAutoBatteryVoltage() { return shooterAutoBatteryVoltage; }
+
+    /**
+     * Percent-based shooter speed readiness test against current velocity target.
+     *
+     * @param percentTolerance allowable error as fraction of target (e.g. 0.10 = +/-10%)
+     */
     public boolean isShooterAtSpeedPercent(double percentTolerance) {
         double targetTicksPerSecond = getShooterTargetTicksPerSec();
         if (Math.abs(targetTicksPerSecond) <= 1.0) return false;
@@ -492,12 +739,38 @@ public class RobotHardware {
         return Math.abs(measuredTicksPerSecond - Math.abs(targetTicksPerSecond)) <= toleranceTicksPerSecond;
     }
 
+    /**
+     * Shooter readiness helper used by both TeleOp and Autonomous.
+     *
+     * <p>Returns true if either:
+     * 1) percent-based tracking is within tolerance, or
+     * 2) measured speed exceeds a minimum floor.
+     */
+    public boolean isShooterReady(double percentTolerance, double minTicksPerSecond) {
+        if (Math.abs(getShooterTargetTicksPerSec()) <= 1.0) {
+            return false;
+        }
+        if (isShooterAtSpeedPercent(percentTolerance)) {
+            return true;
+        }
+        if (minTicksPerSecond > 0.0) {
+            return Math.abs(getShooterVelocityPerSecond()) >= minTicksPerSecond;
+        }
+        return false;
+    }
+
+    /**
+     * Sets both stopper CR servos to the same power.
+     */
     public void setStopperPower(double power) {
         double p = Range.clip(power, -1.0, 1.0);
         leftStopper.setPower(p);
         rightStopper.setPower(p);
     }
 
+    /**
+     * Sets all transfer CR servos to the same power.
+     */
     public void setTransferPower(double power) {
         double p = Range.clip(power, -1.0, 1.0);
         frontLeftTransfer.setPower(p);
@@ -506,13 +779,17 @@ public class RobotHardware {
         backRightTransfer.setPower(p);
     }
 
-    // Current yaw heading in degrees.
+    /**
+     * @return robot yaw heading in degrees from IMU
+     */
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
     }
 
-    // Re-zero yaw so current orientation becomes heading 0.
+    /**
+     * Re-zeros yaw so current orientation becomes heading 0.
+     */
     public void resetYaw() {
         if (imu != null) {
             imu.resetYaw();
@@ -520,7 +797,7 @@ public class RobotHardware {
     }
 
     private void initAprilTag() {
-        // Build AprilTag processor from known camera extrinsics and intrinsics.
+        // Build processor using calibrated intrinsics/extrinsics.
         AprilTagProcessor.Builder tagBuilder = new AprilTagProcessor.Builder()
                 .setDrawAxes(false)
                 .setDrawCubeProjection(false)
@@ -545,8 +822,11 @@ public class RobotHardware {
         visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
-    // Refresh detections and select a non-Obelisk goal tag.
-    // Clear pose values when no valid target is visible to avoid stale control data.
+    /**
+     * Refreshes AprilTag detections and selects a non-Obelisk goal target.
+     *
+     * <p>When no valid goal is visible, cached pose values are cleared to prevent stale control.
+     */
     public void updateAprilTagDetections() {
         if (aprilTag == null) return;
 
@@ -593,7 +873,7 @@ public class RobotHardware {
             goalTagId = chosen.id;
             if (chosen.ftcPose != null) {
 
-                // Apply tag-specific offsets for asymmetric field placements.
+                // Tag-specific offsets for asymmetric field placements.
                 if (goalTagId == 20) {
                     DESIRED_YAW_DEG = 20;
                     DESIRED_BEARING_DEG = 0;
@@ -623,35 +903,68 @@ public class RobotHardware {
         }
     }
 
+    /**
+     * @return true once an Obelisk landmark has been identified
+     */
     public boolean hasObeliskMotif() {return obeliskMotif != null; }
 
+    /**
+     * @return last detected Obelisk tag id, or null if unknown
+     */
     public Integer getObeliskTagId() { return obeliskTagId; }
 
+    /**
+     * @return last detected Obelisk motif/name, or null if unknown
+     */
     public String getObeliskMotif() { return obeliskMotif; }
 
+    /**
+     * @return selected goal tag id, or null if not visible
+     */
     public Integer getGoalTagId() { return goalTagId; }
 
+    /**
+     * @return selected goal range in inches, or NaN if unavailable
+     */
     public double getGoalRangeIn() { return goalRangeIn; }
 
+    /**
+     * @return selected goal bearing in degrees, or NaN if unavailable
+     */
     public double getGoalBearingDeg() { return goalBearingDeg; }
 
+    /**
+     * @return selected goal elevation in degrees, or NaN if unavailable
+     */
     public double getGoalElevationDeg() { return  goalElevationDeg; }
 
+    /**
+     * @return selected goal tag yaw in degrees, or NaN if unavailable
+     */
     public double getTagYawDeg() { return tagYawDeg; }
 
+    /**
+     * Clears cached Obelisk landmark data so it can be reacquired.
+     */
     public void resetObeliskMotif() {
         obeliskMotif = null;
         obeliskTagId = null;
     }
 
-    // Execute one closed-loop assist step toward the selected goal tag.
+    /**
+     * Executes one closed-loop assist step toward the selected goal tag.
+     *
+     * <p>Returns false when pose is not available or produced invalid commands.
+     *
+     * @return true if a valid assist command was applied
+     */
     public boolean autoDriveToGoalStep() {
-        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
+        if (!Double.isFinite(goalRangeIn) || !Double.isFinite(goalBearingDeg)) {
             return false;
         }
         double rangeError = (goalRangeIn - DESIRED_DISTANCE);
         double headingError =  goalBearingDeg - DESIRED_BEARING_DEG;
-        double yawError = tagYawDeg - DESIRED_YAW_DEG;
+        double yawError = Double.isFinite(tagYawDeg) ? (tagYawDeg - DESIRED_YAW_DEG) : 0.0;
 
         // Sign conventions:
         //  +axial   -> drive forward
@@ -660,6 +973,9 @@ public class RobotHardware {
         double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
         double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
         double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
+        if (!Double.isFinite(axial) || !Double.isFinite(lateral) || !Double.isFinite(yaw)) {
+            return false;
+        }
 
         driveRobotCentric(axial, lateral, yaw);
         return true;
