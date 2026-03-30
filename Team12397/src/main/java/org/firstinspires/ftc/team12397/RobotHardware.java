@@ -151,7 +151,7 @@ public class RobotHardware {
         backLeftDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = myOpMode.hardwareMap.get(DcMotor.class, "back_right_drive");
-        //servo
+        //servos
         hood = myOpMode.hardwareMap.get(Servo.class, "hood_servo");
         //hood.setPosition(MID_SERVO);
         // second servo
@@ -164,14 +164,20 @@ public class RobotHardware {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
+
+
         //turret motor reverse?
         turretMotor = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor");
+        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setVelocityPIDFCoefficients(100,1,2,1);
 
         turretMotor2 = myOpMode.hardwareMap.get(DcMotorEx.class, "turret_motor2");
+        turretMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         turretMotor2.setDirection(DcMotor.Direction.FORWARD);
         turretMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -186,7 +192,7 @@ public class RobotHardware {
         // The two enums MUST reflect the physical orientation of the REV Hub on the robot.
         // WHY: Field-centric depends on accurate yaw; wrong orientation => wrong heading rotations.
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,        // e.g., logo pointing up
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,        // e.g., logo pointing up
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));  // e.g., USB ports towards front
 
         imu = myOpMode.hardwareMap.get(IMU.class, "imu"); // TODO(STUDENTS): confirm IMU name
@@ -736,4 +742,3 @@ public class RobotHardware {
 
 
 }
-
