@@ -94,6 +94,7 @@ public class ShooterPIDTuning extends LinearOpMode {
             }
 
             robot.outtakeDrive.setVelocityPIDFCoefficients(P, I, D, F);
+            robot.outtakeDrive2.setVelocityPIDFCoefficients(P, I, D, F);
 
             telemetry.addData("target Velocity: ", TelemVel);
             telemetry.addData("current Velocity: ", currentVel);

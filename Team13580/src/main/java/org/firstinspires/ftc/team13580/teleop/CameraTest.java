@@ -43,10 +43,10 @@ public class CameraTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        double kickerBackPos = 0;
-        double kickerForwardPos = 1;
-        double kickerleftBackPos = 0;
-        double kickerleftFowardPos =1;
+        double kickerBackPos = -1;
+        double kickerForwardPos = .2;
+        double kickerLeftBackPos = -1;
+        double kickerLeftForwardPos = .2;
 
         double axial;
         double lateral;
@@ -80,16 +80,15 @@ public class CameraTest extends LinearOpMode {
                 intake = 0;
             }
 
-            if (gamepad1.b) {
-                robot.setKickerPower(kickerForwardPos);
-            } else {
+            if(gamepad2.y){
+                robot.setKickerLeftPower(kickerLeftBackPos);
                 robot.setKickerPower(kickerBackPos);
-            }
-
-            if (gamepad1.a) {
-                robot.setKickerLeftPower(kickerleftFowardPos);
+            } else if (gamepad1.y) {
+                robot.setKickerLeftPower(kickerLeftBackPos);
+                robot.setKickerPower(kickerBackPos);
             } else {
-                robot.setKickerLeftPower(kickerleftBackPos);
+                robot.setKickerLeftPower(kickerLeftForwardPos);
+                robot.setKickerPower(kickerForwardPos);
             }
 
             if (gamepad2.y) {

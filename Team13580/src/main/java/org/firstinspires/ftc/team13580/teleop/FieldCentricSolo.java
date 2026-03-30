@@ -7,9 +7,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team13580.RobotHardware;
 
-@TeleOp(name = "Field Centric Camara", group = "opMode")
+@TeleOp(name = "Field Centric solo", group = "opMode")
 @Config
-public class FieldCentricCamara extends LinearOpMode {
+public class FieldCentricSolo extends LinearOpMode {
 
     RobotHardware robot = new RobotHardware(this);
 
@@ -103,80 +103,60 @@ public class FieldCentricCamara extends LinearOpMode {
                 }
             }
 
-             if (gamepad1.dpad_down){
-                 outtakeFarToggle = !outtakeFarToggle;
-               }
+            if (gamepad1.dpad_down) {
+                outtakeFarToggle = !outtakeFarToggle;
+            }
 
             // Set outtake speed
-                if (outtakeManual) {
-                    if (!Double.isNaN(robot.getGoalRangeIn())) {
-                         outtake = robot.getCalculatedVelocity(robot.getFloorDistance());  // manual toggle speed
-                    }
+            if (outtakeManual) {
+                if (!Double.isNaN(robot.getGoalRangeIn())) {
+                    outtake = robot.getCalculatedVelocity(robot.getFloorDistance());  // manual toggle speed
                 }
-                 if (outtakeFarToggle) {
-                    outtake = 1500;
-               }
-                 robot.setOuttakeVelocity((int) outtake);
+            }
+            if (outtakeFarToggle) {
+                outtake = 1500;
+            }
+            robot.setOuttakeVelocity((int) outtake);
 
             // Kicker control
 
-            if (gamepad1.a || rightKickerTimer) {
-                if (!rightKickerTimer){
-                    leftKickerTimer = true;
-                    leftKickerClock = 25;
-                }
+            if (gamepad1.a) {
                 robot.setKickerPower(kickerBackPos);
-            } else if (gamepad1.y) {
+                }
+             else if (gamepad1.y) {
                 robot.setKickerPower(kickerBackPos);
             } else {
                 robot.setKickerPower(kickerForwardPos);
             }
 
-            if (gamepad1.b || leftKickerTimer) {
-                if (!leftKickerTimer){
-                    rightKickerTimer = true;
-                    rightKickerClock = 25;
-                }
+            if (gamepad1.b) {
                 robot.setKickerLeftPower(kickerLeftBackPos);
-            } else if (gamepad1.y) {
+                }
+             else if (gamepad1.y) {
                 robot.setKickerLeftPower(kickerLeftBackPos);
             } else {
                 robot.setKickerLeftPower(kickerLeftForwardPos);
             }
 
             //if(gamepad2.y){
-               // robot.setKickerLeftPower(kickerLeftBackPos);
-             //   robot.setKickerPower(kickerBackPos);
-          //  } else if (gamepad1.y) {
-               // robot.setKickerLeftPower(kickerLeftBackPos);
-              //  robot.setKickerPower(kickerBackPos);
-          //  } else {
-              //  robot.setKickerLeftPower(kickerLeftForwardPos);
-              //  robot.setKickerPower(kickerForwardPos);
-           // }
+            // robot.setKickerLeftPower(kickerLeftBackPos);
+            //   robot.setKickerPower(kickerBackPos);
+            //  } else if (gamepad1.y) {
+            // robot.setKickerLeftPower(kickerLeftBackPos);
+            //  robot.setKickerPower(kickerBackPos);
+            //  } else {
+            //  robot.setKickerLeftPower(kickerLeftForwardPos);
+            //  robot.setKickerPower(kickerForwardPos);
+            // }
 
             // Telemetry
-           // telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
+            // telemetry.addData("Mode", slow ? "SLOW" : "NORMAL");
             telemetry.addData("Outtake Toggle", outtakeManual ? "ON (1300)" : "OFF");
             telemetry.addData("Heading", "%4.0f°", robot.getHeading());
             telemetry.addData("Drive", "ax=%.2f  lat=%.2f  yaw=%.2f", axial, lateral, yaw);
             telemetry.update();
 
             sleep(20);
-
-            if (rightKickerClock < 0){
-                rightKickerTimer = false;
-                rightKickerClock = 0;
-            } else {
-                rightKickerClock--;
-            }
-
-            if (leftKickerClock < 0){
-                leftKickerTimer = false;
-                leftKickerClock = 0;
-            } else {
-                leftKickerClock--;
-            }
         }
     }
 }

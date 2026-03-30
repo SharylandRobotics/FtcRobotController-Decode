@@ -31,6 +31,7 @@ package org.firstinspires.ftc.team13580;
 
 import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
@@ -166,12 +167,12 @@ public class RobotHardware {
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        intakeDrive.setDirection(DcMotor.Direction.FORWARD);
+        intakeDrive.setDirection(DcMotor.Direction.REVERSE);
         outtakeDrive.setDirection(DcMotor.Direction.FORWARD);
         outtakeDrive2.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -193,6 +194,9 @@ public class RobotHardware {
         backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        outtakeDrive.setVelocityPIDFCoefficients(120, 3, 3,0);
+        outtakeDrive2.setVelocityPIDFCoefficients(120, 3, 3,0);
 
         // Student Note: Zero heading at init so 0° is the starting direction.
         imu.resetYaw();
@@ -354,6 +358,14 @@ public class RobotHardware {
         if (chosen != null) {
             goalTagId = chosen.id;
             if (chosen.ftcPose != null) {
+
+                // Tag-specific offset: align to the goal face based on asymmetric tag placement.
+                if (goalTagId == 20) {
+                    tagYawDeg = 23;
+                }
+                if (goalTagId == 24) {
+                    tagYawDeg = -23;
+                }
                 goalRangeIn = chosen.ftcPose.range;
                 goalBearingDeg = chosen.ftcPose.bearing;
                 goalElevationDeg = chosen.ftcPose.elevation;
@@ -384,12 +396,14 @@ public class RobotHardware {
     public double getGoalRangeIn() { return goalRangeIn; }
 
     private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
-            new double[]{37, 1070},
-            new double[]{50, 1140},
+            new double[]{37, 1030},
+            new double[]{50, 1100},
             new double[]{62, 1220},
-            new double[]{87, 1290},
-            new double[]{91, 1190},
-            new double[]{98, 1340}
+            new double[]{87, 1270},
+            new double[]{91, 1290},
+            new double[]{98, 1320},
+            new double[]{134, 1500},
+            new double[]{148, 1550}
     ));
     private final double[] slopeList = initializeSlopeList();
 
@@ -434,6 +448,45 @@ public class RobotHardware {
         return Math.sqrt(Math.pow(getGoalRangeIn(), 2) - Math.pow(16,2));
     }
 
+    // One closed-loop step toward the goal tag:
+    // range -> axial, tag yaw -> lateral, bearing -> robot yaw.
+    public boolean autoDriveToGoalStep() {
+        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
+            return false;
+        }
+        double rangeError = (goalRangeIn - DESIRED_DISTANCE);
+        double headingError =  goalBearingDeg;
+        double yawError = tagYawDeg - (-26);
+
+        // Sign conventions:
+        //  +axial   -> drive forward
+        //  +lateral -> strafe left
+        //  +yaw     -> CCW rotation
+        double axial = Range.clip(rangeError * AXIAL_GAIN, -MAX_AUTO_AXIAL,   MAX_AUTO_AXIAL);
+        double lateral = Range.clip(yawError * LATERAL_GAIN, -MAX_AUTO_LATERAL,  MAX_AUTO_LATERAL);
+        double yaw = Range.clip(-headingError * YAW_GAIN, -MAX_AUTO_YAW, MAX_AUTO_YAW);
+
+        driveRobotCentric(axial, lateral, yaw);
+        return true;
+    }
+
+    public PIDFController pidfController = new PIDFController(1, 1,1,0);
+
+    public double autoBearingToGoalCorrect(){
+        if (Double.isNaN(goalRangeIn) || Double.isNaN(goalBearingDeg)) {
+            return Double.NaN;
+        }
+
+        double headingError =  goalBearingDeg;
+
+        pidfController.setSetPoint(0);
+        double power = pidfController.calculate(headingError);
+        myOpMode.telemetry.addData("Yaw Power: ", power);
+
+        double yaw = Range.clip(power, -0.8, 0.8);
+
+        return yaw;
+    }
 
     public double getGoalBearingDeg() { return goalBearingDeg; }
 
@@ -456,4 +509,20 @@ public class RobotHardware {
         return outtakeDrive.getVelocity();
     }
 
+    //Pd Controller-----------------
+    double kP = 0.002;
+    double error = 0;
+    double lasterror = 0;
+    double goalX = 0;//offset here
+    double angleTolorance = 0.2;
+    double kD = 0.0001;
+    double cutTime = 0;
+    double lastTime = 0;
+
+    //driving set-up ----------------------
+    double foward, strafe, rotate;
+
+    //controller passed PD tunning ------------------
+     double[] stepSizes = {1.0, 0.1, 0.001, 0.0001};
+    int stepIndex = 2;
 }

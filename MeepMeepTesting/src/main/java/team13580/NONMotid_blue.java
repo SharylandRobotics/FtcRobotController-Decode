@@ -19,53 +19,50 @@ public class NONMotid_blue {
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-49, -51, Math.toRadians(-126)))
                 //path1
                 .setTangent(Math.atan2(-24+51, -30+49))
-                .lineToY(-24)
+                .lineToYLinearHeading(-24, Math.toRadians(-126))
                 //path2
-                .setTangent(Math.atan2(-28+24, 15+30))
-                .lineToYLinearHeading(-28, Math.toRadians(-90))
-                .setTangent(Math.atan2(-34+28, 0))
-                .lineToYLinearHeading(-34, Math.toRadians(-90))
-                .setTangent(Math.atan2(0, 11-15))
-                .lineToX(11)
-                .setTangent(Math.atan2(-54+34, 0))
-                .lineToYLinearHeading(-54, Math.toRadians(-90))
+                .setTangent(Math.atan2(-20+24, 12+30))
+                .lineToYLinearHeading(-20, Math.toRadians(-90))
+                .setTangent(Math.atan2(-53+20, 0))
+                .lineToYLinearHeading(-53, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(-16+53, 0))
+                .lineToYLinearHeading(-16, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+
                 //path3
-                .setTangent(Math.atan2(-28+54, 0))
-                .lineToYLinearHeading(-28, Math.toRadians(-90))
-                .setTangent(Math.atan2(-24+28, -30-11))
-                .lineToYLinearHeading(-24, Math.toRadians(-175))
-                .turnTo(Math.toRadians(-130))
+                .setTangent(Math.atan2(-18+16, -20-12))
+                .lineToYLinearHeading(-18, Math.toRadians(-135), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+
                 .waitSeconds(2)
                 //path4
-                .setTangent(Math.atan2(-28+24, -10+30))
-                .lineToYLinearHeading(-28, Math.toRadians(-90))
-                .setTangent(Math.atan2(-38+28, 0))
-                .lineToYLinearHeading(-38, Math.toRadians(-90))
-                .setTangent(Math.atan2(0, -10+10))
-                .lineToX(-14)
-                .setTangent(Math.atan2(-53+38, 0))
-                .lineToYLinearHeading(-53, Math.toRadians(-90))
+                .setTangent(Math.atan2(-20+18, 18+20))
+                .lineToYLinearHeading(-20, Math.toRadians(-120))
+                .setTangent(Math.atan2(-58+20, 0))
+                .lineToYLinearHeading(-58, Math.toRadians(-115), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                        //slide to intake
+                . setTangent(Math.atan2(0, 19-18))
+                .lineToX(19, new TranslationalVelConstraint(60), new ProfileAccelConstraint(-60, 100))
 
                 //path5
-                .setTangent(Math.atan2(-24+53, -30+14))
-                .lineToYLinearHeading(-24, Math.toRadians(-130))
+                .setTangent(Math.atan2(-16+58, 0))
+                .lineToYLinearHeading(-16, Math.toRadians(-115), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                .setTangent(Math.atan2(-24+16, -22-19))
+                .lineToYLinearHeading(-24, Math.toRadians(-140), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
                 .waitSeconds(2)
                 //path6
-                .setTangent(Math.atan2(-28+24, 38+30))
-                .lineToYLinearHeading(-28, Math.toRadians(-90))
-                .setTangent(Math.atan2(-34+28, 0))
-                .lineToYLinearHeading(-34, Math.toRadians(-90))
-                .setTangent(Math.atan2(0, 34-38))
-                .lineToX(34)
-                .setTangent(Math.atan2(-56+34, 0))
-                .lineToYLinearHeading(-56, Math.toRadians(-90))
-                //path7
-                .setTangent(Math.atan2(-24+56, -30-34))
-                .lineToYLinearHeading(-24, Math.toRadians(-130))
-                .waitSeconds(2)
-                //path8
-                .setTangent(Math.atan2(-40+24, -10+30))
-                .lineToYLinearHeading(-40, Math.toRadians(-90))
+                .setTangent(Math.atan2(-18+24, -14+22))
+                .lineToYLinearHeading(-18, Math.toRadians(-90))
+                .setTangent(Math.atan2(-48+18, 0))
+                .lineToYLinearHeading(-48, Math.toRadians(-90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 100))
+                 //path 7
+                .setTangent(Math.atan2(-18+48, -16+14))
+                .lineToYLinearHeading(-18, Math.toRadians(-140), new TranslationalVelConstraint(80), new ProfileAccelConstraint(-60, 100))
+                                .waitSeconds(2)
+                //path 8
+                .setTangent(Math.atan2(-49+18, -14+16))
+                .lineToYLinearHeading(-49, Math.toRadians(-90), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-60, 100))
+
+
+
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
