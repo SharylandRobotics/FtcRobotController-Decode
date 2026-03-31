@@ -31,7 +31,6 @@ package org.firstinspires.ftc.team12395;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.media.AudioManager;
 import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -39,7 +38,6 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
-import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -48,7 +46,6 @@ import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.*;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
 import org.firstinspires.ftc.team12395.rr.MecanumDrive;
@@ -58,13 +55,13 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 @Config
 public class RobotHardware {
 
     // We hold a reference to the active OpMode to access hardwareMap/telemetry safely
     private LinearOpMode myOpMode = null;
+    public VoltageSensor voltageSensor;
 
     public Limelight3A limelight;
     public MecanumDrive standardDrive;
@@ -72,7 +69,6 @@ public class RobotHardware {
     public GoBildaPinpointDriver pinpointDriver;
 
     public RevColorSensorV3 colorSensor0, colorSensor1, colorSensor2;
-    public static colorTypes scannedColor = colorTypes.UNKNOWN;
 
     public String mag = "GPP"; // EACH +1 ON THE MAG INDEX IS ONE CW TURN
     public String pattern = "PPG";// a pattern is better than no pattern
@@ -175,8 +171,8 @@ public class RobotHardware {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        shooter2.setDirection(DcMotorEx.Direction.REVERSE);
-        shooter.setDirection(DcMotorEx.Direction.FORWARD);
+        shooter2.setDirection(DcMotorEx.Direction.FORWARD);
+        shooter.setDirection(DcMotorEx.Direction.REVERSE);
         spindexer.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.FORWARD);
 
@@ -213,7 +209,7 @@ public class RobotHardware {
         spindexer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         spindexer.setVelocityPIDFCoefficients(14,4,1,4);
-        spindexer.setPower(0.3);
+        spindexer.setPower(1);
 
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter.setVelocityPIDFCoefficients(100, 5, 1, 5);
@@ -222,9 +218,9 @@ public class RobotHardware {
 
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        colorSensor0.setGain(100);
-        colorSensor1.setGain(100);
-        colorSensor2.setGain(100);
+        colorSensor0.setGain(50);
+        colorSensor1.setGain(50);
+        colorSensor2.setGain(40);
 
         // SERVO POSITIONS
 
@@ -236,17 +232,7 @@ public class RobotHardware {
         //pattern = "PPG";
         mag = "GPP";
 
-        SoundPlayer.getInstance().setMasterVolume(1.0f);
-        AudioManager am = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
-        int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0);
-
-
-
         myOpMode.telemetry.addData("Status", "Hardware Initialized");
-        myOpMode.telemetry.addData("Sound Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb));
-        myOpMode.telemetry.addData("Sound2 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep));
-        myOpMode.telemetry.addData("Sound3 Preloaded: ", SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break));
         //myOpMode.telemetry.addData("PIDF", shooter.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER));
         myOpMode.telemetry.update();
 
@@ -254,6 +240,79 @@ public class RobotHardware {
 
 
         pinpointDriver = ((PinpointLocalizer) standardDrive.localizer).getDriver();
+    }
+
+
+    public double tpsToLinearVelocityMETERS() {
+        double radsPerSecond = (shooter.getVelocity() / 28) * (2*Math.PI);
+        double wheelRadiusMeters = 0.072 /2;
+        double velocity = radsPerSecond * wheelRadiusMeters;
+        return  velocity * efficiency;
+    }
+
+    private final double relativeGoalHeightMeters = 0.9845 - 0.18775; // goal - robot
+    private final double g = 9.81;
+    private final double efficiency = Math.hypot(2.7686/1.21, (0.5)*g*1.21) / 12.11; // 109 inches in 1.21 sec, 12.11 m/s
+
+    public double hoodAngleToBallisticAngle(){
+        double startingReferenceAngle = 61.38954; // deg, measured top hood line angle from plate
+        double servoAngleTraveled = 300 * (hoodAngle.getPosition()); // 300 is ROM of servo
+        // starting reference is at 1, invert position
+
+        double hoodAngleTraveled =  startingReferenceAngle - ((servoAngleTraveled)  / (189/20.));
+        // decreases as servo travels to 0
+
+        double ballistic = 90-hoodAngleTraveled; // 180 - 90 - angle = x
+
+        return ballistic;
+    }
+
+    public double ballisticAngleToHoodAngle(double ballisticAngle){
+        double startingReferenceAngle = 61.38954;
+
+        double hoodAngleTraveled = 90 - ballisticAngle;
+        double servoAngleTraveled = (startingReferenceAngle - hoodAngleTraveled) * (189/20.);
+        double hoodAngle =  (servoAngleTraveled/300);
+
+        return hoodAngle;
+    }
+
+    public double compensatedHoodAngleSolve(){
+        double ballisticAngle = Math.asin( (Math.sqrt(2*g*(relativeGoalHeightMeters + 0.18775))) / tpsToLinearVelocityMETERS());
+        if (!Double.isNaN(ballisticAngle) && ballisticAngle > 0 && ballisticAngle < 90){
+            return ballisticAngleToHoodAngle(ballisticAngle);
+        }
+        return Double.NaN;
+    }
+
+    public boolean isTargetReachable(double velocity, double angle, double distance){
+        double t = timeToTarget(velocity, angle);
+        double vX = velocity*Math.cos(Math.toRadians(angle));
+
+        double calculatedDistance = vX*t;
+
+        return (calculatedDistance > distance - 3 && calculatedDistance < distance + 3);
+    }
+
+    public double timeToTarget(double velocity, double angle){
+        double vY = velocity*Math.sin(Math.toRadians(angle));
+
+        double peakHeight = (vY*vY ) / (2*g);
+
+        double endArcHeight = (peakHeight - relativeGoalHeightMeters);
+        if (endArcHeight < 0){
+            endArcHeight = 0;
+        }
+        myOpMode.telemetry.addData("calculated height: ", peakHeight);
+        myOpMode.telemetry.addData("cut height: ", endArcHeight);
+        double endArcTime = Math.sqrt( (2*endArcHeight) / g);
+        double startArcTime = vY / g;
+
+        double totalTime = startArcTime + endArcTime;
+        if (totalTime < 0){
+            totalTime = 0;
+        }
+        return totalTime;
     }
 
     public void setLocalizerPosition(Pose2d pose){
@@ -267,21 +326,6 @@ public class RobotHardware {
 
     public double getPinPointHeading(){
         return pinpointDriver.getHeading(AngleUnit.DEGREES);
-    }
-
-
-    public void playBeep(String file) {
-        if (Objects.equals(file, "orb")) {
-            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb);
-            SoundPlayer.getInstance().preload(appContext, R.raw.orb);
-        } else if (Objects.equals(file, "orbDeep")){
-            SoundPlayer.getInstance().startPlaying(appContext, R.raw.orb_deep);
-            SoundPlayer.getInstance().preload(appContext, R.raw.orb_deep);
-        } else if (Objects.equals(file, "break")){
-            SoundPlayer.getInstance().startPlaying(appContext, R.raw.anvil_break);
-            SoundPlayer.getInstance().preload(appContext, R.raw.anvil_break);
-        }
-
     }
 
     /**
@@ -371,20 +415,30 @@ public class RobotHardware {
         return spindexer.getCurrentPosition()/spindexerTicksPerDegree;
     }
 
+    private double normalizeTo360deg(double deg){
+        return ((deg % 360) + 360 ) % 360;
+    }
+
+    private double wrapTo180deg(double deg){
+        return ((deg + 180) % 360 + 360) % 360 - 180;
+    }
     // 8192
     public void getSpindexerOffset(){
-        spindexerFudge = (spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree) - (spindexer.getCurrentPosition()/spindexerTicksPerDegree);
+        double encoderDeg = normalizeTo360deg(spindexerE.getPositionAndVelocity().position/spindexerETicksPerDegree);
+        double motorDeg = normalizeTo360deg(spindexer.getCurrentPosition()/spindexerTicksPerDegree);
+
+        spindexerFudge = wrapTo180deg(encoderDeg - motorDeg);
     }
 
     public void spindexerHandler(int targetAdd){
         getSpindexerOffset();
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
-
         spindexerTarget += targetAdd;
+
+        spindexer.setTargetPosition( (int) ( (spindexerTarget - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(900);
+        spindexer.setVelocity(1000);
         //  -intake-
         //    (0)
         // (1)   (2)
@@ -400,18 +454,20 @@ public class RobotHardware {
     }
 
     public void maintainSpindexerHandler(){
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + spindexerFudge) * spindexerTicksPerDegree) );
+        getSpindexerOffset();
+        spindexer.setTargetPosition( (int) ( (spindexerTarget - spindexerFudge) * spindexerTicksPerDegree) );
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        spindexer.setVelocity(600);
+        spindexer.setVelocity(1000);
     }
 
     public void spindexerHandler(int targetAdd,  int vel){
         getSpindexerOffset();
-        spindexer.setTargetPosition( (int) ( (spindexerTarget + targetAdd - spindexerFudge) * spindexerTicksPerDegree) );
-
         spindexerTarget += targetAdd;
+
+        spindexer.setTargetPosition( (int) ( (spindexerTarget - spindexerFudge) * spindexerTicksPerDegree) );
+
 
         spindexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -430,19 +486,6 @@ public class RobotHardware {
         firingChamber = (chamber+2) % 3;
     }
 
-    private double[] getValuesToTarget(){
-        double tx = limelight.getLatestResult().getTx();
-        double ty = limelight.getLatestResult().getTy();
-        Position pose = limelight.getLatestResult().getBotpose_MT2().getPosition();
-
-        double yDistance = verticalTargetDistance /Math.tan(ty);
-        double xDistance = Math.tan(tx)*yDistance;
-
-        double groundDistance = yDistance/Math.cos(tx);
-
-        return new double[]{ xDistance, yDistance, groundDistance};
-    }
-
     public double getHeading() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return orientation.getYaw(AngleUnit.DEGREES);
@@ -454,73 +497,7 @@ public class RobotHardware {
                 (result.getFiducialResults() != null && !result.getFiducialResults().isEmpty()));
     }
 
-    public double[] homeToAprilTagBlue(){
-        boolean check = processLLresult();
-        if (check){
-
-            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
-
-            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
-            myOpMode.telemetry.addData("Tags: ", fresult.size());
-
-
-            for (LLResultTypes.FiducialResult fiducial : fresultCC){
-                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 24){
-                    fresult.remove(fiducial);
-                }
-            }
-
-            if (!fresult.isEmpty()) {
-
-
-                double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
-                double skew  = fresult.get(0).getCameraPoseTargetSpace().getOrientation().getYaw();
-
-                myOpMode.telemetry.addData("turning deg: ", tx);
-                myOpMode.telemetry.addData("skew deg: ", skew);
-                return new double[]{tx, skew};
-
-            }
-
-        }
-        return new double[]{Double.NaN, Double.NaN};
-    }
-
-    public double[] homeToAprilTagRed(){
-        boolean check = processLLresult();
-        if (check){
-
-            List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
-            List<LLResultTypes.FiducialResult> fresultCC = new ArrayList<>(fresult);
-
-            myOpMode.telemetry.addData("Closest Tag ID: ", fresult.get(0).getFiducialId());
-            myOpMode.telemetry.addData("Tags: ", fresult.size());
-
-
-            for (LLResultTypes.FiducialResult fiducial : fresultCC){
-                if (fiducial.getFiducialId() == 21 || fiducial.getFiducialId() == 22 || fiducial.getFiducialId() == 23 || fiducial.getFiducialId() == 20){
-                    fresult.remove(fiducial);
-                }
-            }
-
-            if (!fresult.isEmpty()) {
-
-
-                double tx = Math.round(fresult.get(0).getTargetXDegrees()*100)/100.;
-                double skew  = fresult.get(0).getCameraPoseTargetSpace().getOrientation().getYaw();
-
-                myOpMode.telemetry.addData("turning deg: ", tx);
-                myOpMode.telemetry.addData("skew deg: ", skew);
-                return new double[]{tx, skew};
-
-            }
-
-        }
-        return new double[]{Double.NaN, Double.NaN};
-    }
-
-    public Pose2d fetchLocalizedPose(){
+    public Pose2d fetchLocalizedPose(double headingOffset){
         boolean check  = processLLresult();
         if (check){
             List<LLResultTypes.FiducialResult> fresult = result.getFiducialResults();
@@ -538,12 +515,12 @@ public class RobotHardware {
 
             if (!fresult.isEmpty()) {
                 // placeholder values
-                double cameraOffset = -77.9953;
-                double turretAngle = getCurrentTurretDegreePos();
-                double turretOffset = 55;
+                double cameraOffset = -77.9953 / 25.4 ;
+                double turretAngle = -getCurrentTurretDegreePos();
+                double turretOffset = 55 / 25.4;
 
                 // LL uses meters & deg, RR uses inches & rads
-                limelight.updateRobotOrientation(getHeading() - 90 + turretAngle);
+                limelight.updateRobotOrientation(getHeading() + turretAngle + headingOffset);
 
                 Pose3D rawMT2Pose3D = result.getBotpose_MT2();
                 Position rawMT2Position = rawMT2Pose3D.getPosition().toUnit(DistanceUnit.INCH);
@@ -557,11 +534,13 @@ public class RobotHardware {
 
                 Pose2d translatedPose = rawPose
                         // camera-turret axis offset
-                        .plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))
+                        //.plus(new Twist2d(new Vector2d(cameraOffset,0), Math.toRadians(0)))
                         // turret rotation
-                        .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(turretAngle)))
+                        .plus(new Twist2d(new Vector2d(0,0), Math.toRadians(-turretAngle)))
                         // turret axis-bot center offset
                         .plus(new Twist2d(new Vector2d(turretOffset,0), Math.toRadians(0)));
+
+                myOpMode.telemetry.addData("Translated Pose: ", translatedPose.position);
                 
                 return translatedPose;
             }
@@ -569,9 +548,46 @@ public class RobotHardware {
         return new Pose2d(Double.NaN, Double.NaN, Math.toRadians(0));
     }
 
-    public double turretAngleToTarget(Pose2d target, Pose2d currentPose){
-        return Math.atan2(target.position.y - currentPose.position.y,
-                target.position.x - currentPose.position.x) - currentPose.heading.imag;
+    public double getHeadingVelocity(){
+        return pinpointDriver.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES) - (turretHandler.getCurrentVelocity()/turretTicksPerDegree);
+    }
+
+    public double getDistanceFromTarget(Vector2d target, Pose2d currentPose){
+        Vector2d vectorDelta = new Vector2d(
+                target.x - currentPose.position.x,
+                target.y - currentPose.position.y
+        );
+
+        return Math.sqrt( (vectorDelta.x * vectorDelta.x) + (vectorDelta.y * vectorDelta.y));
+    }
+
+    /**
+     *
+     * @param target
+     * @param currentPose
+     * @return radians
+     */
+    public double turretAngleToTarget(Vector2d target, Pose2d currentPose){
+
+        // we only apply turret axis-bot center offset because we want to find targetHeading as the center of the turret.
+        double turretOffset = 55 / 25.4;
+
+        currentPose = currentPose
+                // turret axis-bot center offset
+                .plus(new Twist2d(new Vector2d(-turretOffset,0), Math.toRadians(0)));
+
+
+
+        Vector2d targetTanComponent = new Vector2d(
+                target.x - currentPose.position.x,
+                target.y - currentPose.position.y
+        );
+
+        Rotation2d targetHeading = Rotation2d.exp(
+                Math.atan2(targetTanComponent.y, targetTanComponent.x)
+        );
+
+        return targetHeading.minus(currentPose.heading);
     }
 
     public boolean processObelisk(){
@@ -614,7 +630,7 @@ public class RobotHardware {
     }
 
     public int[] solvePattern(){
-        if (!mag.contains("0") && mag.contains("G") ){
+        if (!mag.contains("0") && mag.contains("G") && (mag.lastIndexOf('G') == mag.indexOf('G')) ){
             // if I have a full mag with Green and know the pattern
             int greenIndex = mag.indexOf("G");
             switch (pattern) {
@@ -652,7 +668,7 @@ public class RobotHardware {
                     }
             }
         }
-        myOpMode.telemetry.addData(":", mag, pattern, chamber);
+        myOpMode.telemetry.addData(":", mag, pattern, firingChamber);
         return null;
     }
 
@@ -666,7 +682,7 @@ public class RobotHardware {
 
     public void setMagManualBulk(String set){
         //   (firing chamber on 2)
-        //      (chamber on 0)         210
+        //      (chamber on 0)         201
         // set things in a cw manner ( XYZ )
         //    0(X)
         // 1(Z)   2(Y)
@@ -725,7 +741,7 @@ public class RobotHardware {
                 break;
         }
 
-        switch (color1) {
+        switch (color0) {
             case GREEN:
                 colorHolder += "G";
                 break;
@@ -740,7 +756,7 @@ public class RobotHardware {
                 break;
         }
 
-        switch (color0) {
+        switch (color1) {
             case GREEN:
                 colorHolder += "G";
                 break;
@@ -760,7 +776,7 @@ public class RobotHardware {
 
     public void setColorMagManualBulk(String set){
         //   (firing chamber on 2)
-        //      (chamber on 0)         210
+        //      (chamber on 0)         201
         // set things in a cw manner ( XYZ )
         //    0(X)
         // 1(Z)   2(Y)
@@ -779,7 +795,7 @@ public class RobotHardware {
             color = colorTypes.NONE;
         } else if (hsvValues[0] > 180 && hsvValues[0] <= 240){
             color = colorTypes.PURPLE;
-        } else if (hsvValues[1] > 0.5 && hsvValues[1] < 0.8){
+        } else if ((hsvValues[1] > 0.5 && hsvValues[1] < 0.8) && (hsvValues[0] >= 120 && hsvValues[0] <= 180)){
             color = colorTypes.GREEN;
         }
         return color;
@@ -789,35 +805,65 @@ public class RobotHardware {
         return "     ("+mag.charAt(chamber)+")  " + "\n ("+mag.charAt( (chamber+1) % 3)+")    ("+mag.charAt( (chamber+2) % 3)+")  ";
     }
 
-    private ArrayList<double[]> velDataPoints = new ArrayList<>(Arrays.asList(
-            new double[]{0, 0},
-            new double[]{1, 1},
-            new double[]{2, 2}
+    private final ArrayList<double[]> dataPoints = new ArrayList<>(Arrays.asList(
+            // 0 : distance, 1 : rpm, 2 : angle
+            new double[]{42.2, 1400, 0.9 },
+            new double[]{63.2, 1500, 0.75},
+            new double[]{82  , 1600, 0.6 },
+            new double[]{95.5, 1700, 0.5 },
+            new double[]{130 , 1900, 0.27 }
     ));
+    private final double[] velocitySlopeList = initializeSlopeList(1);
+    private final double[] angleSlopeList = initializeSlopeList(2);
 
-    public double getCalculatedVelocity(double distance){
-        int maxIndex = velDataPoints.size()-1;
-        double[] slopeList = new double[maxIndex];
-        for (int i=0; i<maxIndex; i++){
-            slopeList[i] = (
-                    (velDataPoints.get(i+1)[1] - velDataPoints.get(i)[1]) /
-                    (velDataPoints.get(i+1)[0] - velDataPoints.get(i)[0])
+    private double[] initializeSlopeList(int valueIndex){
+        int maxIndex = dataPoints.size();
+        double[] list = new double[maxIndex];
+        for (int i=0; i<maxIndex-1; i++){
+            list[i] = (
+                    (dataPoints.get(i+1)[valueIndex] - dataPoints.get(i)[valueIndex]) /
+                            (dataPoints.get(i+1)[0] - dataPoints.get(i)[0])
             );
         }
-        double velZeroIntercept = velDataPoints.get(0)[1] - slopeList[0]*velDataPoints.get(0)[0];
 
-        for (int i=0; i<slopeList.length; i++){
-            if (i == 0){
-                if (distance >= 0 && distance <= velDataPoints.get(0)[0]){
-                    return velZeroIntercept + distance*slopeList[0];
-                }
-            } else if (distance > velDataPoints.get(i)[0] && distance <= velDataPoints.get(i+1)[0]){
-                return velDataPoints.get(i)[1] + distance*slopeList[i];
+        return list;
+    }
+
+    public double getRegressionValue(double distance, int valueIndex){
+        double returnVal;
+        double[] slopeList;
+        if (valueIndex == 1){
+            returnVal = 1400;
+            slopeList = velocitySlopeList;
+        } else {
+            returnVal = 0.9;
+            slopeList = angleSlopeList;
+        }
+
+        double velZeroIntercept = dataPoints.get(0)[valueIndex] - (slopeList[0]* dataPoints.get(0)[0]);
+
+        if (distance <= dataPoints.get(0)[0]){
+            myOpMode.telemetry.addData("Top Reference: ", dataPoints.get(0)[0] +", " + dataPoints.get(0)[valueIndex]);
+            myOpMode.telemetry.addData("Slope Reference: ", slopeList[0]);
+            returnVal = velZeroIntercept + (distance* slopeList[0]);
+            return returnVal;
+        }
+
+        for (int i = 1; i< slopeList.length; i++){
+            if ((i == slopeList.length-1 && distance >= dataPoints.get(i)[0]) ||
+                    distance > dataPoints.get(i)[0] && distance <= dataPoints.get(i+1)[0]){
+
+                myOpMode.telemetry.addData("Bottom Reference: ", dataPoints.get(i)[0] +", " + dataPoints.get(i)[valueIndex]);
+                myOpMode.telemetry.addData("Slope Reference: ", slopeList[i]);
+                returnVal = dataPoints.get(i)[valueIndex] + (distance- dataPoints.get(i)[0])* slopeList[i];
+                return returnVal;
             }
         }
 
-        return 500;
+        return returnVal;
     }
+
+
 
     public class RoadRunnerActions {
         public class setSpindexerTarget implements Action{
@@ -841,7 +887,10 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                return !processObelisk();
+
+                boolean save = !processObelisk();
+                packet.put("Pattern: ", pattern);
+                return save;
             }
         }
         public class setTurretPosition implements Action {
@@ -877,7 +926,7 @@ public class RobotHardware {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                spindexerHandler(-480, 800);
+                spindexerHandler(-480 - (spindexerTarget % 120), 1300);
                 return false;
             }
         }
@@ -904,31 +953,35 @@ public class RobotHardware {
             public boolean run(@NonNull TelemetryPacket packet){
                 int[] solve = solvePattern();
                 if (solve != null) {
-                    spindexerHandler(120 * solve[0]);
+                    spindexerHandler((120 * solve[0]) - (spindexerTarget % 120), 800);
+                    packet.put("Turning left: ", solve[0]);
+                    packet.put("Pattern Used: ", pattern);
                 }
                 return false;
             }
         }
 
-        public class wiggleSpindexer implements Action{
-            private ElapsedTime timer = new ElapsedTime();
-            private int stage = 0;
-            public wiggleSpindexer(){
+        public class shootAllBallsSlow implements Action{
+            public shootAllBallsSlow(){
 
             }
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                if (stage == 0){
-                    spindexerHandler(10, 600);
-                    stage++;
-                }
+                spindexerHandler(-480 - (spindexerTarget % 120), 700);
+                return false;
+            }
+        }
 
-                if (stage == 1 && timer.seconds() >= 0.5){
-                    spindexerHandler(-10,600);
-                    stage++;
-                }
-                return (stage < 2);
+        public class shootAllBallsSlowFar implements Action{
+            public shootAllBallsSlowFar(){
+
+            }
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                spindexerHandler(-480 - (spindexerTarget % 120), 600);
+                return false;
             }
         }
 
@@ -968,12 +1021,24 @@ public class RobotHardware {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 scanColor();
+                int[] solve = solvePattern();
+
+                packet.put(getMagPicture(), "");
+                if (solve != null) {
+                    packet.put("Turning left: ", solve[0]);
+                }
+                myOpMode.telemetry.update();
+
                 return true;
             }
         }
 
-        public Action wiggleSpindexer(){
-            return new wiggleSpindexer();
+        public Action shootAllBallsSlow(){
+            return new shootAllBallsSlow();
+        }
+
+        public Action shootAllBalsFar(){
+            return new shootAllBallsSlowFar();
         }
         public Action scanColorToggle(){
             return new scanColorSensor();

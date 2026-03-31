@@ -32,6 +32,7 @@ package org.firstinspires.ftc.team12395.tests;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.team12395.RobotHardware;
@@ -39,6 +40,7 @@ import org.firstinspires.ftc.team12395.rr.Localizer;
 
 @TeleOp(name="Motor Test", group="TeleOp")
 @Config
+@Disabled
 // TODO(STUDENTS): You may rename this for your robot (e.g., "Field Centric - Comp Bot)
 public class MotorDebug extends LinearOpMode {
 
